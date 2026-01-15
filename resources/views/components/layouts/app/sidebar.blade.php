@@ -15,11 +15,24 @@
                     <flux:sidebar.item icon="home" :href="route('dashboard')" :current="request()->routeIs('dashboard')" wire:navigate>
                         {{ __('Dashboard') }}
                     </flux:sidebar.item>
+                </flux:sidebar.group>
+                <flux:sidebar.group :heading="__('Users Management')" class="grid">
                     <flux:sidebar.item icon="users" :href="route('employees')" :current="request()->routeIs('employees')" wire:navigate>
                         {{ __('Employees') }}
                     </flux:sidebar.item>
                     <flux:sidebar.item icon="user-circle" :href="route('users')" :current="request()->routeIs('users')" wire:navigate>
                         {{ __('Users') }}
+                    </flux:sidebar.item>
+                </flux:sidebar.group>
+                <flux:sidebar.group :heading="__('Master Data')" class="grid">
+                    <flux:sidebar.item icon="tag" :href="route('asset-categories')" :current="request()->routeIs('asset-categories')" wire:navigate>
+                        {{ __('Asset Categories') }}
+                    </flux:sidebar.item>
+                    <flux:sidebar.item icon="building-storefront" :href="route('suppliers')" :current="request()->routeIs('suppliers')" wire:navigate>
+                        {{ __('Suppliers') }}
+                    </flux:sidebar.item>
+                    <flux:sidebar.item icon="map-pin" :href="route('locations')" :current="request()->routeIs('locations')" wire:navigate>
+                        {{ __('Locations') }}
                     </flux:sidebar.item>
                 </flux:sidebar.group>
             </flux:sidebar.nav>

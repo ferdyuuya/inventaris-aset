@@ -18,4 +18,16 @@ Route::view('/users', 'users')
     ->middleware(['auth', 'verified'])
     ->name('users');
 
+Route::view('/asset-categories', 'asset-categories')
+    ->middleware(['auth', 'verified'])
+    ->name('asset-categories');
+
+Route::view('/suppliers', 'suppliers')
+    ->middleware(['auth', 'verified'])
+    ->name('suppliers');
+
+Route::view('/locations', 'locations')
+    ->middleware(['auth', 'verified'])
+    ->name('locations');
+
 require __DIR__.'/settings.php';
