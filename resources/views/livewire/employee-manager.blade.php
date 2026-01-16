@@ -178,72 +178,119 @@
         </form>
     </flux:modal>
 
-    {{-- Employee Table --}}
-    <div class="bg-white dark:bg-gray-800 shadow overflow-hidden rounded-lg">
-        <div class="min-w-full">
-            <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
-                <thead class="bg-gray-50 dark:bg-gray-700">
-                    <tr>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">NIK</th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Name</th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Gender</th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Position</th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Phone</th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">User Account</th>
-                        <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Actions</th>
-                    </tr>
-                </thead>
-                <tbody class="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
-                    @forelse($employees as $employee)
-                    <tr class="hover:bg-gray-50 dark:hover:bg-gray-700">
-                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-white">{{ $employee->nik }}</td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white">{{ $employee->name }}</td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white">{{ $employee->gender }}</td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white">{{ $employee->position }}</td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white">{{ $employee->phone ?? '-' }}</td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white">
-                            @if($employee->user)
-                                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200">
-                                    {{ $employee->user->name }}
-                                </span>
-                            @else
-                                <span class="text-gray-400 dark:text-gray-500">No account</span>
-                            @endif
-                        </td>
-                        <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                            <flux:dropdown position="left" align="end">
-                                <flux:button variant="ghost" size="sm" icon="ellipsis-horizontal" inset />
-                                <flux:menu>
-                                    <flux:menu.item icon="pencil" wire:click="edit({{ $employee->id }})">Edit</flux:menu.item>
-                                    @if($employee->user)
-                                        <flux:menu.item icon="link-slash" variant="danger" wire:click="unlinkUser({{ $employee->id }})">Unlink User</flux:menu.item>
-                                    @else
-                                        <flux:menu.item icon="link" wire:click="showLinkUserModal({{ $employee->id }})">Link User</flux:menu.item>
-                                    @endif
-                                    <flux:menu.separator />
-                                    <flux:menu.item icon="trash" variant="danger" wire:click="delete({{ $employee->id }})" wire:confirm="Are you sure you want to delete this employee?">Delete</flux:menu.item>
-                                </flux:menu>
-                            </flux:dropdown>
-                        </td>
-                    </tr>
-                    @empty
-                    <tr>
-                        <td colspan="7" class="px-6 py-4 text-center text-sm text-gray-500 dark:text-gray-400">
-                            No employees found.
-                        </td>
-                    </tr>
-                    @endforelse
-                </tbody>
-            </table>
+    {{-- Bulk Actions Bar --}}
+    @if(count($selectedEmployees) > 0)
+        <div class="flex items-center justify-between bg-blue-50 dark:bg-blue-900/30 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
+            <div class="flex items-center space-x-4">
+                <span class="text-sm font-medium text-blue-900 dark:text-blue-200">
+                    {{ count($selectedEmployees) }} employee{{ count($selectedEmployees) > 1 ? 's' : '' }} selected
+                </span>
+            </div>
+            <div class="flex items-center space-x-2">
+                <flux:button size="sm" variant="ghost" wire:click="clearSelection">
+                    Clear Selection
+                </flux:button>
+                <flux:button size="sm" variant="danger" icon="trash" wire:click="bulkDelete" wire:confirm="Are you sure you want to delete {{ count($selectedEmployees) }} employee(s)?">
+                    Delete Selected
+                </flux:button>
+                <flux:button size="sm" variant="ghost" icon="link-slash" wire:click="bulkUnlinkUsers">
+                    Unlink Users
+                </flux:button>
+            </div>
         </div>
+    @endif
 
-        {{-- Pagination --}}
-        @if($employees->hasPages())
-        <div class="px-6 py-3 border-t border-gray-200 dark:border-gray-700">
-            {{ $employees->links() }}
-        </div>
-        @endif
-    </div>
+    {{-- Employee Table --}}
+    <flux:table :paginate="$this->employees">
+        <flux:table.columns>
+            <flux:table.column class="w-12">
+                <input type="checkbox" 
+                       wire:model.live="selectAll" 
+                       wire:click="toggleSelectAll"
+                       class="rounded border-gray-300 text-blue-600 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700" />
+            </flux:table.column>
+            <flux:table.column sortable :sorted="$sortBy === 'nik'" :direction="$sortDirection" wire:click="sort('nik')">
+                NIK
+            </flux:table.column>
+            <flux:table.column sortable :sorted="$sortBy === 'name'" :direction="$sortDirection" wire:click="sort('name')">
+                Name
+            </flux:table.column>
+            <flux:table.column sortable :sorted="$sortBy === 'gender'" :direction="$sortDirection" wire:click="sort('gender')">
+                Gender
+            </flux:table.column>
+            <flux:table.column sortable :sorted="$sortBy === 'position'" :direction="$sortDirection" wire:click="sort('position')">
+                Position
+            </flux:table.column>
+            <flux:table.column sortable :sorted="$sortBy === 'phone'" :direction="$sortDirection" wire:click="sort('phone')">
+                Phone
+            </flux:table.column>
+            <flux:table.column sortable :sorted="$sortBy === 'user.name'" :direction="$sortDirection" wire:click="sort('user_id')">
+                User Account
+            </flux:table.column>
+            <flux:table.column>
+                Actions
+            </flux:table.column>
+        </flux:table.columns>
+
+        <flux:table.rows>
+            @forelse ($this->employees as $employee)
+                <flux:table.row :key="$employee->id" class="{{ in_array((string)$employee->id, $selectedEmployees) ? 'bg-blue-50 dark:bg-blue-900/20' : '' }}">
+                    <flux:table.cell class="w-12">
+                        <input type="checkbox" 
+                               value="{{ $employee->id }}"
+                               wire:model.live="selectedEmployees"
+                               wire:click="toggleSelect({{ $employee->id }})"
+                               class="rounded border-gray-300 text-blue-600 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700" />
+                    </flux:table.cell>
+                    <flux:table.cell class="font-medium">
+                        {{ $employee->nik }}
+                    </flux:table.cell>
+                    <flux:table.cell>
+                        {{ $employee->name }}
+                    </flux:table.cell>
+                    <flux:table.cell>
+                        {{ $employee->gender }}
+                    </flux:table.cell>
+                    <flux:table.cell>
+                        {{ $employee->position }}
+                    </flux:table.cell>
+                    <flux:table.cell>
+                        {{ $employee->phone ?? '-' }}
+                    </flux:table.cell>
+                    <flux:table.cell>
+                        @if($employee->user)
+                            <flux:badge size="sm" color="green" inset="top bottom">
+                                {{ $employee->user->name }}
+                            </flux:badge>
+                        @else
+                            <span class="text-gray-400 dark:text-gray-500 text-sm">No account</span>
+                        @endif
+                    </flux:table.cell>
+                    <flux:table.cell>
+                        <flux:dropdown position="left" align="end">
+                            <flux:button variant="ghost" size="sm" icon="ellipsis-horizontal" inset />
+                            <flux:menu>
+                                <flux:menu.item icon="pencil" wire:click="edit({{ $employee->id }})">Edit</flux:menu.item>
+                                @if($employee->user)
+                                    <flux:menu.item icon="link-slash" variant="danger" wire:click="unlinkUser({{ $employee->id }})">Unlink User</flux:menu.item>
+                                @else
+                                    <flux:menu.item icon="link" wire:click="showLinkUserModal({{ $employee->id }})">Link User</flux:menu.item>
+                                @endif
+                                <flux:menu.separator />
+                                <flux:menu.item icon="trash" variant="danger" wire:click="delete({{ $employee->id }})" wire:confirm="Are you sure you want to delete this employee?">Delete</flux:menu.item>
+                            </flux:menu>
+                        </flux:dropdown>
+                    </flux:table.cell>
+                </flux:table.row>
+            @empty
+                <flux:table.row>
+                    <flux:table.cell colspan="8" class="text-center text-sm text-gray-500 dark:text-gray-400 py-8">
+                        No employees found.
+                    </flux:table.cell>
+                </flux:table.row>
+            @endforelse
+        </flux:table.rows>
+    </flux:table>
 
     {{-- Link User Modal --}}
     <flux:modal name="linkUser" class="md:w-96">

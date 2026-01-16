@@ -38,6 +38,10 @@ class EmployeeManager extends Component
     public $search = '';
     public $selectedUserId = null;
     public $userSearchQuery = '';
+    public $sortBy = 'created_at';
+    public $sortDirection = 'desc';
+    public $selectedEmployees = [];
+    public $selectAll = false;
 
     public function mount()
     {
@@ -46,22 +50,85 @@ class EmployeeManager extends Component
 
     public function render()
     {
-        $employees = Employee::with('user')
+        $users = User::whereDoesntHave('employee')->get();
+
+        return view('livewire.employee-manager', [
+            'users' => $users,
+            'genderOptions' => Employee::getGenderOptions()
+        ]);
+    }
+
+    #[\Livewire\Attributes\Computed]
+    public function employees()
+    {
+        return Employee::with('user')
             ->when($this->search, function($query) {
                 $query->where('name', 'like', '%' . $this->search . '%')
                       ->orWhere('nik', 'like', '%' . $this->search . '%')
                       ->orWhere('position', 'like', '%' . $this->search . '%');
             })
-            ->orderBy('created_at', 'desc')
+            ->orderBy($this->sortBy, $this->sortDirection)
             ->paginate(10);
+    }
 
-        $users = User::whereDoesntHave('employee')->get();
+    public function sort($column)
+    {
+        if ($this->sortBy === $column) {
+            $this->sortDirection = $this->sortDirection === 'asc' ? 'desc' : 'asc';
+        } else {
+            $this->sortBy = $column;
+            $this->sortDirection = 'asc';
+        }
+    }
 
-        return view('livewire.employee-manager', [
-            'employees' => $employees,
-            'users' => $users,
-            'genderOptions' => Employee::getGenderOptions()
-        ]);
+    public function toggleSelectAll()
+    {
+        if ($this->selectAll) {
+            $this->selectedEmployees = $this->employees()->pluck('id')->map(fn($id) => (string)$id)->toArray();
+        } else {
+            $this->selectedEmployees = [];
+        }
+    }
+
+    public function toggleSelect($employeeId)
+    {
+        $employeeId = (string)$employeeId;
+        if (in_array($employeeId, $this->selectedEmployees)) {
+            $this->selectedEmployees = array_filter($this->selectedEmployees, fn($id) => $id !== $employeeId);
+        } else {
+            $this->selectedEmployees[] = $employeeId;
+        }
+        $this->selectAll = false;
+    }
+
+    public function bulkDelete()
+    {
+        if (empty($this->selectedEmployees)) {
+            return;
+        }
+
+        Employee::whereIn('id', $this->selectedEmployees)->delete();
+        $this->selectedEmployees = [];
+        $this->selectAll = false;
+        session()->flash('message', 'Selected employees deleted successfully.');
+    }
+
+    public function bulkUnlinkUsers()
+    {
+        if (empty($this->selectedEmployees)) {
+            return;
+        }
+
+        Employee::whereIn('id', $this->selectedEmployees)->update(['user_id' => null]);
+        $this->selectedEmployees = [];
+        $this->selectAll = false;
+        session()->flash('message', 'Selected employees unlinked from users successfully.');
+    }
+
+    public function clearSelection()
+    {
+        $this->selectedEmployees = [];
+        $this->selectAll = false;
     }
 
     public function showCreateForm()

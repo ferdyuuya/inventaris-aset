@@ -1,4 +1,4 @@
-<x-layouts.app :title="__('Employees')">
+<x-layouts.app title="Employees">
     {{-- Breadcrumbs --}}
     <flux:breadcrumbs>
         <flux:breadcrumbs.item href="/" icon="home" />
