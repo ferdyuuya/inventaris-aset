@@ -22,8 +22,9 @@ return new class extends Migration
         );
 
         Schema::table('procurements', fn($t)=>[
-            $t->foreign('supplier_id')->references('id')->on('suppliers')->restrictOnDelete(),
             $t->foreign('asset_category_id')->references('id')->on('asset_categories')->restrictOnDelete(),
+            $t->foreign('location_id')->references('id')->on('locations')->restrictOnDelete(),
+            $t->foreign('supplier_id')->references('id')->on('suppliers')->restrictOnDelete(),
             $t->foreign('created_by')->references('id')->on('users')->restrictOnDelete(),
         ]);
 

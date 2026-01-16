@@ -76,6 +76,20 @@
                 </div>
 
                 <div>
+                    <flux:select wire:model="location_id" 
+                               label="Location" 
+                               description="Storage location (cannot be changed after creation)"
+                               placeholder="Choose location"
+                               required>
+                        <flux:select.option value="">-- Select Location --</flux:select.option>
+                        @foreach($locations as $location)
+                            <flux:select.option value="{{ $location->id }}">{{ $location->name }}</flux:select.option>
+                        @endforeach
+                    </flux:select>
+                    @error('location_id') <span class="text-red-500 text-xs">{{ $message }}</span> @enderror
+                </div>
+
+                <div>
                     <flux:select wire:model="supplier_id" 
                                label="Supplier" 
                                description="Select supplier for this procurement"
@@ -113,10 +127,9 @@
                     <div class="relative">
                         <span class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-700 dark:text-gray-300 font-semibold">Rp</span>
                         <input type="text" 
-                               wire:model.live.debounce.300ms="total_cost"
                                placeholder="0"
                                class="w-full pl-10 pr-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg dark:bg-gray-700 dark:text-white focus:ring-2 focus:ring-blue-500"
-                               @input="$el.value = $el.value.replace(/[^0-9]/g, ''); const num = parseInt($el.value || 0); $el.value = new Intl.NumberFormat('id-ID').format(num)" />
+                               @input="const numeric = $el.value.replace(/[^0-9]/g, ''); $el.value = new Intl.NumberFormat('id-ID').format(numeric || 0); @this.set('total_cost', numeric)" />
                     </div>
                     @error('total_cost') <span class="text-red-500 text-xs">{{ $message }}</span> @enderror
                 </div>
@@ -127,7 +140,7 @@
                 <flux:modal.close>
                     <flux:button variant="ghost">Cancel</flux:button>
                 </flux:modal.close>
-                <flux:button type="submit" variant="primary">Create Procurement</flux:button>
+                <flux:button type="button" variant="primary" wire:click="save">Create Procurement</flux:button>
             </div>
         </form>
     </flux:modal>
@@ -166,6 +179,17 @@
                 </div>
 
                 <div>
+                    @php
+                        $location = $locations->firstWhere('id', $location_id);
+                    @endphp
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Location</label>
+                    <div class="px-3 py-2 bg-gray-100 dark:bg-gray-600 rounded-lg border border-gray-300 dark:border-gray-600">
+                        <p class="text-gray-900 dark:text-white text-sm">{{ $location ? $location->name : 'Not set' }}</p>
+                        <p class="text-gray-500 dark:text-gray-400 text-xs mt-1">Cannot be changed after creation</p>
+                    </div>
+                </div>
+
+                <div>
                     <flux:select wire:model="supplier_id" 
                                label="Supplier" 
                                description="Select supplier for this procurement"
@@ -203,10 +227,9 @@
                     <div class="relative">
                         <span class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-700 dark:text-gray-300 font-semibold">Rp</span>
                         <input type="text" 
-                               wire:model.live.debounce.300ms="total_cost"
                                placeholder="0"
                                class="w-full pl-10 pr-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg dark:bg-gray-700 dark:text-white focus:ring-2 focus:ring-blue-500"
-                               @input="$el.value = $el.value.replace(/[^0-9]/g, ''); const num = parseInt($el.value || 0); $el.value = new Intl.NumberFormat('id-ID').format(num)" />
+                               @input="const numeric = $el.value.replace(/[^0-9]/g, ''); $el.value = new Intl.NumberFormat('id-ID').format(numeric || 0); @this.set('total_cost', numeric)" />
                     </div>
                     @error('total_cost') <span class="text-red-500 text-xs">{{ $message }}</span> @enderror
                 </div>
@@ -220,6 +243,37 @@
                 <flux:button type="submit" variant="primary">Update Procurement</flux:button>
             </div>
         </form>
+    </flux:modal>
+
+    {{-- Location Confirmation Modal --}}
+    <flux:modal wire:model.self="showConfirmLocationModal" class="md:w-96">
+        <div class="space-y-6">
+            <div>
+                <flux:heading size="lg">Confirm Procurement Creation</flux:heading>
+                <flux:text class="mt-2 text-sm">Please review the location before confirming.</flux:text>
+            </div>
+
+            <div class="bg-yellow-50 dark:bg-yellow-900/30 border border-yellow-200 dark:border-yellow-700 rounded-lg p-4">
+                <div class="flex">
+                    <div class="flex-shrink-0">
+                        <svg class="h-5 w-5 text-yellow-400" viewBox="0 0 20 20" fill="currentColor">
+                            <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd" />
+                        </svg>
+                    </div>
+                    <div class="ml-3">
+                        <p class="text-sm font-medium text-yellow-800 dark:text-yellow-200">
+                            <strong>Important:</strong> Location cannot be changed after this procurement is created.
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="flex gap-2">
+                <flux:spacer />
+                <flux:button variant="ghost" wire:click="$toggle('showConfirmLocationModal')">Cancel</flux:button>
+                <flux:button type="submit" variant="primary" wire:click="confirmCreateProcurement">Confirm & Create</flux:button>
+            </div>
+        </div>
     </flux:modal>
 
     {{-- Procurements Table --}}

@@ -3,6 +3,7 @@
 namespace App\Livewire;
 
 use App\Models\AssetCategory;
+use App\Models\Location;
 use App\Models\Procurement;
 use App\Models\Supplier;
 use App\Models\User;
@@ -34,11 +35,15 @@ class ProcurementManager extends Component
     #[Validate('required|numeric|min:0')]
     public $total_cost = '';
 
+    #[Validate('required|exists:locations,id')]
+    public $location_id = '';
+
     // Component state
     public $selectedProcurementId = null;
     public $isEditing = false;
     public $showForm = false;
     public $search = '';
+    public $showConfirmLocationModal = false;
 
     public function mount()
     {
@@ -51,7 +56,7 @@ class ProcurementManager extends Component
 
     public function render()
     {
-        $procurements = Procurement::with(['supplier', 'category', 'creator'])
+        $procurements = Procurement::with(['supplier', 'category', 'creator', 'location'])
             ->when($this->search, function($query) {
                 $query->where('name', 'like', '%' . $this->search . '%')
                       ->orWhere('invoice_number', 'like', '%' . $this->search . '%')
@@ -64,11 +69,13 @@ class ProcurementManager extends Component
 
         $suppliers = Supplier::orderBy('name')->get();
         $categories = AssetCategory::orderBy('name')->get();
+        $locations = Location::orderBy('name')->get();
 
         return view('livewire.procurement-manager', [
             'procurements' => $procurements,
             'suppliers' => $suppliers,
             'categories' => $categories,
+            'locations' => $locations,
         ]);
     }
 
@@ -88,6 +95,7 @@ class ProcurementManager extends Component
         $this->selectedProcurementId = $procurement->id;
         $this->name = $procurement->name;
         $this->asset_category_id = $procurement->asset_category_id;
+        $this->location_id = $procurement->location_id;
         $this->supplier_id = $procurement->supplier_id;
         $this->procurement_date = $procurement->procurement_date->format('Y-m-d');
         $this->invoice_number = $procurement->invoice_number;
@@ -103,8 +111,15 @@ class ProcurementManager extends Component
         if ($this->isEditing) {
             $this->updateProcurement();
         } else {
-            $this->createProcurement();
+            // Show confirmation modal for location warning
+            $this->showConfirmLocationModal = true;
         }
+    }
+
+    public function confirmCreateProcurement()
+    {
+        $this->createProcurement();
+        $this->showConfirmLocationModal = false;
     }
 
     public function createProcurement()
@@ -114,6 +129,7 @@ class ProcurementManager extends Component
         Procurement::create([
             'name' => $this->name,
             'asset_category_id' => $this->asset_category_id,
+            'location_id' => $this->location_id,
             'supplier_id' => $this->supplier_id,
             'procurement_date' => $this->procurement_date,
             'invoice_number' => $this->invoice_number ?: null,
@@ -168,6 +184,7 @@ class ProcurementManager extends Component
     {
         $this->name = '';
         $this->asset_category_id = '';
+        $this->location_id = '';
         $this->supplier_id = '';
         $this->procurement_date = now()->format('Y-m-d');
         $this->invoice_number = '';

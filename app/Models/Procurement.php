@@ -15,6 +15,7 @@ class Procurement extends Model
     protected $fillable = [
         'name',
         'asset_category_id',
+        'location_id',
         'supplier_id',
         'procurement_date',
         'invoice_number',
@@ -46,6 +47,14 @@ class Procurement extends Model
     public function category(): BelongsTo
     {
         return $this->belongsTo(AssetCategory::class, 'asset_category_id');
+    }
+
+    /**
+     * Get the location for this procurement.
+     */
+    public function location(): BelongsTo
+    {
+        return $this->belongsTo(Location::class);
     }
 
     /**
