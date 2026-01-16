@@ -26,6 +26,10 @@ Route::view('/suppliers', 'suppliers')
     ->middleware(['auth', 'verified'])
     ->name('suppliers');
 
+Route::view('/procurements', 'procurements')
+    ->middleware(['auth', 'verified'])
+    ->name('procurements');
+
 Route::view('/locations', 'locations')
     ->middleware(['auth', 'verified'])
     ->name('locations');

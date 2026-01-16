@@ -11,11 +11,27 @@
             </flux:sidebar.header>
 
             <flux:sidebar.nav>
-                <flux:sidebar.group :heading="__('Platform')" class="grid">
+                {{-- Dashboard --}}
                     <flux:sidebar.item icon="home" :href="route('dashboard')" :current="request()->routeIs('dashboard')" wire:navigate>
                         {{ __('Dashboard') }}
                     </flux:sidebar.item>
+                {{-- Procurement Management --}}
+                <flux:sidebar.group :heading="__('Procurements')" class="grid">
+                    <flux:sidebar.item icon="folder" :href="route('procurements')" :current="request()->routeIs('procurements')" wire:navigate>
+                        {{ __('Procurements') }}
+                    </flux:sidebar.item>
                 </flux:sidebar.group>
+                {{-- //Maintenance Management --}}
+                {{-- <flux:sidebar.group :heading="__('Maintenance')" class="grid">
+                    <flux:sidebar.item icon="folder" :href="route('dashboard')" :current="request()->routeIs('dashboard')" wire:navigate>
+                        {{ __('Maintenance Requests') }}
+                    </flux:sidebar.item>
+                    <flux:sidebar.item icon="folder" :href="route('dashboard')" :current="request()->routeIs('dashboard')" wire:navigate>
+                        {{ __('Maintenance Assets') }}
+                    </flux:sidebar.item>
+                </flux:sidebar.group> --}}
+
+                {{-- Users Management --}}
                 <flux:sidebar.group :heading="__('Users Management')" class="grid">
                     <flux:sidebar.item icon="users" :href="route('employees')" :current="request()->routeIs('employees')" wire:navigate>
                         {{ __('Employees') }}
@@ -24,6 +40,8 @@
                         {{ __('Users') }}
                     </flux:sidebar.item>
                 </flux:sidebar.group>
+
+                {{-- Master Data --}}
                 <flux:sidebar.group :heading="__('Master Data')" class="grid">
                     <flux:sidebar.item icon="tag" :href="route('asset-categories')" :current="request()->routeIs('asset-categories')" wire:navigate>
                         {{ __('Asset Categories') }}
@@ -43,7 +61,6 @@
                 <flux:sidebar.item icon="folder-git-2" href="https://github.com/laravel/livewire-starter-kit" target="_blank">
                     {{ __('Repository') }}
                 </flux:sidebar.item>
-
                 <flux:sidebar.item icon="book-open-text" href="https://laravel.com/docs/starter-kits#livewire" target="_blank">
                     {{ __('Documentation') }}
                 </flux:sidebar.item>

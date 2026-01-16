@@ -13,7 +13,9 @@ return new class extends Migration
     {
         Schema::create('procurements', function (Blueprint $table) {
             $table->id();
+            $table->string('name');
             $table->unsignedBigInteger('supplier_id');
+            $table->unsignedBigInteger('asset_category_id');
             $table->date('procurement_date');
             $table->string('invoice_number')->nullable();
             $table->decimal('total_cost',15,0);

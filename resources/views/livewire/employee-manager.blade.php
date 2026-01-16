@@ -23,7 +23,7 @@
             <h1 class="text-2xl font-semibold text-gray-900 dark:text-white">Employee Management</h1>
             <flux:modal.trigger name="createEmployee">
                 <flux:button variant="primary" wire:click="showCreateForm">
-                    <svg class="-ml-1 mr-2 h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <svg class="-ml-1 mr-th2 h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
                     </svg>
                     Add Employee
