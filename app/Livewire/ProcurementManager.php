@@ -7,6 +7,7 @@ use App\Models\Location;
 use App\Models\Procurement;
 use App\Models\Supplier;
 use App\Models\User;
+use App\Services\AssetGenerationService;
 use Livewire\Component;
 use Livewire\WithPagination;
 use Livewire\Attributes\Validate;
@@ -33,7 +34,7 @@ class ProcurementManager extends Component
     #[Validate('nullable|string|max:255')]
     public $invoice_number = '';
 
-    #[Validate('required|numeric|min:0')]
+    #[Validate('required|integer|min:1')]
     public $quantity = '';
     
     #[Validate('required|numeric|min:0')]
@@ -171,24 +172,42 @@ class ProcurementManager extends Component
     {
         $this->validate();
 
-        Procurement::create([
-            'name' => $this->name,
-            'asset_category_id' => $this->asset_category_id,
-            'location_id' => $this->location_id,
-            'supplier_id' => $this->supplier_id,
-            'procurement_date' => $this->procurement_date,
-            'invoice_number' => $this->invoice_number ?: null,
-            'quantity' => $this->quantity,
-            'unit_price' => $this->unit_price,
-            'total_cost' => $this->quantity * $this->unit_price, // Calculate total cost
-            'created_by' => Auth::id(),
-        ]);
+        try {
+            // Create procurement record
+            $procurement = Procurement::create([
+                'name' => $this->name,
+                'asset_category_id' => $this->asset_category_id,
+                'location_id' => $this->location_id,
+                'supplier_id' => $this->supplier_id,
+                'procurement_date' => $this->procurement_date,
+                'invoice_number' => $this->invoice_number ?: null,
+                'quantity' => $this->quantity,
+                'unit_price' => $this->unit_price,
+                'total_cost' => $this->quantity * $this->unit_price,
+                'created_by' => Auth::id(),
+            ]);
 
-        $this->resetForm();
-        $this->showForm = false;
-        $this->modal('createProcurement')->close();
-        $this->dispatch('procurement-created');
-        session()->flash('message', 'Procurement created successfully.');
+            // Auto-generate assets
+            $assetService = new AssetGenerationService();
+            $assetsCreated = $assetService->generateAssets([
+                'name' => $this->name,
+                'asset_category_id' => $this->asset_category_id,
+                'location_id' => $this->location_id,
+                'supplier_id' => $this->supplier_id,
+                'procurement_date' => \Carbon\Carbon::parse($this->procurement_date),
+                'invoice_number' => $this->invoice_number,
+                'quantity' => (int)$this->quantity,
+                'unit_price' => (float)$this->unit_price,
+            ]);
+
+            $this->resetForm();
+            $this->showForm = false;
+            $this->modal('createProcurement')->close();
+            $this->dispatch('procurement-created');
+            session()->flash('message', "Procurement created successfully with {$assetsCreated} assets generated.");
+        } catch (\Exception $e) {
+            session()->flash('error', 'Error creating procurement: ' . $e->getMessage());
+        }
     }
 
     public function updateProcurement()

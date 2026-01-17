@@ -1,10 +1,16 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\TestAssetGenerationController;
 
 Route::get('/', function () {
     return view('welcome');
 })->name('home');
+
+// Test route for asset generation
+Route::get('/test-asset-generation', [TestAssetGenerationController::class, 'test'])
+    ->middleware(['auth', 'verified'])
+    ->name('test-asset-generation');
 
 Route::view('dashboard', 'dashboard')
     ->middleware(['auth', 'verified'])
