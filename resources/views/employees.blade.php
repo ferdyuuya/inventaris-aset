@@ -1,11 +1,10 @@
 <x-layouts.app title="Employees">
-    {{-- Breadcrumbs --}}
-    <flux:breadcrumbs>
-        <flux:breadcrumbs.item href="/" icon="home" />
-        <flux:breadcrumbs.item>Employees</flux:breadcrumbs.item>
-    </flux:breadcrumbs>
+    <x-page-container>
+        <flux:breadcrumbs>
+            <flux:breadcrumbs.item href="/" icon="home" />
+            <flux:breadcrumbs.item>Employees</flux:breadcrumbs.item>
+        </flux:breadcrumbs>
 
-    <div class="mt-4">
         <livewire:employee-manager />
-    </div>
+    </x-page-container>
 </x-layouts.app>
