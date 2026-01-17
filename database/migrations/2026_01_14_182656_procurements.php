@@ -19,6 +19,8 @@ return new class extends Migration
             $table->unsignedBigInteger('supplier_id');
             $table->date('procurement_date');
             $table->string('invoice_number')->nullable();
+            $table->string('quantity');
+            $table->decimal('unit_price',15,0);
             $table->decimal('total_cost',15,0);
             $table->unsignedBigInteger('created_by');
             $table->timestamps();

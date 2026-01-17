@@ -14,6 +14,13 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
+        // Call other seeders
+        $this->call([
+            SupplierSeeder::class,
+            AssetCategorySeeder::class,
+            LocationSeeder::class,
+        ]);
+
         // Create Admin Account
         $admin = User::firstOrCreate([
             'email' => 'admin@invetaris.local'

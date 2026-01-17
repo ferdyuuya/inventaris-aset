@@ -10,6 +10,7 @@ use App\Models\User;
 use Livewire\Component;
 use Livewire\WithPagination;
 use Livewire\Attributes\Validate;
+use Livewire\Attributes\Computed;
 use Illuminate\Support\Facades\Auth;
 
 class ProcurementManager extends Component
@@ -31,6 +32,12 @@ class ProcurementManager extends Component
     
     #[Validate('nullable|string|max:255')]
     public $invoice_number = '';
+
+    #[Validate('required|numeric|min:0')]
+    public $quantity = '';
+    
+    #[Validate('required|numeric|min:0')]
+    public $unit_price = '';
     
     #[Validate('required|numeric|min:0')]
     public $total_cost = '';
@@ -44,6 +51,8 @@ class ProcurementManager extends Component
     public $showForm = false;
     public $search = '';
     public $showConfirmLocationModal = false;
+    public $sortBy = 'procurement_date';
+    public $sortDirection = 'desc';
 
     public function mount()
     {
@@ -54,9 +63,10 @@ class ProcurementManager extends Component
         }
     }
 
-    public function render()
+    #[Computed]
+    public function procurements()
     {
-        $procurements = Procurement::with(['supplier', 'category', 'creator', 'location'])
+        return Procurement::with(['supplier', 'category', 'creator', 'location'])
             ->when($this->search, function($query) {
                 $query->where('name', 'like', '%' . $this->search . '%')
                       ->orWhere('invoice_number', 'like', '%' . $this->search . '%')
@@ -64,19 +74,50 @@ class ProcurementManager extends Component
                           $q->where('name', 'like', '%' . $this->search . '%');
                       });
             })
-            ->orderBy('procurement_date', 'desc')
+            ->orderBy($this->sortBy, $this->sortDirection)
             ->paginate(10);
+    }
 
+    public function render()
+    {
         $suppliers = Supplier::orderBy('name')->get();
         $categories = AssetCategory::orderBy('name')->get();
         $locations = Location::orderBy('name')->get();
 
         return view('livewire.procurement-manager', [
-            'procurements' => $procurements,
             'suppliers' => $suppliers,
             'categories' => $categories,
             'locations' => $locations,
         ]);
+    }
+
+    /**
+     * Calculate total cost based on quantity and unit price
+     */
+    public function updated($property)
+    {
+        if (in_array($property, ['quantity', 'unit_price'])) {
+            $this->calculateTotalCost();
+        }
+    }
+
+    public function calculateTotalCost()
+    {
+        if (!empty($this->quantity) && !empty($this->unit_price)) {
+            $this->total_cost = $this->quantity * $this->unit_price;
+        } else {
+            $this->total_cost = 0;
+        }
+    }
+
+    public function sort($column)
+    {
+        if ($this->sortBy === $column) {
+            $this->sortDirection = $this->sortDirection === 'asc' ? 'desc' : 'asc';
+        } else {
+            $this->sortBy = $column;
+            $this->sortDirection = 'asc';
+        }
     }
 
     public function showCreateForm()
@@ -99,7 +140,11 @@ class ProcurementManager extends Component
         $this->supplier_id = $procurement->supplier_id;
         $this->procurement_date = $procurement->procurement_date->format('Y-m-d');
         $this->invoice_number = $procurement->invoice_number;
-        $this->total_cost = $procurement->total_cost;
+        $this->quantity = $procurement->quantity;
+        $this->unit_price = $procurement->unit_price;
+        $this->quantity = $procurement->quantity;
+        $this->unit_price = $procurement->unit_price;
+        $this->total_cost = $procurement->quantity * $procurement->unit_price; // Recalculate total cost
         
         $this->isEditing = true;
         $this->showForm = true;
@@ -133,7 +178,9 @@ class ProcurementManager extends Component
             'supplier_id' => $this->supplier_id,
             'procurement_date' => $this->procurement_date,
             'invoice_number' => $this->invoice_number ?: null,
-            'total_cost' => $this->total_cost,
+            'quantity' => $this->quantity,
+            'unit_price' => $this->unit_price,
+            'total_cost' => $this->quantity * $this->unit_price, // Calculate total cost
             'created_by' => Auth::id(),
         ]);
 
@@ -155,7 +202,10 @@ class ProcurementManager extends Component
             'supplier_id' => $this->supplier_id,
             'procurement_date' => $this->procurement_date,
             'invoice_number' => $this->invoice_number ?: null,
-            'total_cost' => $this->total_cost,
+            'quantity' => $this->quantity,
+            'unit_price' => $this->unit_price,
+            'total_cost' => $this->quantity * $this->unit_price, // Recalculate total cost
+            // 'total_cost' => $this->total_cost,
         ]);
 
         $this->resetForm();
@@ -188,6 +238,8 @@ class ProcurementManager extends Component
         $this->supplier_id = '';
         $this->procurement_date = now()->format('Y-m-d');
         $this->invoice_number = '';
+        $this->quantity = '';
+        $this->unit_price = '';
         $this->total_cost = '';
         $this->selectedProcurementId = null;
         $this->isEditing = false;

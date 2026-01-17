@@ -15,9 +15,12 @@ class AssetCategoryManager extends Component
     #[Validate('required|string|max:255|unique:asset_categories,name')]
     public $name = '';
     
+    #[Validate('required|string|max:10|unique:asset_categories,code')]
+    public $code = '';
+    
     #[Validate('nullable|string')]
     public $description = '';
-
+    
     // Component state
     public $selectedCategoryId = null;
     public $isEditing = false;
@@ -36,7 +39,7 @@ class AssetCategoryManager extends Component
                       ->orWhere('description', 'like', '%' . $this->search . '%');
             })
             ->orderBy('created_at', 'desc')
-            ->paginate(10);
+            ->paginate(15);
 
         return view('livewire.asset-category-manager', [
             'categories' => $categories,
@@ -55,6 +58,7 @@ class AssetCategoryManager extends Component
         
         $this->selectedCategoryId = $category->id;
         $this->name = $category->name;
+        $this->code = $category->code;
         $this->description = $category->description;
         $this->isEditing = true;
         
@@ -76,6 +80,7 @@ class AssetCategoryManager extends Component
 
         AssetCategory::create([
             'name' => $this->name,
+            'code' => strtoupper(substr($this->name,0,10)),
             'description' => $this->description,
         ]);
 
@@ -88,6 +93,7 @@ class AssetCategoryManager extends Component
     {
         $rules = [
             'name' => 'required|string|max:255|unique:asset_categories,name,' . $this->selectedCategoryId,
+            'code' => 'required|string|max:10|unique:asset_categories,code,' . $this->selectedCategoryId,
             'description' => 'nullable|string',
         ];
 
@@ -96,6 +102,7 @@ class AssetCategoryManager extends Component
         $category = AssetCategory::findOrFail($this->selectedCategoryId);
         $category->update([
             'name' => $this->name,
+            'code' => strtoupper(substr($this->name,0,10)),
             'description' => $this->description,
         ]);
 

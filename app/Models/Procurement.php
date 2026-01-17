@@ -19,6 +19,8 @@ class Procurement extends Model
         'supplier_id',
         'procurement_date',
         'invoice_number',
+        'quantity',
+        'unit_price',
         'total_cost',
         'created_by',
     ];
@@ -30,6 +32,8 @@ class Procurement extends Model
      */
     protected $casts = [
         'procurement_date' => 'date',
+        'quantity' => 'integer',
+        'unit_price' => 'decimal:0',
         'total_cost' => 'decimal:0',
     ];
 

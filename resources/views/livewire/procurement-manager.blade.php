@@ -123,14 +123,48 @@
                 </div>
 
                 <div>
-                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Total Cost</label>
-                    <div class="relative">
-                        <span class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-700 dark:text-gray-300 font-semibold">Rp</span>
-                        <input type="text" 
-                               placeholder="0"
-                               class="w-full pl-10 pr-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg dark:bg-gray-700 dark:text-white focus:ring-2 focus:ring-blue-500"
-                               @input="const numeric = $el.value.replace(/[^0-9]/g, ''); $el.value = new Intl.NumberFormat('id-ID').format(numeric || 0); @this.set('total_cost', numeric)" />
+                    <flux:heading>Pricing Information</flux:heading>
+                </div>
+
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <flux:input wire:model.live="quantity" 
+                                   icon="hashtag"
+                                   label="Quantity" 
+                                   type="number"
+                                   min="0"
+                                   step="1"
+                                   description="Number of items"
+                                   placeholder="0"
+                                   required />
+                        @error('quantity') <span class="text-red-500 text-xs">{{ $message }}</span> @enderror
                     </div>
+
+                    <div>
+                        <flux:input wire:model.live="unit_price" 
+                                   icon="currency-dollar"
+                                   label="Unit Price (Rp)" 
+                                   type="number"
+                                   min="0"
+                                   step="0.01"
+                                   description="Price per unit"
+                                   placeholder="0"
+                                   required />
+                        @error('unit_price') <span class="text-red-500 text-xs">{{ $message }}</span> @enderror
+                    </div>
+                </div>
+
+                <div>
+                    <flux:input wire:model="total_cost" 
+                               icon="banknotes"
+                               label="Total Cost (Rp)" 
+                               type="number"
+                               min="0"
+                               step="0.01"
+                               description="Automatically calculated: Quantity × Unit Price"
+                               placeholder="0"
+                               readonly
+                               variant="filled" />
                     @error('total_cost') <span class="text-red-500 text-xs">{{ $message }}</span> @enderror
                 </div>
             </div>
@@ -223,14 +257,48 @@
                 </div>
 
                 <div>
-                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Total Cost</label>
-                    <div class="relative">
-                        <span class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-700 dark:text-gray-300 font-semibold">Rp</span>
-                        <input type="text" 
-                               placeholder="0"
-                               class="w-full pl-10 pr-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg dark:bg-gray-700 dark:text-white focus:ring-2 focus:ring-blue-500"
-                               @input="const numeric = $el.value.replace(/[^0-9]/g, ''); $el.value = new Intl.NumberFormat('id-ID').format(numeric || 0); @this.set('total_cost', numeric)" />
+                    <flux:heading>Pricing Information</flux:heading>
+                </div>
+
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <flux:input wire:model.live="quantity" 
+                                   icon="hashtag"
+                                   label="Quantity" 
+                                   type="number"
+                                   min="0"
+                                   step="1"
+                                   description="Number of items"
+                                   placeholder="0"
+                                   required />
+                        @error('quantity') <span class="text-red-500 text-xs">{{ $message }}</span> @enderror
                     </div>
+
+                    <div>
+                        <flux:input wire:model.live="unit_price" 
+                                   icon="currency-dollar"
+                                   label="Unit Price (Rp)" 
+                                   type="number"
+                                   min="0"
+                                   step="0.01"
+                                   description="Price per unit"
+                                   placeholder="0"
+                                   required />
+                        @error('unit_price') <span class="text-red-500 text-xs">{{ $message }}</span> @enderror
+                    </div>
+                </div>
+
+                <div>
+                    <flux:input wire:model="total_cost" 
+                               icon="banknotes"
+                               label="Total Cost (Rp)" 
+                               type="number"
+                               min="0"
+                               step="0.01"
+                               description="Automatically calculated: Quantity × Unit Price"
+                               placeholder="0"
+                               readonly
+                               variant="filled" />
                     @error('total_cost') <span class="text-red-500 text-xs">{{ $message }}</span> @enderror
                 </div>
             </div>
@@ -277,70 +345,66 @@
     </flux:modal>
 
     {{-- Procurements Table --}}
-    <div class="bg-white dark:bg-gray-800 shadow overflow-hidden rounded-lg">
-        <div class="min-w-full">
-            <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
-                <thead class="bg-gray-50 dark:bg-gray-700">
-                    <tr>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Product</th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Category</th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Supplier</th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Invoice</th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Date</th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Total Cost</th>
-                        <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Actions</th>
-                    </tr>
-                </thead>
-                <tbody class="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
-                    @forelse($procurements as $procurement)
-                    <tr class="hover:bg-gray-50 dark:hover:bg-gray-700">
-                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-white">
-                            {{ $procurement->name }}
-                        </td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white">
-                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200">
-                                {{ $procurement->category->name }}
-                            </span>
-                        </td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white">
-                            {{ $procurement->supplier->name }}
-                        </td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white">
-                            {{ $procurement->invoice_number ?? '-' }}
-                        </td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white">
-                            {{ $procurement->procurement_date->format('d M Y') }}
-                        </td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm font-semibold text-gray-900 dark:text-white">
-                            Rp {{ number_format($procurement->total_cost, 0, ',', '.') }}
-                        </td>
-                        <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                            <flux:dropdown position="left" align="end">
-                                <flux:button variant="ghost" size="sm" icon="ellipsis-horizontal" inset />
-                                <flux:menu>
-                                    <flux:menu.item icon="pencil" wire:click="edit({{ $procurement->id }})">Edit</flux:menu.item>
-                                    <flux:menu.separator />
-                                    <flux:menu.item icon="trash" variant="danger" wire:click="delete({{ $procurement->id }})" wire:confirm="Are you sure you want to delete this procurement?">Delete</flux:menu.item>
-                                </flux:menu>
-                            </flux:dropdown>
-                        </td>
-                    </tr>
-                    @empty
-                    <tr>
-                        <td colspan="7" class="px-6 py-4 text-center text-sm text-gray-500 dark:text-gray-400">
-                            No procurements found.
-                        </td>
-                    </tr>
-                    @endforelse
-                </tbody>
-            </table>
-        </div>
+    <flux:table :paginate="$this->procurements">
+        <flux:table.columns>
+            <flux:table.column sortable :sorted="$sortBy === 'name'" :direction="$sortDirection" wire:click="sort('name')">Product</flux:table.column>
+            <flux:table.column sortable :sorted="$sortBy === 'asset_category_id'" :direction="$sortDirection" wire:click="sort('asset_category_id')">Category</flux:table.column>
+            <flux:table.column sortable :sorted="$sortBy === 'supplier_id'" :direction="$sortDirection" wire:click="sort('supplier_id')">Supplier</flux:table.column>
+            <flux:table.column sortable :sorted="$sortBy === 'invoice_number'" :direction="$sortDirection" wire:click="sort('invoice_number')">Invoice</flux:table.column>
+            <flux:table.column sortable :sorted="$sortBy === 'quantity'" :direction="$sortDirection" wire:click="sort('quantity')">Quantity</flux:table.column>
+            <flux:table.column sortable :sorted="$sortBy === 'unit_price'" :direction="$sortDirection" wire:click="sort('unit_price')">Unit Price</flux:table.column>
+            <flux:table.column sortable :sorted="$sortBy === 'total_cost'" :direction="$sortDirection" wire:click="sort('total_cost')">Total Cost</flux:table.column>
+            <flux:table.column sortable :sorted="$sortBy === 'procurement_date'" :direction="$sortDirection" wire:click="sort('procurement_date')">Date</flux:table.column>
+            <flux:table.column>Actions</flux:table.column>
+        </flux:table.columns>
 
-        {{-- Pagination --}}
-        @if($procurements->hasPages())
-        <div class="px-6 py-3 border-t border-gray-200 dark:border-gray-700">
-            {{ $procurements->links() }}
-        </div>
-        @endif
-    </div>
+        <flux:table.rows>
+            @forelse ($this->procurements as $procurement)
+                <flux:table.row :key="$procurement->id">
+                    <flux:table.cell class="font-medium">
+                        {{ $procurement->name }}
+                    </flux:table.cell>
+                    <flux:table.cell>
+                        <flux:badge size="sm" color="blue" inset="top bottom">
+                            {{ $procurement->category->name }}
+                        </flux:badge>
+                    </flux:table.cell>
+                    <flux:table.cell>
+                        {{ $procurement->supplier->name }}
+                    </flux:table.cell>
+                    <flux:table.cell>
+                        {{ $procurement->invoice_number ?? '-' }}
+                    </flux:table.cell>
+                    <flux:table.cell>
+                        {{ $procurement->quantity }}
+                    </flux:table.cell>
+                    <flux:table.cell variant="strong">
+                        Rp {{ number_format($procurement->unit_price, 0, ',', '.') }}
+                    </flux:table.cell>
+                    <flux:table.cell variant="strong">
+                        Rp {{ number_format($procurement->total_cost, 0, ',', '.') }}
+                    </flux:table.cell>
+                    <flux:table.cell class="whitespace-nowrap">
+                        {{ $procurement->procurement_date->format('d M Y') }}
+                    </flux:table.cell>
+                    <flux:table.cell>
+                        <flux:dropdown position="left" align="end">
+                            <flux:button variant="ghost" size="sm" icon="ellipsis-horizontal" inset />
+                            <flux:menu>
+                                <flux:menu.item icon="pencil" wire:click="edit({{ $procurement->id }})">Edit</flux:menu.item>
+                                <flux:menu.separator />
+                                <flux:menu.item icon="trash" variant="danger" wire:click="delete({{ $procurement->id }})" wire:confirm="Are you sure you want to delete this procurement?">Delete</flux:menu.item>
+                            </flux:menu>
+                        </flux:dropdown>
+                    </flux:table.cell>
+                </flux:table.row>
+            @empty
+                <flux:table.row>
+                    <flux:table.cell colspan="9" class="text-center text-sm text-gray-500 dark:text-gray-400 py-8">
+                        No procurements found.
+                    </flux:table.cell>
+                </flux:table.row>
+            @endforelse
+        </flux:table.rows>
+    </flux:table>
 </div>

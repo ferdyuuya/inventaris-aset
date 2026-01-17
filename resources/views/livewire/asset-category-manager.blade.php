@@ -49,6 +49,7 @@
                 <thead class="bg-gray-50 dark:bg-gray-700">
                     <tr>
                         <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Name</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Code</th>
                         <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Description</th>
                         <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Created</th>
                         <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Actions</th>
@@ -58,6 +59,7 @@
                     @forelse($categories as $category)
                     <tr class="hover:bg-gray-50 dark:hover:bg-gray-700">
                         <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-white">{{ $category->name }}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-white">{{ $category->code }}</td>
                         <td class="px-6 py-4 text-sm text-gray-900 dark:text-white">{{ $category->description ?? '-' }}</td>
                         <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">{{ $category->created_at->format('M d, Y') }}</td>
                         <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
@@ -105,6 +107,10 @@
                 </div>
 
                 <div>
+                    <flux:input wire:model="code" icon="identification" label="Category Code" description="The code of the asset category" placeholder="Enter category code" required />
+                    @error('code') <span class="text-red-500 text-xs">{{ $message }}</span> @enderror
+                </div>
+                <div>
                     <flux:input wire:model="description" icon="document-text" label="Description" description="Optional description for this category" placeholder="Enter description" />
                     @error('description') <span class="text-red-500 text-xs">{{ $message }}</span> @enderror
                 </div>
@@ -133,6 +139,10 @@
                     <flux:input wire:model="name" icon="tag" label="Category Name" description="The name of the asset category" placeholder="Enter category name" required />
                     @error('name') <span class="text-red-500 text-xs">{{ $message }}</span> @enderror
                 </div>
+
+                <div>
+                    <flux:input wire:model="code" icon="identification" label="Category Code" description="The code of the asset category" placeholder="Enter category code" required />
+                    @error('code') <span class="text-red-500 text-xs">{{ $message }}</span> @enderror
 
                 <div>
                     <flux:input wire:model="description" icon="document-text" label="Description" description="Optional description for this category" placeholder="Enter description" />

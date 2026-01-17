@@ -14,6 +14,7 @@ return new class extends Migration
         Schema::create('asset_categories', function (Blueprint $table) {
             $table->id();
             $table->string('name')->unique();
+            $table->string('code',10)->unique();
             $table->text('description')->nullable();
             $table->timestamps();
         });
