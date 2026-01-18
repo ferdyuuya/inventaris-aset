@@ -15,6 +15,15 @@
                     <flux:sidebar.item icon="home" :href="route('dashboard')" :current="request()->routeIs('dashboard')" wire:navigate>
                         {{ __('Dashboard') }}
                     </flux:sidebar.item>
+                {{-- Asset Management --}}
+                <flux:sidebar.group :heading="__('Assets')" class="grid">
+                    <flux:sidebar.item icon="archive-box" :href="route('assets.summary')" :current="request()->routeIs('assets.*')" wire:navigate>
+                        {{ __('Asset Summary') }}
+                    </flux:sidebar.item>
+                    <flux:sidebar.item icon="list-bullet" :href="route('assets.index')" :current="request()->routeIs('assets.index')" wire:navigate>
+                        {{ __('Asset List') }}
+                    </flux:sidebar.item>
+                </flux:sidebar.group>
                 {{-- Procurement Management --}}
                 <flux:sidebar.group :heading="__('Procurements')" class="grid">
                     <flux:sidebar.item icon="folder" :href="route('procurements')" :current="request()->routeIs('procurements')" wire:navigate>

@@ -4,8 +4,11 @@ namespace App\Services;
 
 use App\Models\Asset;
 use App\Models\AssetCategory;
+use App\Models\Location;
+use App\Models\Procurement;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Str;
 
 class AssetGenerationService
 {
