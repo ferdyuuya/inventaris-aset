@@ -26,23 +26,59 @@ class AssetCategoryManager extends Component
     public $isEditing = false;
     public $categoryToDelete = null;
     public $search = '';
+    public $sortField = 'name';
+    public $sortOrder = 'asc';
+    public $perPage = 15;
 
     public function mount()
     {
         $this->resetForm();
     }
 
+    /**
+     * Get filtered and paginated categories
+     */
+    public function getCategories()
+    {
+        return AssetCategory::query()
+            ->select('asset_categories.*')
+            ->when($this->search, function($query) {
+                $query->where('name', 'like', "%{$this->search}%")
+                      ->orWhere('code', 'like', "%{$this->search}%")
+                      ->orWhere('description', 'like', "%{$this->search}%");
+            })
+            ->orderBy($this->sortField, $this->sortOrder)
+            ->paginate($this->perPage);
+    }
+
+    /**
+     * Toggle sort direction
+     */
+    public function toggleSort(string $field): void
+    {
+        if ($this->sortField === $field) {
+            $this->sortOrder = $this->sortOrder === 'asc' ? 'desc' : 'asc';
+        } else {
+            $this->sortField = $field;
+            $this->sortOrder = 'asc';
+        }
+    }
+
+    /**
+     * Updated hook - reset page on search, not on sort
+     */
+    public function updatedSearch(): void
+    {
+        $this->resetPage();
+    }
+
     public function render()
     {
-        $categories = AssetCategory::when($this->search, function($query) {
-                $query->where('name', 'like', '%' . $this->search . '%')
-                      ->orWhere('description', 'like', '%' . $this->search . '%');
-            })
-            ->orderBy('created_at', 'desc')
-            ->paginate(15);
-
         return view('livewire.asset-category-manager', [
-            'categories' => $categories,
+            'categories' => $this->getCategories(),
+            'sortField' => $this->sortField,
+            'sortOrder' => $this->sortOrder,
+            'perPage' => $this->perPage,
         ]);
     }
 

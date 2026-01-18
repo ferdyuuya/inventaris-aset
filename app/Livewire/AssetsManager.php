@@ -25,12 +25,17 @@ class AssetsManager extends Component
     public function assets()
     {
         $query = Asset::query()
-            ->with(['category', 'location', 'supplier']);
+            ->select('assets.*')
+            ->with([
+                'category:id,name',
+                'location:id,name',
+                'supplier:id,name'
+            ]);
 
         // Search
         if ($this->search) {
             $query->where(function ($q) {
-                $q->where('code', 'like', "%{$this->search}%")
+                $q->where('asset_code', 'like', "%{$this->search}%")
                   ->orWhere('name', 'like', "%{$this->search}%");
             });
         }
@@ -52,6 +57,14 @@ class AssetsManager extends Component
             $this->sortField = $field;
             $this->sortOrder = 'asc';
         }
+    }
+
+    /**
+     * Updated hook - reset page on search, not on sort
+     */
+    public function updatedSearch(): void
+    {
+        $this->resetPage();
     }
 
     /**

@@ -43,87 +43,93 @@
     </div>
 
     {{-- Users Table --}}
-    <div class="bg-white dark:bg-gray-800 shadow overflow-hidden rounded-lg">
-        <div class="min-w-full">
-            <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
-                <thead class="bg-gray-50 dark:bg-gray-700">
-                    <tr>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Name</th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Email</th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Role</th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Employee Link</th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Created</th>
-                        <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Actions</th>
-                    </tr>
-                </thead>
-                <tbody class="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
-                    @forelse($users as $user)
-                    <tr class="hover:bg-gray-50 dark:hover:bg-gray-700">
-                        <td class="px-6 py-4 whitespace-nowrap">
-                            <div class="flex items-center">
-                                <div class="flex-shrink-0 h-8 w-8">
-                                    <div class="h-8 w-8 rounded-full bg-gray-300 dark:bg-gray-600 flex items-center justify-center text-xs font-medium text-gray-700 dark:text-gray-300">
-                                        {{ $user->initials() }}
-                                    </div>
-                                </div>
-                                <div class="ml-3">
-                                    <div class="text-sm font-medium text-gray-900 dark:text-white">{{ $user->name }}</div>
-                                </div>
-                            </div>
-                        </td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white">{{ $user->email }}</td>
-                        <td class="px-6 py-4 whitespace-nowrap">
-                            <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full 
-                                {{ $user->role === 'admin' ? 'bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200' : 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200' }}">
-                                {{ ucfirst($user->role) }}
-                            </span>
-                        </td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white">
-                            @if($user->employee)
-                                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200">
-                                    {{ $user->employee->name }}
-                                </span>
-                            @else
-                                <span class="text-gray-400 dark:text-gray-500">No employee</span>
-                            @endif
-                        </td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
-                            {{ $user->created_at->format('M d, Y') }}
-                        </td>
-                        <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                            <flux:dropdown position="left" align="end">
-                                <flux:button variant="ghost" size="sm" icon="ellipsis-horizontal" inset />
-                                <flux:menu>
-                                    <flux:menu.item icon="pencil" wire:click="showEditForm({{ $user->id }})">Edit</flux:menu.item>
-                                    @if($user->employee)
-                                        <flux:menu.item icon="link-slash" variant="danger" wire:click="unlinkEmployee({{ $user->id }})">Unlink Employee</flux:menu.item>
-                                    @else
-                                        <flux:menu.item icon="link" wire:click="showLinkEmployeeModal({{ $user->id }})">Link Employee</flux:menu.item>
-                                    @endif
-                                    <flux:menu.separator />
-                                    <flux:menu.item icon="trash" variant="danger" wire:click="showDeleteConfirmation({{ $user->id }})">Delete</flux:menu.item>
-                                </flux:menu>
-                            </flux:dropdown>
-                        </td>
-                    </tr>
-                    @empty
-                    <tr>
-                        <td colspan="6" class="px-6 py-4 text-center text-sm text-gray-500 dark:text-gray-400">
-                            No users found.
-                        </td>
-                    </tr>
-                    @endforelse
-                </tbody>
-            </table>
-        </div>
+    <flux:table>
+        <flux:table.columns>
+            <flux:table.column sortable :sorted="$sortField === 'name'" :direction="$sortOrder" wire:click="toggleSort('name')">
+                Name
+            </flux:table.column>
+            <flux:table.column sortable :sorted="$sortField === 'email'" :direction="$sortOrder" wire:click="toggleSort('email')">
+                Email
+            </flux:table.column>
+            <flux:table.column sortable :sorted="$sortField === 'role'" :direction="$sortOrder" wire:click="toggleSort('role')">
+                Role
+            </flux:table.column>
+            <flux:table.column sortable :sorted="$sortField === 'employee_id'" :direction="$sortOrder" wire:click="toggleSort('employee_id')">
+                Employee Link
+            </flux:table.column>
+            <flux:table.column sortable :sorted="$sortField === 'created_at'" :direction="$sortOrder" wire:click="toggleSort('created_at')">
+                Created
+            </flux:table.column>
+            <flux:table.column>
+                Actions
+            </flux:table.column>
+        </flux:table.columns>
 
-        {{-- Pagination --}}
-        @if($users->hasPages())
-        <div class="px-6 py-4 border-t border-gray-200 dark:border-gray-700">
+        <flux:table.rows>
+            @forelse($users as $user)
+                <flux:table.row :key="$user->id">
+                    <flux:table.cell>
+                        <div class="flex items-center space-x-3">
+                            <div class="h-8 w-8 rounded-full bg-gray-300 dark:bg-gray-600 flex items-center justify-center text-xs font-medium text-gray-700 dark:text-gray-300">
+                                {{ $user->initials() }}
+                            </div>
+                            <span class="font-medium">{{ $user->name }}</span>
+                        </div>
+                    </flux:table.cell>
+                    <flux:table.cell>
+                        {{ $user->email }}
+                    </flux:table.cell>
+                    <flux:table.cell>
+                        <flux:badge size="sm" :color="$user->role === 'admin' ? 'purple' : 'blue'" variant="solid">
+                            {{ ucfirst($user->role) }}
+                        </flux:badge>
+                    </flux:table.cell>
+                    <flux:table.cell>
+                        @if($user->employee)
+                            <flux:badge size="sm" color="green" variant="solid">
+                                {{ $user->employee->name }}
+                            </flux:badge>
+                        @else
+                            <span class="text-gray-400 dark:text-gray-500 text-sm">No employee</span>
+                        @endif
+                    </flux:table.cell>
+                    <flux:table.cell>
+                        <flux:text size="sm">
+                            {{ $user->created_at->format('M d, Y') }}
+                        </flux:text>
+                    </flux:table.cell>
+                    <flux:table.cell>
+                        <flux:dropdown position="left" align="end">
+                            <flux:button variant="ghost" size="sm" icon="ellipsis-horizontal" inset />
+                            <flux:menu>
+                                <flux:menu.item icon="pencil" wire:click="showEditForm({{ $user->id }})">Edit</flux:menu.item>
+                                @if($user->employee)
+                                    <flux:menu.item icon="link-slash" variant="danger" wire:click="unlinkEmployee({{ $user->id }})">Unlink Employee</flux:menu.item>
+                                @else
+                                    <flux:menu.item icon="link" wire:click="showLinkEmployeeModal({{ $user->id }})">Link Employee</flux:menu.item>
+                                @endif
+                                <flux:menu.separator />
+                                <flux:menu.item icon="trash" variant="danger" wire:click="showDeleteConfirmation({{ $user->id }})">Delete</flux:menu.item>
+                            </flux:menu>
+                        </flux:dropdown>
+                    </flux:table.cell>
+                </flux:table.row>
+            @empty
+                <flux:table.row>
+                    <flux:table.cell colspan="6" class="text-center text-sm text-gray-500 dark:text-gray-400 py-8">
+                        No users found.
+                    </flux:table.cell>
+                </flux:table.row>
+            @endforelse
+        </flux:table.rows>
+    </flux:table>
+
+    {{-- Pagination --}}
+    @if($users->hasPages())
+        <div class="mt-6">
             <flux:pagination :paginator="$users" />
         </div>
-        @endif
-    </div>
+    @endif
 
     {{-- Create User Modal --}}
     <flux:modal name="createUser" class="md:w-96">

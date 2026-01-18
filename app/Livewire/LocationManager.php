@@ -27,6 +27,9 @@ class LocationManager extends Component
     public $isEditing = false;
     public $locationToDelete = null;
     public $search = '';
+    public $sortField = 'name';
+    public $sortOrder = 'asc';
+    public $perPage = 10;
 
     public function mount()
     {
@@ -35,20 +38,41 @@ class LocationManager extends Component
 
     public function render()
     {
-        $locations = Location::with('responsibleEmployee')
-            ->when($this->search, function($query) {
-                $query->where('name', 'like', '%' . $this->search . '%')
-                      ->orWhere('description', 'like', '%' . $this->search . '%');
-            })
-            ->orderBy('created_at', 'desc')
-            ->paginate(10);
-
+        $locations = $this->getLocations();
         $employees = Employee::orderBy('name')->get();
 
         return view('livewire.location-manager', [
             'locations' => $locations,
             'employees' => $employees,
         ]);
+    }
+
+    #[\Livewire\Attributes\Computed]
+    public function getLocations()
+    {
+        return Location::with('responsibleEmployee:id,name')
+            ->when($this->search, function($query) {
+                $query->where('name', 'like', '%' . $this->search . '%')
+                      ->orWhere('description', 'like', '%' . $this->search . '%');
+            })
+            ->orderBy($this->sortField, $this->sortOrder)
+            ->paginate($this->perPage);
+    }
+
+    public function toggleSort($field)
+    {
+        if ($this->sortField === $field) {
+            $this->sortOrder = $this->sortOrder === 'asc' ? 'desc' : 'asc';
+        } else {
+            $this->sortField = $field;
+            $this->sortOrder = 'asc';
+        }
+    }
+
+    #[\Livewire\Attributes\On('search')]
+    public function updatedSearch()
+    {
+        $this->resetPage();
     }
 
     public function showCreateForm()

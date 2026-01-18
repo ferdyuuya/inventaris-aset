@@ -32,26 +32,61 @@ class UserManager extends Component
     public $search = '';
     public $selectedEmployeeId = null;
     public $employeeSearchQuery = '';
+    public $sortField = 'name';
+    public $sortOrder = 'asc';
+    public $perPage = 10;
 
     public function mount()
     {
         $this->resetForm();
     }
 
+    /**
+     * Get filtered and paginated users
+     */
+    public function getUsers()
+    {
+        return User::query()
+            ->select('users.*')
+            ->with(['employee:id,nik,name,position'])
+            ->when($this->search, function($query) {
+                $query->where('name', 'like', "%{$this->search}%")
+                      ->orWhere('email', 'like', "%{$this->search}%")
+                      ->orWhere('role', 'like', "%{$this->search}%");
+            })
+            ->orderBy($this->sortField, $this->sortOrder)
+            ->paginate($this->perPage);
+    }
+
+    /**
+     * Toggle sort direction
+     */
+    public function toggleSort(string $field): void
+    {
+        if ($this->sortField === $field) {
+            $this->sortOrder = $this->sortOrder === 'asc' ? 'desc' : 'asc';
+        } else {
+            $this->sortField = $field;
+            $this->sortOrder = 'asc';
+        }
+    }
+
+    /**
+     * Updated hook - reset page on search, not on sort
+     */
+    public function updatedSearch(): void
+    {
+        $this->resetPage();
+    }
+
     public function render()
     {
-        $users = User::with('employee')
-            ->when($this->search, function($query) {
-                $query->where('name', 'like', '%' . $this->search . '%')
-                      ->orWhere('email', 'like', '%' . $this->search . '%')
-                      ->orWhere('role', 'like', '%' . $this->search . '%');
-            })
-            ->orderBy('created_at', 'desc')
-            ->paginate(10);
-
         return view('livewire.user-manager', [
-            'users' => $users,
-            'roleOptions' => $this->getRoleOptions()
+            'users' => $this->getUsers(),
+            'roleOptions' => $this->getRoleOptions(),
+            'sortField' => $this->sortField,
+            'sortOrder' => $this->sortOrder,
+            'perPage' => $this->perPage,
         ]);
     }
 

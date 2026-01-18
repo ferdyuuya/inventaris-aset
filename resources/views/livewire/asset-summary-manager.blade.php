@@ -42,7 +42,7 @@
                 @forelse($assets as $asset)
                     <flux:table.row>
                         <flux:table.cell>
-                            <flux:text size="sm" variant="subtle">{{ $loop->iteration }}</flux:text>
+                            <flux:text size="sm" variant="subtle">{{ ($assets->currentPage() - 1) * $perPage + $loop->iteration }}</flux:text>
                         </flux:table.cell>
                         <flux:table.cell>
                             <flux:text variant="strong" color="blue">{{ $asset->asset_code }}</flux:text>

@@ -38,8 +38,9 @@ class EmployeeManager extends Component
     public $search = '';
     public $selectedUserId = null;
     public $userSearchQuery = '';
-    public $sortBy = 'created_at';
-    public $sortDirection = 'desc';
+    public $sortField = 'name';
+    public $sortOrder = 'asc';
+    public $perPage = 10;
     public $selectedEmployees = [];
     public $selectAll = false;
 
@@ -48,13 +49,55 @@ class EmployeeManager extends Component
         $this->resetForm();
     }
 
+    /**
+     * Get filtered and paginated employees
+     */
+    public function getEmployees()
+    {
+        return Employee::query()
+            ->select('employees.*')
+            ->with(['user:id,name,email'])
+            ->when($this->search, function($query) {
+                $query->where('name', 'like', "%{$this->search}%")
+                      ->orWhere('nik', 'like', "%{$this->search}%")
+                      ->orWhere('position', 'like', "%{$this->search}%");
+            })
+            ->orderBy($this->sortField, $this->sortOrder)
+            ->paginate($this->perPage);
+    }
+
+    /**
+     * Toggle sort direction
+     */
+    public function toggleSort(string $field): void
+    {
+        if ($this->sortField === $field) {
+            $this->sortOrder = $this->sortOrder === 'asc' ? 'desc' : 'asc';
+        } else {
+            $this->sortField = $field;
+            $this->sortOrder = 'asc';
+        }
+    }
+
+    /**
+     * Updated hook - reset page on search, not on sort
+     */
+    public function updatedSearch(): void
+    {
+        $this->resetPage();
+    }
+
     public function render()
     {
         $users = User::whereDoesntHave('employee')->get();
 
         return view('livewire.employee-manager', [
+            'employees' => $this->getEmployees(),
             'users' => $users,
-            'genderOptions' => Employee::getGenderOptions()
+            'genderOptions' => Employee::getGenderOptions(),
+            'sortField' => $this->sortField,
+            'sortOrder' => $this->sortOrder,
+            'perPage' => $this->perPage,
         ]);
     }
 

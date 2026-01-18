@@ -201,7 +201,7 @@
     @endif
 
     {{-- Employee Table --}}
-    <flux:table :paginate="$this->employees">
+    <flux:table>
         <flux:table.columns>
             <flux:table.column class="w-12">
                 <input type="checkbox" 
@@ -209,22 +209,22 @@
                        wire:click="toggleSelectAll"
                        class="rounded border-gray-300 text-blue-600 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700" />
             </flux:table.column>
-            <flux:table.column sortable :sorted="$sortBy === 'nik'" :direction="$sortDirection" wire:click="sort('nik')">
+            <flux:table.column sortable :sorted="$sortField === 'nik'" :direction="$sortOrder" wire:click="toggleSort('nik')">
                 NIK
             </flux:table.column>
-            <flux:table.column sortable :sorted="$sortBy === 'name'" :direction="$sortDirection" wire:click="sort('name')">
+            <flux:table.column sortable :sorted="$sortField === 'name'" :direction="$sortOrder" wire:click="toggleSort('name')">
                 Name
             </flux:table.column>
-            <flux:table.column sortable :sorted="$sortBy === 'gender'" :direction="$sortDirection" wire:click="sort('gender')">
+            <flux:table.column sortable :sorted="$sortField === 'gender'" :direction="$sortOrder" wire:click="toggleSort('gender')">
                 Gender
             </flux:table.column>
-            <flux:table.column sortable :sorted="$sortBy === 'position'" :direction="$sortDirection" wire:click="sort('position')">
+            <flux:table.column sortable :sorted="$sortField === 'position'" :direction="$sortOrder" wire:click="toggleSort('position')">
                 Position
             </flux:table.column>
-            <flux:table.column sortable :sorted="$sortBy === 'phone'" :direction="$sortDirection" wire:click="sort('phone')">
+            <flux:table.column sortable :sorted="$sortField === 'phone'" :direction="$sortOrder" wire:click="toggleSort('phone')">
                 Phone
             </flux:table.column>
-            <flux:table.column sortable :sorted="$sortBy === 'user.name'" :direction="$sortDirection" wire:click="sort('user_id')">
+            <flux:table.column sortable :sorted="$sortField === 'user_id'" :direction="$sortOrder" wire:click="toggleSort('user_id')">
                 User Account
             </flux:table.column>
             <flux:table.column>
@@ -233,7 +233,7 @@
         </flux:table.columns>
 
         <flux:table.rows>
-            @forelse ($this->employees as $employee)
+            @forelse ($employees as $employee)
                 <flux:table.row :key="$employee->id" class="{{ in_array((string)$employee->id, $selectedEmployees) ? 'bg-blue-50 dark:bg-blue-900/20' : '' }}">
                     <flux:table.cell class="w-12">
                         <input type="checkbox" 
@@ -291,6 +291,13 @@
             @endforelse
         </flux:table.rows>
     </flux:table>
+
+    {{-- Pagination --}}
+    @if($employees->hasPages())
+        <div class="mt-6">
+            <flux:pagination :paginator="$employees" />
+        </div>
+    @endif
 
     {{-- Link User Modal --}}
     <flux:modal name="linkUser" class="md:w-96">

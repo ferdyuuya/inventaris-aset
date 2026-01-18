@@ -52,8 +52,9 @@ class ProcurementManager extends Component
     public $showForm = false;
     public $search = '';
     public $showConfirmLocationModal = false;
-    public $sortBy = 'procurement_date';
-    public $sortDirection = 'desc';
+    public $sortField = 'procurement_date';
+    public $sortOrder = 'desc';
+    public $perPage = 10;
 
     public function mount()
     {
@@ -64,31 +65,62 @@ class ProcurementManager extends Component
         }
     }
 
+    /**
+     * Toggle sort direction
+     */
+    public function toggleSort(string $field): void
+    {
+        if ($this->sortField === $field) {
+            $this->sortOrder = $this->sortOrder === 'asc' ? 'desc' : 'asc';
+        } else {
+            $this->sortField = $field;
+            $this->sortOrder = 'asc';
+        }
+    }
+
+    /**
+     * Updated hook - reset page on search, not on sort
+     */
+    public function updatedSearch(): void
+    {
+        $this->resetPage();
+    }
+
     #[Computed]
     public function procurements()
     {
-        return Procurement::with(['supplier', 'category', 'creator', 'location'])
+        return Procurement::query()
+            ->select('procurements.*')
+            ->with([
+                'supplier:id,name',
+                'category:id,name',
+                'creator:id,name',
+                'location:id,name'
+            ])
             ->when($this->search, function($query) {
-                $query->where('name', 'like', '%' . $this->search . '%')
-                      ->orWhere('invoice_number', 'like', '%' . $this->search . '%')
+                $query->where('name', 'like', "%{$this->search}%")
+                      ->orWhere('invoice_number', 'like', "%{$this->search}%")
                       ->orWhereHas('supplier', function($q) {
-                          $q->where('name', 'like', '%' . $this->search . '%');
+                          $q->where('name', 'like', "%{$this->search}%");
                       });
             })
-            ->orderBy($this->sortBy, $this->sortDirection)
-            ->paginate(10);
+            ->orderBy($this->sortField, $this->sortOrder)
+            ->paginate($this->perPage);
     }
 
     public function render()
     {
-        $suppliers = Supplier::orderBy('name')->get();
-        $categories = AssetCategory::orderBy('name')->get();
-        $locations = Location::orderBy('name')->get();
+        $suppliers = Supplier::select('id', 'name')->orderBy('name')->get();
+        $categories = AssetCategory::select('id', 'name')->orderBy('name')->get();
+        $locations = Location::select('id', 'name')->orderBy('name')->get();
 
         return view('livewire.procurement-manager', [
             'suppliers' => $suppliers,
             'categories' => $categories,
             'locations' => $locations,
+            'sortField' => $this->sortField,
+            'sortOrder' => $this->sortOrder,
+            'perPage' => $this->perPage,
         ]);
     }
 

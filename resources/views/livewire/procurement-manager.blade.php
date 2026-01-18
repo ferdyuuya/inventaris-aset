@@ -345,16 +345,16 @@
     </flux:modal>
 
     {{-- Procurements Table --}}
-    <flux:table :paginate="$this->procurements">
+    <flux:table>
         <flux:table.columns>
-            <flux:table.column sortable :sorted="$sortBy === 'name'" :direction="$sortDirection" wire:click="sort('name')">Product</flux:table.column>
-            <flux:table.column sortable :sorted="$sortBy === 'asset_category_id'" :direction="$sortDirection" wire:click="sort('asset_category_id')">Category</flux:table.column>
-            <flux:table.column sortable :sorted="$sortBy === 'supplier_id'" :direction="$sortDirection" wire:click="sort('supplier_id')">Supplier</flux:table.column>
-            <flux:table.column sortable :sorted="$sortBy === 'invoice_number'" :direction="$sortDirection" wire:click="sort('invoice_number')">Invoice</flux:table.column>
-            <flux:table.column sortable :sorted="$sortBy === 'quantity'" :direction="$sortDirection" wire:click="sort('quantity')">Quantity</flux:table.column>
-            <flux:table.column sortable :sorted="$sortBy === 'unit_price'" :direction="$sortDirection" wire:click="sort('unit_price')">Unit Price</flux:table.column>
-            <flux:table.column sortable :sorted="$sortBy === 'total_cost'" :direction="$sortDirection" wire:click="sort('total_cost')">Total Cost</flux:table.column>
-            <flux:table.column sortable :sorted="$sortBy === 'procurement_date'" :direction="$sortDirection" wire:click="sort('procurement_date')">Date</flux:table.column>
+            <flux:table.column sortable :sorted="$sortField === 'name'" :direction="$sortOrder" wire:click="toggleSort('name')">Product</flux:table.column>
+            <flux:table.column sortable :sorted="$sortField === 'asset_category_id'" :direction="$sortOrder" wire:click="toggleSort('asset_category_id')">Category</flux:table.column>
+            <flux:table.column sortable :sorted="$sortField === 'supplier_id'" :direction="$sortOrder" wire:click="toggleSort('supplier_id')">Supplier</flux:table.column>
+            <flux:table.column sortable :sorted="$sortField === 'invoice_number'" :direction="$sortOrder" wire:click="toggleSort('invoice_number')">Invoice</flux:table.column>
+            <flux:table.column sortable :sorted="$sortField === 'quantity'" :direction="$sortOrder" wire:click="toggleSort('quantity')">Quantity</flux:table.column>
+            <flux:table.column sortable :sorted="$sortField === 'unit_price'" :direction="$sortOrder" wire:click="toggleSort('unit_price')">Unit Price</flux:table.column>
+            <flux:table.column sortable :sorted="$sortField === 'total_cost'" :direction="$sortOrder" wire:click="toggleSort('total_cost')">Total Cost</flux:table.column>
+            <flux:table.column sortable :sorted="$sortField === 'procurement_date'" :direction="$sortOrder" wire:click="toggleSort('procurement_date')">Date</flux:table.column>
             <flux:table.column>Actions</flux:table.column>
         </flux:table.columns>
 
@@ -407,4 +407,11 @@
             @endforelse
         </flux:table.rows>
     </flux:table>
+
+    {{-- Pagination --}}
+    @if($this->procurements->hasPages())
+        <div class="mt-6">
+            <flux:pagination :paginator="$this->procurements" />
+        </div>
+    @endif
 </div>

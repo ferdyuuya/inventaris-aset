@@ -33,7 +33,12 @@ class AssetSummaryManager extends Component
     public function assets()
     {
         $query = Asset::query()
-            ->with(['category', 'location', 'supplier']);
+            ->select('assets.*')
+            ->with([
+                'category:id,name',
+                'location:id,name',
+                'supplier:id,name'
+            ]);
 
         // Search
         if ($this->search) {
@@ -60,6 +65,14 @@ class AssetSummaryManager extends Component
             $this->sortField = $field;
             $this->sortOrder = 'asc';
         }
+    }
+
+    /**
+     * Updated hook - reset page on search, not on sort
+     */
+    public function updatedSearch(): void
+    {
+        $this->resetPage();
     }
 
     /**
