@@ -43,70 +43,75 @@
     </div>
 
     {{-- Locations Table --}}
-    <flux:table>
-        <flux:table.columns>
-            <flux:table.column sortable :sorted="$sortField === 'name'" :direction="$sortOrder" wire:click="toggleSort('name')">
-                Name
-            </flux:table.column>
-            <flux:table.column>
-                Description
-            </flux:table.column>
-            <flux:table.column sortable :sorted="$sortField === 'responsible_employee_id'" :direction="$sortOrder" wire:click="toggleSort('responsible_employee_id')">
-                Responsible Employee
-            </flux:table.column>
-            <flux:table.column sortable :sorted="$sortField === 'created_at'" :direction="$sortOrder" wire:click="toggleSort('created_at')">
-                Created
-            </flux:table.column>
-            <flux:table.column>
-                Actions
-            </flux:table.column>
-        </flux:table.columns>
+    <div class="overflow-x-auto">
+        <flux:table>
+            <flux:table.columns>
+                <flux:table.column class="w-12">#</flux:table.column>
+                <flux:table.column sortable :sorted="$sortField === 'name'" :direction="$sortOrder" wire:click="toggleSort('name')">
+                    Name
+                </flux:table.column>
+                <flux:table.column>
+                    Description
+                </flux:table.column>
+                <flux:table.column sortable :sorted="$sortField === 'responsible_employee_id'" :direction="$sortOrder" wire:click="toggleSort('responsible_employee_id')">
+                    Responsible Employee
+                </flux:table.column>
+                <flux:table.column sortable :sorted="$sortField === 'created_at'" :direction="$sortOrder" wire:click="toggleSort('created_at')">
+                    Created
+                </flux:table.column>
+                <flux:table.column>
+                    Actions
+                </flux:table.column>
+            </flux:table.columns>
 
-        <flux:table.rows>
-            @forelse($locations as $location)
-                <flux:table.row :key="$location->id">
-                    <flux:table.cell class="font-medium">
-                        {{ $location->name }}
-                    </flux:table.cell>
-                    <flux:table.cell>
-                        <flux:text size="sm">
-                            {{ $location->description ?? '-' }}
-                        </flux:text>
-                    </flux:table.cell>
-                    <flux:table.cell>
-                        @if($location->responsibleEmployee)
-                            <flux:badge size="sm" color="blue" variant="solid">
-                                {{ $location->responsibleEmployee->name }}
-                            </flux:badge>
-                        @else
-                            <span class="text-gray-400 dark:text-gray-500 text-sm">No employee</span>
-                        @endif
-                    </flux:table.cell>
-                    <flux:table.cell>
-                        <flux:text size="sm">
-                            {{ $location->created_at->format('M d, Y') }}
-                        </flux:text>
-                    </flux:table.cell>
-                    <flux:table.cell>
-                        <flux:dropdown position="left" align="end">
-                            <flux:button variant="ghost" size="sm" icon="ellipsis-horizontal" inset />
-                            <flux:menu>
-                                <flux:menu.item icon="pencil" wire:click="showEditForm({{ $location->id }})">Edit</flux:menu.item>
-                                <flux:menu.separator />
-                                <flux:menu.item icon="trash" variant="danger" wire:click="showDeleteConfirmation({{ $location->id }})">Delete</flux:menu.item>
-                            </flux:menu>
-                        </flux:dropdown>
-                    </flux:table.cell>
-                </flux:table.row>
-            @empty
-                <flux:table.row>
-                    <flux:table.cell colspan="5" class="text-center text-sm text-gray-500 dark:text-gray-400 py-8">
-                        No locations found.
-                    </flux:table.cell>
-                </flux:table.row>
-            @endforelse
-        </flux:table.rows>
-    </flux:table>
+            <flux:table.rows>
+                @forelse($locations as $location)
+                    <flux:table.row :key="$location->id">
+                        <flux:table.cell>
+                            <flux:text variant="subtle">{{ ($locations->currentPage() - 1) * $perPage + $loop->iteration }}</flux:text>
+                        </flux:table.cell>
+                        <flux:table.cell>
+                            <flux:text variant="strong">{{ $location->name }}</flux:text>
+                        </flux:table.cell>
+                        <flux:table.cell>
+                            <flux:text>{{ $location->description ?? '-' }}</flux:text>
+                        </flux:table.cell>
+                        <flux:table.cell>
+                            @if($location->responsibleEmployee)
+                                <flux:badge color="success" inset="top bottom">
+                                    {{ $location->responsibleEmployee->name }}
+                                </flux:badge>
+                            @else
+                                <flux:text variant="subtle">No employee</flux:text>
+                            @endif
+                        </flux:table.cell>
+                        <flux:table.cell>
+                            <flux:text>{{ $location->created_at->format('M d, Y') }}</flux:text>
+                        </flux:table.cell>
+                        <flux:table.cell>
+                            <flux:dropdown position="bottom" align="end">
+                                <flux:button variant="ghost" icon="ellipsis-horizontal" />
+                                <flux:menu>
+                                    <flux:menu.item icon="pencil" wire:click="showEditForm({{ $location->id }})">Edit</flux:menu.item>
+                                    <flux:menu.separator />
+                                    <flux:menu.item icon="trash" variant="danger" wire:click="showDeleteConfirmation({{ $location->id }})">Delete</flux:menu.item>
+                                </flux:menu>
+                            </flux:dropdown>
+                        </flux:table.cell>
+                    </flux:table.row>
+                @empty
+                    <flux:table.row>
+                        <flux:table.cell colspan="6" class="text-center py-8">
+                            <div class="flex flex-col items-center justify-center">
+                                <flux:icon.inbox class="h-12 w-12 text-gray-400 dark:text-gray-600 mb-3" />
+                                <flux:text variant="subtle">No locations found</flux:text>
+                            </div>
+                        </flux:table.cell>
+                    </flux:table.row>
+                @endforelse
+            </flux:table.rows>
+        </flux:table>
+    </div>
 
     {{-- Pagination --}}
     @if($locations->hasPages())

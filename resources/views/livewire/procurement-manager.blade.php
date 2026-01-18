@@ -345,68 +345,77 @@
     </flux:modal>
 
     {{-- Procurements Table --}}
-    <flux:table>
-        <flux:table.columns>
-            <flux:table.column sortable :sorted="$sortField === 'name'" :direction="$sortOrder" wire:click="toggleSort('name')">Product</flux:table.column>
-            <flux:table.column sortable :sorted="$sortField === 'asset_category_id'" :direction="$sortOrder" wire:click="toggleSort('asset_category_id')">Category</flux:table.column>
-            <flux:table.column sortable :sorted="$sortField === 'supplier_id'" :direction="$sortOrder" wire:click="toggleSort('supplier_id')">Supplier</flux:table.column>
-            <flux:table.column sortable :sorted="$sortField === 'invoice_number'" :direction="$sortOrder" wire:click="toggleSort('invoice_number')">Invoice</flux:table.column>
-            <flux:table.column sortable :sorted="$sortField === 'quantity'" :direction="$sortOrder" wire:click="toggleSort('quantity')">Quantity</flux:table.column>
-            <flux:table.column sortable :sorted="$sortField === 'unit_price'" :direction="$sortOrder" wire:click="toggleSort('unit_price')">Unit Price</flux:table.column>
-            <flux:table.column sortable :sorted="$sortField === 'total_cost'" :direction="$sortOrder" wire:click="toggleSort('total_cost')">Total Cost</flux:table.column>
-            <flux:table.column sortable :sorted="$sortField === 'procurement_date'" :direction="$sortOrder" wire:click="toggleSort('procurement_date')">Date</flux:table.column>
-            <flux:table.column>Actions</flux:table.column>
-        </flux:table.columns>
+    <div class="overflow-x-auto">
+        <flux:table>
+            <flux:table.columns>
+                <flux:table.column class="w-12">#</flux:table.column>
+                <flux:table.column sortable :sorted="$sortField === 'name'" :direction="$sortOrder" wire:click="toggleSort('name')">Product</flux:table.column>
+                <flux:table.column sortable :sorted="$sortField === 'asset_category_id'" :direction="$sortOrder" wire:click="toggleSort('asset_category_id')">Category</flux:table.column>
+                <flux:table.column sortable :sorted="$sortField === 'supplier_id'" :direction="$sortOrder" wire:click="toggleSort('supplier_id')">Supplier</flux:table.column>
+                <flux:table.column sortable :sorted="$sortField === 'invoice_number'" :direction="$sortOrder" wire:click="toggleSort('invoice_number')">Invoice</flux:table.column>
+                <flux:table.column sortable :sorted="$sortField === 'quantity'" :direction="$sortOrder" wire:click="toggleSort('quantity')">Qty</flux:table.column>
+                <flux:table.column sortable :sorted="$sortField === 'unit_price'" :direction="$sortOrder" wire:click="toggleSort('unit_price')">Unit Price</flux:table.column>
+                <flux:table.column sortable :sorted="$sortField === 'total_cost'" :direction="$sortOrder" wire:click="toggleSort('total_cost')">Total</flux:table.column>
+                <flux:table.column sortable :sorted="$sortField === 'procurement_date'" :direction="$sortOrder" wire:click="toggleSort('procurement_date')">Date</flux:table.column>
+                <flux:table.column>Actions</flux:table.column>
+            </flux:table.columns>
 
-        <flux:table.rows>
-            @forelse ($this->procurements as $procurement)
-                <flux:table.row :key="$procurement->id">
-                    <flux:table.cell class="font-medium">
-                        {{ $procurement->name }}
-                    </flux:table.cell>
-                    <flux:table.cell>
-                        <flux:badge size="sm" color="blue" inset="top bottom">
-                            {{ $procurement->category->name }}
-                        </flux:badge>
-                    </flux:table.cell>
-                    <flux:table.cell>
-                        {{ $procurement->supplier->name }}
-                    </flux:table.cell>
-                    <flux:table.cell>
-                        {{ $procurement->invoice_number ?? '-' }}
-                    </flux:table.cell>
-                    <flux:table.cell>
-                        {{ $procurement->quantity }}
-                    </flux:table.cell>
-                    <flux:table.cell variant="strong">
-                        Rp {{ number_format($procurement->unit_price, 0, ',', '.') }}
-                    </flux:table.cell>
-                    <flux:table.cell variant="strong">
-                        Rp {{ number_format($procurement->total_cost, 0, ',', '.') }}
-                    </flux:table.cell>
-                    <flux:table.cell class="whitespace-nowrap">
-                        {{ $procurement->procurement_date->format('d M Y') }}
-                    </flux:table.cell>
-                    <flux:table.cell>
-                        <flux:dropdown position="left" align="end">
-                            <flux:button variant="ghost" size="sm" icon="ellipsis-horizontal" inset />
-                            <flux:menu>
-                                <flux:menu.item icon="pencil" wire:click="edit({{ $procurement->id }})">Edit</flux:menu.item>
-                                <flux:menu.separator />
-                                <flux:menu.item icon="trash" variant="danger" wire:click="delete({{ $procurement->id }})" wire:confirm="Are you sure you want to delete this procurement?">Delete</flux:menu.item>
-                            </flux:menu>
-                        </flux:dropdown>
-                    </flux:table.cell>
-                </flux:table.row>
-            @empty
-                <flux:table.row>
-                    <flux:table.cell colspan="9" class="text-center text-sm text-gray-500 dark:text-gray-400 py-8">
-                        No procurements found.
-                    </flux:table.cell>
-                </flux:table.row>
-            @endforelse
-        </flux:table.rows>
-    </flux:table>
+            <flux:table.rows>
+                @forelse ($this->procurements as $procurement)
+                    <flux:table.row :key="$procurement->id">
+                        <flux:table.cell>
+                            <flux:text variant="subtle">{{ ($this->procurements->currentPage() - 1) * $perPage + $loop->iteration }}</flux:text>
+                        </flux:table.cell>
+                        <flux:table.cell>
+                            <flux:text variant="strong">{{ $procurement->name }}</flux:text>
+                        </flux:table.cell>
+                        <flux:table.cell>
+                            <flux:badge color="blue" inset="top bottom">
+                                {{ $procurement->category->name }}
+                            </flux:badge>
+                        </flux:table.cell>
+                        <flux:table.cell>
+                            <flux:text>{{ $procurement->supplier->name }}</flux:text>
+                        </flux:table.cell>
+                        <flux:table.cell>
+                            <flux:text>{{ $procurement->invoice_number ?? '-' }}</flux:text>
+                        </flux:table.cell>
+                        <flux:table.cell>
+                            <flux:text>{{ $procurement->quantity }}</flux:text>
+                        </flux:table.cell>
+                        <flux:table.cell>
+                            <flux:text variant="strong">Rp {{ number_format($procurement->unit_price, 0, ',', '.') }}</flux:text>
+                        </flux:table.cell>
+                        <flux:table.cell>
+                            <flux:text variant="strong">Rp {{ number_format($procurement->total_cost, 0, ',', '.') }}</flux:text>
+                        </flux:table.cell>
+                        <flux:table.cell>
+                            <flux:text>{{ $procurement->procurement_date->format('d M Y') }}</flux:text>
+                        </flux:table.cell>
+                        <flux:table.cell>
+                            <flux:dropdown position="bottom" align="end">
+                                <flux:button variant="ghost" icon="ellipsis-horizontal" />
+                                <flux:menu>
+                                    <flux:menu.item icon="pencil" wire:click="edit({{ $procurement->id }})">Edit</flux:menu.item>
+                                    <flux:menu.separator />
+                                    <flux:menu.item icon="trash" variant="danger" wire:click="delete({{ $procurement->id }})" wire:confirm="Are you sure you want to delete this procurement?">Delete</flux:menu.item>
+                                </flux:menu>
+                            </flux:dropdown>
+                        </flux:table.cell>
+                    </flux:table.row>
+                @empty
+                    <flux:table.row>
+                        <flux:table.cell colspan="10" class="text-center py-8">
+                            <div class="flex flex-col items-center justify-center">
+                                <flux:icon.inbox class="h-12 w-12 text-gray-400 dark:text-gray-600 mb-3" />
+                                <flux:text variant="subtle">No procurements found</flux:text>
+                            </div>
+                        </flux:table.cell>
+                    </flux:table.row>
+                @endforelse
+            </flux:table.rows>
+        </flux:table>
+    </div>
 
     {{-- Pagination --}}
     @if($this->procurements->hasPages())

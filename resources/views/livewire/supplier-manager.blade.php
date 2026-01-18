@@ -43,74 +43,75 @@
     </div>
 
     {{-- Suppliers Table --}}
-    <flux:table>
-        <flux:table.columns>
-            <flux:table.column sortable :sorted="$sortField === 'name'" :direction="$sortOrder" wire:click="toggleSort('name')">
-                Name
-            </flux:table.column>
-            <flux:table.column sortable :sorted="$sortField === 'email'" :direction="$sortOrder" wire:click="toggleSort('email')">
-                Email
-            </flux:table.column>
-            <flux:table.column sortable :sorted="$sortField === 'phone'" :direction="$sortOrder" wire:click="toggleSort('phone')">
-                Phone
-            </flux:table.column>
-            <flux:table.column>
-                Address
-            </flux:table.column>
-            <flux:table.column sortable :sorted="$sortField === 'created_at'" :direction="$sortOrder" wire:click="toggleSort('created_at')">
-                Created
-            </flux:table.column>
-            <flux:table.column>
-                Actions
-            </flux:table.column>
-        </flux:table.columns>
+    <div class="overflow-x-auto">
+        <flux:table>
+            <flux:table.columns>
+                <flux:table.column class="w-12">#</flux:table.column>
+                <flux:table.column sortable :sorted="$sortField === 'name'" :direction="$sortOrder" wire:click="toggleSort('name')">
+                    Name
+                </flux:table.column>
+                <flux:table.column sortable :sorted="$sortField === 'email'" :direction="$sortOrder" wire:click="toggleSort('email')">
+                    Email
+                </flux:table.column>
+                <flux:table.column sortable :sorted="$sortField === 'phone'" :direction="$sortOrder" wire:click="toggleSort('phone')">
+                    Phone
+                </flux:table.column>
+                <flux:table.column>
+                    Address
+                </flux:table.column>
+                <flux:table.column sortable :sorted="$sortField === 'created_at'" :direction="$sortOrder" wire:click="toggleSort('created_at')">
+                    Created
+                </flux:table.column>
+                <flux:table.column>
+                    Actions
+                </flux:table.column>
+            </flux:table.columns>
 
-        <flux:table.rows>
-            @forelse($suppliers as $supplier)
-                <flux:table.row :key="$supplier->id">
-                    <flux:table.cell class="font-medium">
-                        {{ $supplier->name }}
-                    </flux:table.cell>
-                    <flux:table.cell>
-                        <flux:text size="sm">
-                            {{ $supplier->email ?? '-' }}
-                        </flux:text>
-                    </flux:table.cell>
-                    <flux:table.cell>
-                        <flux:text size="sm">
-                            {{ $supplier->phone ?? '-' }}
-                        </flux:text>
-                    </flux:table.cell>
-                    <flux:table.cell>
-                        <flux:text size="sm">
-                            {{ $supplier->address ?? '-' }}
-                        </flux:text>
-                    </flux:table.cell>
-                    <flux:table.cell>
-                        <flux:text size="sm">
-                            {{ $supplier->created_at->format('M d, Y') }}
-                        </flux:text>
-                    </flux:table.cell>
-                    <flux:table.cell>
-                        <flux:dropdown position="left" align="end">
-                            <flux:button variant="ghost" size="sm" icon="ellipsis-horizontal" inset />
-                            <flux:menu>
-                                <flux:menu.item icon="pencil" wire:click="showEditForm({{ $supplier->id }})">Edit</flux:menu.item>
-                                <flux:menu.separator />
-                                <flux:menu.item icon="trash" variant="danger" wire:click="showDeleteConfirmation({{ $supplier->id }})">Delete</flux:menu.item>
-                            </flux:menu>
-                        </flux:dropdown>
-                    </flux:table.cell>
-                </flux:table.row>
-            @empty
-                <flux:table.row>
-                    <flux:table.cell colspan="6" class="text-center text-sm text-gray-500 dark:text-gray-400 py-8">
-                        No suppliers found.
-                    </flux:table.cell>
-                </flux:table.row>
-            @endforelse
-        </flux:table.rows>
-    </flux:table>
+            <flux:table.rows>
+                @forelse($suppliers as $supplier)
+                    <flux:table.row :key="$supplier->id">
+                        <flux:table.cell>
+                            <flux:text variant="subtle">{{ ($suppliers->currentPage() - 1) * $perPage + $loop->iteration }}</flux:text>
+                        </flux:table.cell>
+                        <flux:table.cell>
+                            <flux:text variant="strong">{{ $supplier->name }}</flux:text>
+                        </flux:table.cell>
+                        <flux:table.cell>
+                            <flux:text>{{ $supplier->email ?? '-' }}</flux:text>
+                        </flux:table.cell>
+                        <flux:table.cell>
+                            <flux:text>{{ $supplier->phone ?? '-' }}</flux:text>
+                        </flux:table.cell>
+                        <flux:table.cell>
+                            <flux:text>{{ $supplier->address ?? '-' }}</flux:text>
+                        </flux:table.cell>
+                        <flux:table.cell>
+                            <flux:text>{{ $supplier->created_at->format('M d, Y') }}</flux:text>
+                        </flux:table.cell>
+                        <flux:table.cell>
+                            <flux:dropdown position="bottom" align="end">
+                                <flux:button variant="ghost" icon="ellipsis-horizontal" />
+                                <flux:menu>
+                                    <flux:menu.item icon="pencil" wire:click="showEditForm({{ $supplier->id }})">Edit</flux:menu.item>
+                                    <flux:menu.separator />
+                                    <flux:menu.item icon="trash" variant="danger" wire:click="showDeleteConfirmation({{ $supplier->id }})">Delete</flux:menu.item>
+                                </flux:menu>
+                            </flux:dropdown>
+                        </flux:table.cell>
+                    </flux:table.row>
+                @empty
+                    <flux:table.row>
+                        <flux:table.cell colspan="7" class="text-center py-8">
+                            <div class="flex flex-col items-center justify-center">
+                                <flux:icon.inbox class="h-12 w-12 text-gray-400 dark:text-gray-600 mb-3" />
+                                <flux:text variant="subtle">No suppliers found</flux:text>
+                            </div>
+                        </flux:table.cell>
+                    </flux:table.row>
+                @endforelse
+            </flux:table.rows>
+        </flux:table>
+    </div>
 
     {{-- Pagination --}}
     @if($suppliers->hasPages())

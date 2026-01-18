@@ -43,66 +43,71 @@
     </div>
 
     {{-- Categories Table --}}
-    <flux:table>
-        <flux:table.columns>
-            <flux:table.column sortable :sorted="$sortField === 'name'" :direction="$sortOrder" wire:click="toggleSort('name')">
-                Name
-            </flux:table.column>
-            <flux:table.column sortable :sorted="$sortField === 'code'" :direction="$sortOrder" wire:click="toggleSort('code')">
-                Code
-            </flux:table.column>
-            <flux:table.column>
-                Description
-            </flux:table.column>
-            <flux:table.column sortable :sorted="$sortField === 'created_at'" :direction="$sortOrder" wire:click="toggleSort('created_at')">
-                Created
-            </flux:table.column>
-            <flux:table.column>
-                Actions
-            </flux:table.column>
-        </flux:table.columns>
+    <div class="overflow-x-auto">
+        <flux:table>
+            <flux:table.columns>
+                <flux:table.column class="w-12">#</flux:table.column>
+                <flux:table.column sortable :sorted="$sortField === 'name'" :direction="$sortOrder" wire:click="toggleSort('name')">
+                    Name
+                </flux:table.column>
+                <flux:table.column sortable :sorted="$sortField === 'code'" :direction="$sortOrder" wire:click="toggleSort('code')">
+                    Code
+                </flux:table.column>
+                <flux:table.column>
+                    Description
+                </flux:table.column>
+                <flux:table.column sortable :sorted="$sortField === 'created_at'" :direction="$sortOrder" wire:click="toggleSort('created_at')">
+                    Created
+                </flux:table.column>
+                <flux:table.column>
+                    Actions
+                </flux:table.column>
+            </flux:table.columns>
 
-        <flux:table.rows>
-            @forelse($categories as $category)
-                <flux:table.row :key="$category->id">
-                    <flux:table.cell class="font-medium">
-                        {{ $category->name }}
-                    </flux:table.cell>
-                    <flux:table.cell>
-                        <flux:badge size="sm" color="blue" variant="outline">
-                            {{ $category->code }}
-                        </flux:badge>
-                    </flux:table.cell>
-                    <flux:table.cell>
-                        <flux:text size="sm">
-                            {{ $category->description ?? '-' }}
-                        </flux:text>
-                    </flux:table.cell>
-                    <flux:table.cell>
-                        <flux:text size="sm">
-                            {{ $category->created_at->format('M d, Y') }}
-                        </flux:text>
-                    </flux:table.cell>
-                    <flux:table.cell>
-                        <flux:dropdown position="left" align="end">
-                            <flux:button variant="ghost" size="sm" icon="ellipsis-horizontal" inset />
-                            <flux:menu>
-                                <flux:menu.item icon="pencil" wire:click="showEditForm({{ $category->id }})">Edit</flux:menu.item>
-                                <flux:menu.separator />
-                                <flux:menu.item icon="trash" variant="danger" wire:click="showDeleteConfirmation({{ $category->id }})">Delete</flux:menu.item>
-                            </flux:menu>
-                        </flux:dropdown>
-                    </flux:table.cell>
-                </flux:table.row>
-            @empty
-                <flux:table.row>
-                    <flux:table.cell colspan="5" class="text-center text-sm text-gray-500 dark:text-gray-400 py-8">
-                        No categories found.
-                    </flux:table.cell>
-                </flux:table.row>
-            @endforelse
-        </flux:table.rows>
-    </flux:table>
+            <flux:table.rows>
+                @forelse($categories as $category)
+                    <flux:table.row :key="$category->id">
+                        <flux:table.cell>
+                            <flux:text size="sm" variant="subtle">{{ ($categories->currentPage() - 1) * $perPage + $loop->iteration }}</flux:text>
+                        </flux:table.cell>
+                        <flux:table.cell>
+                            <flux:text variant="strong">{{ $category->name }}</flux:text>
+                        </flux:table.cell>
+                        <flux:table.cell>
+                            <flux:badge size="sm" color="blue" variant="outline">
+                                {{ $category->code }}
+                            </flux:badge>
+                        </flux:table.cell>
+                        <flux:table.cell>
+                            <flux:text size="sm">{{ $category->description ?? '-' }}</flux:text>
+                        </flux:table.cell>
+                        <flux:table.cell>
+                            <flux:text size="sm">{{ $category->created_at->format('M d, Y') }}</flux:text>
+                        </flux:table.cell>
+                        <flux:table.cell>
+                            <flux:dropdown position="bottom" align="end">
+                                <flux:button variant="ghost" size="sm" icon="ellipsis-horizontal" />
+                                <flux:menu>
+                                    <flux:menu.item icon="pencil" wire:click="showEditForm({{ $category->id }})">Edit</flux:menu.item>
+                                    <flux:menu.separator />
+                                    <flux:menu.item icon="trash" variant="danger" wire:click="showDeleteConfirmation({{ $category->id }})">Delete</flux:menu.item>
+                                </flux:menu>
+                            </flux:dropdown>
+                        </flux:table.cell>
+                    </flux:table.row>
+                @empty
+                    <flux:table.row>
+                        <flux:table.cell colspan="6" class="text-center py-8">
+                            <div class="flex flex-col items-center justify-center">
+                                <flux:icon.inbox class="h-12 w-12 text-gray-400 dark:text-gray-600 mb-3" />
+                                <flux:text variant="subtle">No categories found</flux:text>
+                            </div>
+                        </flux:table.cell>
+                    </flux:table.row>
+                @endforelse
+            </flux:table.rows>
+        </flux:table>
+    </div>
 
     {{-- Pagination --}}
     @if($categories->hasPages())
