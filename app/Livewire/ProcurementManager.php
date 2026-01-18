@@ -50,8 +50,10 @@ class ProcurementManager extends Component
     public $selectedProcurementId = null;
     public $isEditing = false;
     public $showForm = false;
+    public $showEditModal = false;
     public $search = '';
     public $showConfirmLocationModal = false;
+    public $showConfirmQuantityModal = false;
     public $sortField = 'procurement_date';
     public $sortOrder = 'desc';
     public $perPage = 10;
@@ -161,14 +163,14 @@ class ProcurementManager extends Component
     {
         $this->resetForm();
         $this->procurement_date = now()->format('Y-m-d');
-        $this->showForm = true;
         $this->isEditing = false;
-        $this->modal('createProcurement')->show();
     }
 
     public function edit($procurementId)
     {
-        $procurement = Procurement::findOrFail($procurementId);
+        $procurement = Procurement::find($procurementId);
+        
+        if (!$procurement) return;
         
         $this->selectedProcurementId = $procurement->id;
         $this->name = $procurement->name;
@@ -179,13 +181,10 @@ class ProcurementManager extends Component
         $this->invoice_number = $procurement->invoice_number;
         $this->quantity = $procurement->quantity;
         $this->unit_price = $procurement->unit_price;
-        $this->quantity = $procurement->quantity;
-        $this->unit_price = $procurement->unit_price;
-        $this->total_cost = $procurement->quantity * $procurement->unit_price; // Recalculate total cost
+        $this->total_cost = $procurement->quantity * $procurement->unit_price;
         
         $this->isEditing = true;
-        $this->showForm = true;
-        $this->modal('editProcurement')->show();
+        $this->showEditModal = true;
     }
 
     public function save()
@@ -193,15 +192,15 @@ class ProcurementManager extends Component
         if ($this->isEditing) {
             $this->updateProcurement();
         } else {
-            // Show confirmation modal for location warning
-            $this->showConfirmLocationModal = true;
+            // Show confirmation modal for quantity warning
+            $this->showConfirmQuantityModal = true;
         }
     }
 
     public function confirmCreateProcurement()
     {
         $this->createProcurement();
-        $this->showConfirmLocationModal = false;
+        $this->showConfirmQuantityModal = false;
     }
 
     public function createProcurement()

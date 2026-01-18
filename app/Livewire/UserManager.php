@@ -96,7 +96,7 @@ class UserManager extends Component
     public function showCreateForm()
     {
         $this->resetForm();
-        $this->modal('createUser')->show();
+        $this->isEditing = false;
     }
 
     public function showEditForm($userId)
@@ -114,9 +114,7 @@ class UserManager extends Component
 
     public function showDeleteConfirmation($userId)
     {
-        $this->userToDelete = User::findOrFail($userId);
-        $this->showDeleteModal = true;
-        $this->modal('deleteUser')->show();
+        $this->userToDelete = User::find($userId);
     }
 
     public function createUser()
@@ -191,7 +189,6 @@ class UserManager extends Component
         $this->selectedUserId = $userId;
         $this->selectedEmployeeId = null;
         $this->employeeSearchQuery = '';
-        $this->modal('linkEmployee')->show();
     }
 
     public function linkEmployee()

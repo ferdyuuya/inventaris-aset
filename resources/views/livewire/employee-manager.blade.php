@@ -43,7 +43,7 @@
     </div>
 
     {{-- Create Employee Modal --}}
-    <flux:modal name="createEmployee" class="md:w-96">
+    <flux:modal name="createEmployee" class="md:w-96" @close="$wire.resetForm()">
         <form wire:submit="save" class="space-y-6">
             <div>
                 <flux:heading size="lg">Add New Employee</flux:heading>
@@ -111,7 +111,7 @@
     </flux:modal>
 
     {{-- Edit Employee Modal --}}
-    <flux:modal name="editEmployee" class="md:w-96">
+    <flux:modal name="editEmployee" class="md:w-96" @close="$wire.resetForm()">
         <form wire:submit="save" class="space-y-6">
             <div>
                 <flux:heading size="lg">Edit Employee</flux:heading>

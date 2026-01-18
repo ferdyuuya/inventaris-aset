@@ -88,7 +88,7 @@ class SupplierManager extends Component
     public function showCreateForm()
     {
         $this->resetForm();
-        $this->modal('createSupplier')->show();
+        $this->isEditing = false;
     }
 
     public function showEditForm($supplierId)
@@ -156,8 +156,7 @@ class SupplierManager extends Component
 
     public function showDeleteConfirmation($supplierId)
     {
-        $this->supplierToDelete = Supplier::findOrFail($supplierId);
-        $this->modal('deleteSupplier')->show();
+        $this->supplierToDelete = Supplier::find($supplierId);
     }
 
     public function confirmDelete()

@@ -80,20 +80,20 @@ class LocationManager extends Component
     public function showCreateForm()
     {
         $this->resetForm();
-        $this->modal('createLocation')->show();
+        $this->isEditing = false;
     }
 
     public function showEditForm($locationId)
     {
-        $location = Location::findOrFail($locationId);
+        $location = Location::find($locationId);
+        
+        if (!$location) return;
         
         $this->selectedLocationId = $location->id;
         $this->name = $location->name;
         $this->description = $location->description;
         $this->responsible_employee_id = $location->responsible_employee_id;
         $this->isEditing = true;
-        
-        $this->modal('editLocation')->show();
     }
 
     public function save()
@@ -144,8 +144,7 @@ class LocationManager extends Component
 
     public function showDeleteConfirmation($locationId)
     {
-        $this->locationToDelete = Location::findOrFail($locationId);
-        $this->modal('deleteLocation')->show();
+        $this->locationToDelete = Location::find($locationId);
     }
 
     public function confirmDelete()

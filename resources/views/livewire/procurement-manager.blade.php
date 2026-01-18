@@ -22,7 +22,7 @@
         <div class="flex items-center justify-between">
             <h1 class="text-2xl font-semibold text-gray-900 dark:text-white">Procurement Management</h1>
             <flux:modal.trigger name="createProcurement">
-                <flux:button variant="primary" wire:click="showCreateForm">
+                <flux:button variant="primary">
                     <svg class="-ml-1 mr-2 h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
                     </svg>
@@ -43,7 +43,7 @@
     </div>
 
     {{-- Create Procurement Modal --}}
-    <flux:modal name="createProcurement" class="md:w-96">
+    <flux:modal name="createProcurement" class="md:w-96" @close="$wire.resetForm()">
         <form wire:submit="save" class="space-y-6">
             <div>
                 <flux:heading size="lg">Add New Procurement</flux:heading>
@@ -174,13 +174,13 @@
                 <flux:modal.close>
                     <flux:button variant="ghost">Cancel</flux:button>
                 </flux:modal.close>
-                <flux:button type="button" variant="primary" wire:click="save">Create Procurement</flux:button>
+                <flux:button type="submit" variant="primary">Create Procurement</flux:button>
             </div>
         </form>
     </flux:modal>
 
     {{-- Edit Procurement Modal --}}
-    <flux:modal name="editProcurement" class="md:w-96">
+    <flux:modal wire:model.self="showEditModal" class="md:w-96" @close="$wire.resetForm()">
         <form wire:submit="save" class="space-y-6">
             <div>
                 <flux:heading size="lg">Edit Procurement</flux:heading>
@@ -270,6 +270,7 @@
                                    step="1"
                                    description="Number of items"
                                    placeholder="0"
+                                   @if($isEditing) disabled @endif
                                    required />
                         @error('quantity') <span class="text-red-500 text-xs">{{ $message }}</span> @enderror
                     </div>
@@ -283,6 +284,7 @@
                                    step="0.01"
                                    description="Price per unit"
                                    placeholder="0"
+                                   @if($isEditing) disabled @endif
                                    required />
                         @error('unit_price') <span class="text-red-500 text-xs">{{ $message }}</span> @enderror
                     </div>
@@ -313,7 +315,38 @@
         </form>
     </flux:modal>
 
-    {{-- Location Confirmation Modal --}}
+    {{-- Confirm Quantity Modal --}}
+    <flux:modal wire:model.self="showConfirmQuantityModal" class="md:w-96">
+        <div class="space-y-6">
+            <div>
+                <flux:heading size="lg">Confirm Procurement Creation</flux:heading>
+                <flux:text class="mt-2 text-sm">This will generate <strong>{{ $quantity }}</strong> of <strong>{{ $name }}</strong> and reserved at <strong>{{ $location }}</strong> and it can't be undone.</flux:text>
+            </div>
+
+            <div class="bg-yellow-50 dark:bg-yellow-900/30 border border-yellow-200 dark:border-yellow-700 rounded-lg p-4">
+                <div class="flex">
+                    <div class="flex-shrink-0">
+                        <svg class="h-5 w-5 text-yellow-400" viewBox="0 0 20 20" fill="currentColor">
+                            <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd" />
+                        </svg>
+                    </div>
+                    <div class="ml-3">
+                        <p class="text-sm font-medium text-yellow-800 dark:text-yellow-200">
+                            <strong>Important:</strong> This action cannot be reversed. Please review the quantity and location carefully.
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="flex gap-2">
+                <flux:spacer />
+                <flux:button variant="ghost" wire:click="$toggle('showConfirmQuantityModal')">Cancel</flux:button>
+                <flux:button type="button" variant="primary" wire:click="confirmCreateProcurement">Confirm & Create</flux:button>
+            </div>
+        </div>
+    </flux:modal>
+
+    {{-- Location Confirmation Modal (Legacy) --}}
     <flux:modal wire:model.self="showConfirmLocationModal" class="md:w-96">
         <div class="space-y-6">
             <div>

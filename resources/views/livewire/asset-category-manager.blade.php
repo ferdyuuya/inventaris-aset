@@ -117,7 +117,7 @@
     @endif
 
     {{-- Create Category Modal --}}
-    <flux:modal name="createCategory" class="md:w-96">
+    <flux:modal name="createCategory" class="md:w-96" @close="$wire.resetForm()">
         <form wire:submit="save" class="space-y-6">
             <div>
                 <flux:heading size="lg">Create New Category</flux:heading>
@@ -151,7 +151,7 @@
     </flux:modal>
 
     {{-- Edit Category Modal --}}
-    <flux:modal name="editCategory" class="md:w-96">
+    <flux:modal name="editCategory" class="md:w-96" @close="$wire.resetForm()">
         <form wire:submit="save" class="space-y-6">
             <div>
                 <flux:heading size="lg">Edit Category</flux:heading>

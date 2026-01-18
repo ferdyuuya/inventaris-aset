@@ -139,7 +139,7 @@
     @endif
 
     {{-- Create User Modal --}}
-    <flux:modal name="createUser" class="md:w-96">
+    <flux:modal name="createUser" class="md:w-96" @close="$wire.resetForm()">
         <form wire:submit="createUser" class="space-y-6">
             <div>
                 <flux:heading size="lg">Create New User</flux:heading>
@@ -192,7 +192,7 @@
     </flux:modal>
 
     {{-- Edit User Modal --}}
-    <flux:modal name="editUser" class="md:w-96">
+    <flux:modal name="editUser" class="md:w-96" @close="$wire.resetForm()">
         <form wire:submit="updateUser" class="space-y-6">
             <div>
                 <flux:heading size="lg">Edit User</flux:heading>

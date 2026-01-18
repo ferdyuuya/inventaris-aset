@@ -121,7 +121,7 @@
     @endif
 
     {{-- Create Supplier Modal --}}
-    <flux:modal name="createSupplier" class="md:w-96">
+    <flux:modal name="createSupplier" class="md:w-96" @close="$wire.resetForm()">
         <form wire:submit="save" class="space-y-6">
             <div>
                 <flux:heading size="lg">Create New Supplier</flux:heading>
@@ -161,7 +161,7 @@
     </flux:modal>
 
     {{-- Edit Supplier Modal --}}
-    <flux:modal name="editSupplier" class="md:w-96">
+    <flux:modal name="editSupplier" class="md:w-96" @close="$wire.resetForm()">
         <form wire:submit="save" class="space-y-6">
             <div>
                 <flux:heading size="lg">Edit Supplier</flux:heading>

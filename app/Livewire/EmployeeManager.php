@@ -52,7 +52,8 @@ class EmployeeManager extends Component
     /**
      * Get filtered and paginated employees
      */
-    public function getEmployees()
+    #[\Livewire\Attributes\Computed]
+    public function employees()
     {
         return Employee::query()
             ->select('employees.*')
@@ -94,18 +95,6 @@ class EmployeeManager extends Component
             ->whereDoesntHave('employee')
             ->orderBy('name')
             ->get();
-    }
-
-    #[\Livewire\Attributes\Computed]
-    public function employees()
-    {
-        return Employee::with('user:id,name,email')
-            ->when($this->search, function($query) {
-                $query->where('name', 'like', "%{$this->search}%")
-                      ->orWhere('nik', 'like', "%{$this->search}%");
-            })
-            ->orderBy($this->sortField, $this->sortOrder)
-            ->paginate($this->perPage);
     }
 
     public function render()
@@ -173,14 +162,14 @@ class EmployeeManager extends Component
     public function showCreateForm()
     {
         $this->resetForm();
-        $this->showForm = true;
         $this->isEditing = false;
-        $this->modal('createEmployee')->show();
     }
 
     public function edit($employeeId)
     {
-        $employee = Employee::findOrFail($employeeId);
+        $employee = Employee::find($employeeId);
+        
+        if (!$employee) return;
         
         $this->selectedEmployeeId = $employee->id;
         $this->user_id = $employee->user_id;
@@ -191,8 +180,6 @@ class EmployeeManager extends Component
         $this->position = $employee->position;
         
         $this->isEditing = true;
-        $this->showForm = true;
-        $this->modal('editEmployee')->show();
     }
 
     public function save()
@@ -266,7 +253,6 @@ class EmployeeManager extends Component
         $this->selectedEmployeeId = $employeeId;
         $this->selectedUserId = null;
         $this->userSearchQuery = '';
-        $this->modal('linkUser')->show();
     }
 
     public function linkUser()

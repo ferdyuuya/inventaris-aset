@@ -121,7 +121,7 @@
     @endif
 
     {{-- Create Location Modal --}}
-    <flux:modal name="createLocation" class="md:w-96">
+    <flux:modal name="createLocation" class="md:w-96" @close="$wire.resetForm()">
         <form wire:submit="save" class="space-y-6">
             <div>
                 <flux:heading size="lg">Create New Location</flux:heading>
@@ -161,7 +161,7 @@
     </flux:modal>
 
     {{-- Edit Location Modal --}}
-    <flux:modal name="editLocation" class="md:w-96">
+    <flux:modal name="editLocation" class="md:w-96" @close="$wire.resetForm()">
         <form wire:submit="save" class="space-y-6">
             <div>
                 <flux:heading size="lg">Edit Location</flux:heading>

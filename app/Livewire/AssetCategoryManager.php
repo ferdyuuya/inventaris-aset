@@ -85,20 +85,20 @@ class AssetCategoryManager extends Component
     public function showCreateForm()
     {
         $this->resetForm();
-        $this->modal('createCategory')->show();
+        $this->isEditing = false;
     }
 
     public function showEditForm($categoryId)
     {
-        $category = AssetCategory::findOrFail($categoryId);
+        $category = AssetCategory::find($categoryId);
+        
+        if (!$category) return;
         
         $this->selectedCategoryId = $category->id;
         $this->name = $category->name;
         $this->code = $category->code;
         $this->description = $category->description;
         $this->isEditing = true;
-        
-        $this->modal('editCategory')->show();
     }
 
     public function save()
@@ -149,8 +149,7 @@ class AssetCategoryManager extends Component
 
     public function showDeleteConfirmation($categoryId)
     {
-        $this->categoryToDelete = AssetCategory::findOrFail($categoryId);
-        $this->modal('deleteCategory')->show();
+        $this->categoryToDelete = AssetCategory::find($categoryId);
     }
 
     public function confirmDelete()
