@@ -12,6 +12,7 @@ class AssetSummaryManager extends Component
 {
     use WithPagination;
 
+    public int $perPage = 10;
     public string $sortField = 'asset_code';
     public string $sortOrder = 'desc';
     public string $search = '';
@@ -23,6 +24,29 @@ class AssetSummaryManager extends Component
     public function metrics()
     {
         return app(AssetService::class)->getSummaryMetrics();
+    }
+
+    /**
+     * Get filtered and paginated assets
+     */
+    #[Computed]
+    public function assets()
+    {
+        $query = Asset::query()
+            ->with(['category', 'location', 'supplier']);
+
+        // Search
+        if ($this->search) {
+            $query->where(function ($q) {
+                $q->where('asset_code', 'like', "%{$this->search}%")
+                  ->orWhere('name', 'like', "%{$this->search}%");
+            });
+        }
+
+        // Sorting
+        $query->orderBy($this->sortField, $this->sortOrder);
+
+        return $query->paginate($this->perPage);
     }
 
     /**
@@ -51,6 +75,7 @@ class AssetSummaryManager extends Component
     {
         return view('livewire.asset-summary-manager', [
             'metrics' => $this->metrics,
+            'assets' => $this->assets,
         ]);
     }
 }

@@ -1,3 +1,7 @@
+@php
+    use App\Helpers\BadgeColorHelper;
+@endphp
+
 <div class="space-y-6">
     {{-- Header --}}
     <div class="flex items-center justify-between">
@@ -41,13 +45,13 @@
                             <flux:text size="sm" variant="subtle">{{ $loop->iteration }}</flux:text>
                         </flux:table.cell>
                         <flux:table.cell>
-                            <flux:text variant="strong" color="blue" class="font-mono">{{ $asset->asset_code }}</flux:text>
+                            <flux:text variant="strong" color="blue">{{ $asset->asset_code }}</flux:text>
                         </flux:table.cell>
                         <flux:table.cell>
                             <flux:text variant="strong">{{ $asset->name }}</flux:text>
                         </flux:table.cell>
                         <flux:table.cell>
-                            <flux:badge size="sm" color="blue" variant="solid">
+                            <flux:badge size="sm" :color="BadgeColorHelper::getCategoryColor($asset->category)" variant="solid">
                                 {{ $asset->category->name ?? '-' }}
                             </flux:badge>
                         </flux:table.cell>
@@ -104,10 +108,9 @@
     </div>
 
     {{-- Pagination --}}
-    <div class="flex items-center justify-between">
-        <div class="text-sm text-gray-600 dark:text-gray-400">
-            Showing {{ $assets->firstItem() ?? 0 }} to {{ $assets->lastItem() ?? 0 }} of {{ $assets->total() }} results
+    @if($assets->hasPages())
+        <div class="mt-6">
+            <flux:pagination :paginator="$assets" />
         </div>
-        {{ $assets->links() }}
-    </div>
+    @endif
 </div>
