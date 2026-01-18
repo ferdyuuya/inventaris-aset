@@ -87,41 +87,37 @@ class EmployeeManager extends Component
         $this->resetPage();
     }
 
-    public function render()
+    #[\Livewire\Attributes\Computed]
+    public function availableUsers()
     {
-        $users = User::whereDoesntHave('employee')->get();
-
-        return view('livewire.employee-manager', [
-            'employees' => $this->getEmployees(),
-            'users' => $users,
-            'genderOptions' => Employee::getGenderOptions(),
-            'sortField' => $this->sortField,
-            'sortOrder' => $this->sortOrder,
-            'perPage' => $this->perPage,
-        ]);
+        return User::select('id', 'name', 'email')
+            ->whereDoesntHave('employee')
+            ->orderBy('name')
+            ->get();
     }
 
     #[\Livewire\Attributes\Computed]
     public function employees()
     {
-        return Employee::with('user')
+        return Employee::with('user:id,name,email')
             ->when($this->search, function($query) {
-                $query->where('name', 'like', '%' . $this->search . '%')
-                      ->orWhere('nik', 'like', '%' . $this->search . '%')
-                      ->orWhere('position', 'like', '%' . $this->search . '%');
+                $query->where('name', 'like', "%{$this->search}%")
+                      ->orWhere('nik', 'like', "%{$this->search}%");
             })
-            ->orderBy($this->sortBy, $this->sortDirection)
-            ->paginate(10);
+            ->orderBy($this->sortField, $this->sortOrder)
+            ->paginate($this->perPage);
     }
 
-    public function sort($column)
+    public function render()
     {
-        if ($this->sortBy === $column) {
-            $this->sortDirection = $this->sortDirection === 'asc' ? 'desc' : 'asc';
-        } else {
-            $this->sortBy = $column;
-            $this->sortDirection = 'asc';
-        }
+        return view('livewire.employee-manager', [
+            'employees' => $this->employees,
+            'users' => $this->availableUsers,
+            'genderOptions' => Employee::getGenderOptions(),
+            'sortField' => $this->sortField,
+            'sortOrder' => $this->sortOrder,
+            'perPage' => $this->perPage,
+        ]);
     }
 
     public function toggleSelectAll()

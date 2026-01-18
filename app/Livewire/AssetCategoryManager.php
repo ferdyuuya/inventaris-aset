@@ -38,10 +38,10 @@ class AssetCategoryManager extends Component
     /**
      * Get filtered and paginated categories
      */
-    public function getCategories()
+    #[\Livewire\Attributes\Computed]
+    public function categories()
     {
         return AssetCategory::query()
-            ->select('asset_categories.*')
             ->when($this->search, function($query) {
                 $query->where('name', 'like', "%{$this->search}%")
                       ->orWhere('code', 'like', "%{$this->search}%")
@@ -75,7 +75,7 @@ class AssetCategoryManager extends Component
     public function render()
     {
         return view('livewire.asset-category-manager', [
-            'categories' => $this->getCategories(),
+            'categories' => $this->categories,
             'sortField' => $this->sortField,
             'sortOrder' => $this->sortOrder,
             'perPage' => $this->perPage,

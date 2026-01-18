@@ -41,10 +41,10 @@ class SupplierManager extends Component
     /**
      * Get filtered and paginated suppliers
      */
-    public function getSuppliers()
+    #[\Livewire\Attributes\Computed]
+    public function suppliers()
     {
         return Supplier::query()
-            ->select('suppliers.*')
             ->when($this->search, function($query) {
                 $query->where('name', 'like', "%{$this->search}%")
                       ->orWhere('email', 'like', "%{$this->search}%")
@@ -78,7 +78,7 @@ class SupplierManager extends Component
     public function render()
     {
         return view('livewire.supplier-manager', [
-            'suppliers' => $this->getSuppliers(),
+            'suppliers' => $this->suppliers,
             'sortField' => $this->sortField,
             'sortOrder' => $this->sortOrder,
             'perPage' => $this->perPage,

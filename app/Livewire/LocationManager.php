@@ -38,17 +38,19 @@ class LocationManager extends Component
 
     public function render()
     {
-        $locations = $this->getLocations();
-        $employees = Employee::orderBy('name')->get();
+        $employees = Employee::select('id', 'name')->orderBy('name')->get();
 
         return view('livewire.location-manager', [
-            'locations' => $locations,
+            'locations' => $this->locations,
             'employees' => $employees,
+            'sortField' => $this->sortField,
+            'sortOrder' => $this->sortOrder,
+            'perPage' => $this->perPage,
         ]);
     }
 
     #[\Livewire\Attributes\Computed]
-    public function getLocations()
+    public function locations()
     {
         return Location::with('responsibleEmployee:id,name')
             ->when($this->search, function($query) {

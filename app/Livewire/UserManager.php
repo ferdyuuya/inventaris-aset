@@ -6,6 +6,7 @@ use App\Models\User;
 use Livewire\Component;
 use Livewire\WithPagination;
 use Livewire\Attributes\Validate;
+use Livewire\Attributes\Computed;
 use Illuminate\Support\Facades\Hash;
 
 class UserManager extends Component
@@ -35,6 +36,7 @@ class UserManager extends Component
     public $sortField = 'name';
     public $sortOrder = 'asc';
     public $perPage = 10;
+    public $showDeleteModal = false;
 
     public function mount()
     {
@@ -44,7 +46,8 @@ class UserManager extends Component
     /**
      * Get filtered and paginated users
      */
-    public function getUsers()
+    #[Computed]
+    public function users()
     {
         return User::query()
             ->select('users.*')
@@ -82,7 +85,7 @@ class UserManager extends Component
     public function render()
     {
         return view('livewire.user-manager', [
-            'users' => $this->getUsers(),
+            'users' => $this->users,
             'roleOptions' => $this->getRoleOptions(),
             'sortField' => $this->sortField,
             'sortOrder' => $this->sortOrder,

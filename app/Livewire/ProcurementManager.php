@@ -110,18 +110,32 @@ class ProcurementManager extends Component
 
     public function render()
     {
-        $suppliers = Supplier::select('id', 'name')->orderBy('name')->get();
-        $categories = AssetCategory::select('id', 'name')->orderBy('name')->get();
-        $locations = Location::select('id', 'name')->orderBy('name')->get();
-
         return view('livewire.procurement-manager', [
-            'suppliers' => $suppliers,
-            'categories' => $categories,
-            'locations' => $locations,
+            'suppliers' => $this->suppliers,
+            'categories' => $this->categories,
+            'locations' => $this->locations,
             'sortField' => $this->sortField,
             'sortOrder' => $this->sortOrder,
             'perPage' => $this->perPage,
         ]);
+    }
+
+    #[\Livewire\Attributes\Computed]
+    public function suppliers()
+    {
+        return Supplier::select('id', 'name')->orderBy('name')->get();
+    }
+
+    #[\Livewire\Attributes\Computed]
+    public function categories()
+    {
+        return AssetCategory::select('id', 'name')->orderBy('name')->get();
+    }
+
+    #[\Livewire\Attributes\Computed]
+    public function locations()
+    {
+        return Location::select('id', 'name')->orderBy('name')->get();
     }
 
     /**
@@ -140,16 +154,6 @@ class ProcurementManager extends Component
             $this->total_cost = $this->quantity * $this->unit_price;
         } else {
             $this->total_cost = 0;
-        }
-    }
-
-    public function sort($column)
-    {
-        if ($this->sortBy === $column) {
-            $this->sortDirection = $this->sortDirection === 'asc' ? 'desc' : 'asc';
-        } else {
-            $this->sortBy = $column;
-            $this->sortDirection = 'asc';
         }
     }
 
