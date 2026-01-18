@@ -41,24 +41,17 @@ Route::view('/locations', 'locations')
     ->middleware(['auth', 'verified'])
     ->name('locations');
 
-// ============================================================
-// ASSET MANAGEMENT ROUTES (Read-Only with Controlled Actions)
+// ASSET MANAGEMENT ROUTES
 // ============================================================
 // Assets are generated from procurement records.
 // Users cannot manually create, edit, or delete assets.
-// Only controlled lifecycle actions are allowed:
-// - Transfer Location
-// - Borrow Asset
-// - Return Asset
-// - Send to Maintenance
-// - Complete Maintenance
 // ============================================================
 
 Route::middleware(['auth', 'verified'])->prefix('assets')->name('assets.')->group(function () {
     // Summary page (overview with metrics)
     Route::get('/summary', [AssetController::class, 'summary'])->name('summary');
 
-    // Asset list (paginated, searchable, filterable)
+    // Asset list (via controller, displays Livewire component)
     Route::get('/', [AssetController::class, 'index'])->name('index');
 
     // Asset detail page

@@ -5,6 +5,6 @@
             <flux:breadcrumbs.item>Assets</flux:breadcrumbs.item>
         </flux:breadcrumbs>
 
-        <livewire:asset-table-manager />
+        <livewire:assets-manager />
     </x-page-container>
 </x-layouts.app>

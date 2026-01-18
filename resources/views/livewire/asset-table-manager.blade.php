@@ -188,15 +188,24 @@
                         {{ $asset->purchase_date?->format('d M Y') ?? '-' }}
                     </flux:table.cell>
                     <flux:table.cell>
-                        <flux:button 
-                            href="{{ route('assets.show', $asset) }}" 
-                            variant="ghost" 
-                            size="sm" 
-                            icon="eye"
-                            wire:click.stop
-                        >
-                            View
-                        </flux:button>
+                        <flux:dropdown position="bottom" align="end">
+                            <flux:button 
+                                variant="ghost" 
+                                size="sm" 
+                                icon="ellipsis-horizontal"
+                                wire:click.stop
+                            />
+
+                            <flux:menu>
+                                <flux:menu.item 
+                                    href="{{ route('assets.show', $asset) }}" 
+                                    icon="eye"
+                                    wire:navigate
+                                >
+                                    View
+                                </flux:menu.item>
+                            </flux:menu>
+                        </flux:dropdown>
                     </flux:table.cell>
                 </flux:table.row>
             @empty

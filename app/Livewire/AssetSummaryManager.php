@@ -6,9 +6,16 @@ use App\Models\Asset;
 use App\Services\AssetService;
 use Livewire\Component;
 use Livewire\Attributes\Computed;
+use Livewire\WithPagination;
 
 class AssetSummaryManager extends Component
 {
+    use WithPagination;
+
+    public string $sortField = 'asset_code';
+    public string $sortOrder = 'desc';
+    public string $search = '';
+
     /**
      * Get summary metrics
      */
@@ -16,6 +23,19 @@ class AssetSummaryManager extends Component
     public function metrics()
     {
         return app(AssetService::class)->getSummaryMetrics();
+    }
+
+    /**
+     * Toggle sort direction
+     */
+    public function toggleSort(string $field): void
+    {
+        if ($this->sortField === $field) {
+            $this->sortOrder = $this->sortOrder === 'asc' ? 'desc' : 'asc';
+        } else {
+            $this->sortField = $field;
+            $this->sortOrder = 'asc';
+        }
     }
 
     /**
