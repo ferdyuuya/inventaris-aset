@@ -37,6 +37,13 @@ Route::view('/procurements', 'procurements')
     ->middleware(['auth', 'verified'])
     ->name('procurements');
 
+Route::get('/procurements/{id}', function ($id) {
+    $procurement = \App\Models\Procurement::with(['category', 'supplier', 'location'])->findOrFail($id);
+    return view('procurements.detail', compact('id', 'procurement'));
+})
+    ->name('procurements.detail')
+    ->middleware(['auth', 'verified']);
+
 Route::view('/locations', 'locations')
     ->middleware(['auth', 'verified'])
     ->name('locations');

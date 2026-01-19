@@ -269,6 +269,7 @@ class ProcurementManager extends Component
             // Auto-generate assets
             $assetService = new AssetGenerationService();
             $assetsCreated = $assetService->generateAssets([
+                'procurement_id' => $procurement->id,
                 'name' => $this->name,
                 'asset_category_id' => $this->asset_category_id,
                 'location_id' => $this->location_id,

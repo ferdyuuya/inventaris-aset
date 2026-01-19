@@ -71,6 +71,7 @@ class AssetGenerationService
                         'category_id' => $procurementData['asset_category_id'],
                         'location_id' => $procurementData['location_id'],
                         'supplier_id' => $procurementData['supplier_id'] ?? null,
+                        'procurement_id' => $procurementData['procurement_id'],
                         'purchase_date' => $procurementData['procurement_date'],
                         'purchase_price' => (float)$procurementData['unit_price'],
                         'invoice_number' => $procurementData['invoice_number'] ?? null,

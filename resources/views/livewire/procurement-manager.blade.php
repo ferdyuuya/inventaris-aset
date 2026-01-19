@@ -490,6 +490,7 @@
                             <flux:dropdown position="bottom" align="end">
                                 <flux:button variant="ghost" icon="ellipsis-horizontal" />
                                 <flux:menu>
+                                    <flux:menu.item icon="eye" href="{{ route('procurements.detail', $procurement->id) }}">View Details</flux:menu.item>
                                     <flux:menu.item icon="pencil" wire:click="edit({{ $procurement->id }})">Edit</flux:menu.item>
                                     <flux:menu.separator />
                                     <flux:menu.item icon="trash" variant="danger" wire:click="delete({{ $procurement->id }})" wire:confirm="Are you sure you want to delete this procurement?">Delete</flux:menu.item>
