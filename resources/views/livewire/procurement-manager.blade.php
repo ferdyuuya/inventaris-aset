@@ -43,7 +43,7 @@
     </div>
 
     {{-- Create Procurement Modal --}}
-    <flux:modal name="createProcurement" class="md:w-96" @close="$wire.resetForm()">
+    <flux:modal name="createProcurement" class="md:w-96" @close="resetForm">
         <form wire:submit="save" class="space-y-6">
             <div>
                 <flux:heading size="lg">Add New Procurement</flux:heading>
@@ -200,7 +200,7 @@
     </flux:modal>
 
     {{-- Edit Procurement Modal --}}
-    <flux:modal wire:model.self="showEditModal" class="md:w-96" @close="$wire.resetForm()">
+    <flux:modal wire:model.self="showEditModal" class="md:w-96" @close="resetForm">
         <form wire:submit="save" class="space-y-6">
             <div>
                 <flux:heading size="lg">Edit Procurement</flux:heading>

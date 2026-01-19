@@ -10,8 +10,9 @@
 ])
 
 @php
-    $inputId = 'file-input-' . uniqid();
-    $uploadAreaId = 'upload-area-' . uniqid();
+    $modelAttribute = $attributes->wire('model')->value ?? 'files';
+    $inputId = 'file-input-' . \Illuminate\Support\Str::slug($modelAttribute);
+    $uploadAreaId = 'upload-area-' . \Illuminate\Support\Str::slug($modelAttribute);
 @endphp
 
 <div class="w-full">
@@ -145,4 +146,14 @@
             }
         }
     }, false);
+
+    // Clear file input value when form is reset (allows file picker to open again)
+    document.addEventListener('livewire:init', function() {
+        Livewire.on('fileInputReset', function() {
+            const fileInput = document.getElementById('{{ $inputId }}');
+            if (fileInput) {
+                fileInput.value = '';
+            }
+        });
+    });
 </script>

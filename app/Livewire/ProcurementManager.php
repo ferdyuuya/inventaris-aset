@@ -358,6 +358,7 @@ class ProcurementManager extends Component
         $this->selectedProcurementId = null;
         $this->isEditing = false;
         $this->resetErrorBag();
+        $this->dispatch('fileInputReset');
     }
 
     protected function rules()
