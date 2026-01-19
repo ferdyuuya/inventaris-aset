@@ -35,6 +35,7 @@
                 <flux:table.column>Category</flux:table.column>
                 <flux:table.column>Location</flux:table.column>
                 <flux:table.column>Status</flux:table.column>
+                <flux:table.column>Last updated</flux:table.columns>
                 <flux:table.column>Actions</flux:table.column>
             </flux:table.columns>
 
@@ -76,6 +77,11 @@
                                     <flux:badge color="error" inset="top bottom">Inactive</flux:badge>
                                     @break
                             @endswitch
+                        </flux:table.cell>
+                        <flux:table.cell>
+                            <flux:text variant="subtle">
+                                {{ $asset->updated_at->diffForHumans() }}
+                            </flux:text>
                         </flux:table.cell>
                         <flux:table.cell>
                             <flux:dropdown position="bottom" align="end">

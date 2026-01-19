@@ -1,11 +1,12 @@
-<div class="space-y-6">
-    {{-- ============================================== --}}
-    {{-- ASSET DETAIL PAGE - UI ONLY (DUMMY DATA)      --}}
-    {{-- Backend logic will be reintroduced later      --}}
-    {{-- ============================================== --}}
+<div>
+    <div class="space-y-6">
+        {{-- ============================================== --}}
+        {{-- ASSET DETAIL PAGE - UI ONLY (DUMMY DATA)      --}}
+        {{-- Backend logic will be reintroduced later      --}}
+        {{-- ============================================== --}}
 
-    {{-- Main Content Grid --}}
-    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {{-- Main Content Grid --}}
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {{-- Left Column (2/3 width on large screens) --}}
         <div class="lg:col-span-2 space-y-6">
 
@@ -461,3 +462,4 @@
         </div>
     </form>
 </flux:modal>
+</div>
