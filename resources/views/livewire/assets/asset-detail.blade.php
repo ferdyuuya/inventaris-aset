@@ -68,18 +68,20 @@
             {{-- C. Asset History Log           --}}
             {{-- (Location Transfer History)    --}}
             {{-- ============================== --}}
-            <flux:card>
-                <flux:heading size="lg">Location History</flux:heading>
-                <flux:text class="mt-2">Asset transfer history between locations</flux:text>
+            <flux:card class="overflow-hidden">
+                <div class="px-6 py-4 border-b border-zinc-200 dark:border-zinc-700">
+                    <flux:heading size="lg">Location History</flux:heading>
+                    <flux:text class="mt-2">Asset transfer history between locations</flux:text>
+                </div>
 
-                <div class="flow-root mt-6">
+                <div class="px-6 py-6">
                     @if($locationHistory && $locationHistory->count() > 0)
                         <ul role="list" class="-mb-8">
                             @foreach($locationHistory as $index => $transaction)
                                 <li>
                                     <div class="relative @if(!$loop->last) pb-8 @endif">
                                         @if(!$loop->last)
-                                            <span class="absolute left-4 top-4 -ml-px h-full w-0.5 bg-zinc-200 dark:bg-zinc-700" aria-hidden="true"></span>
+                                            {{-- <span class="absolute left-4 top-4 -ml-px h-full w-0.5 bg-zinc-200 dark:bg-zinc-700" aria-hidden="true"></span> --}}
                                         @endif
                                         <div class="relative flex space-x-3">
                                             <div>

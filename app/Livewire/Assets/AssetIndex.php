@@ -15,8 +15,45 @@ class AssetIndex extends Component
 
     public int $perPage = 25;
     public string $search = '';
-    public string $sortField = 'asset_code';
+    public string $sortField = 'created_at';
     public string $sortOrder = 'desc';
+    
+    // Filters
+    public ?int $filterLocation = null;
+    public ?int $filterCategory = null;
+    public ?string $filterStatus = null;
+
+    /**
+     * Get all locations for filter dropdown
+     */
+    #[Computed]
+    public function locations()
+    {
+        return Location::orderBy('name')->get();
+    }
+
+    /**
+     * Get all categories for filter dropdown
+     */
+    #[Computed]
+    public function categories()
+    {
+        return AssetCategory::orderBy('name')->get();
+    }
+
+    /**
+     * Get all status options
+     */
+    #[Computed]
+    public function statuses()
+    {
+        return [
+            'aktif' => 'Active',
+            'dipinjam' => 'Borrowed',
+            'dipelihara' => 'Maintenance',
+            'nonaktif' => 'Inactive',
+        ];
+    }
 
     /**
      * Get filtered and paginated assets
@@ -32,12 +69,27 @@ class AssetIndex extends Component
                 'supplier:id,name'
             ]);
 
-        // Search
+        // Search filter
         if ($this->search) {
             $query->where(function ($q) {
                 $q->where('asset_code', 'like', "%{$this->search}%")
                   ->orWhere('name', 'like', "%{$this->search}%");
             });
+        }
+
+        // Location filter
+        if ($this->filterLocation) {
+            $query->where('location_id', $this->filterLocation);
+        }
+
+        // Category filter
+        if ($this->filterCategory) {
+            $query->where('category_id', $this->filterCategory);
+        }
+
+        // Status filter
+        if ($this->filterStatus) {
+            $query->where('status', $this->filterStatus);
         }
 
         // Sorting
@@ -47,7 +99,7 @@ class AssetIndex extends Component
     }
 
     /**
-     * Toggle sort direction
+     * Toggle sort direction or change sort field
      */
     public function toggleSort(string $field): void
     {
@@ -60,9 +112,46 @@ class AssetIndex extends Component
     }
 
     /**
-     * Updated hook - reset page on search, not on sort
+     * Set sort field and direction
+     */
+    public function setSortField(string $field, string $direction = 'asc'): void
+    {
+        $this->sortField = $field;
+        $this->sortOrder = $direction;
+        $this->resetPage();
+    }
+
+    /**
+     * Clear all filters
+     */
+    public function clearFilters(): void
+    {
+        $this->filterLocation = null;
+        $this->filterCategory = null;
+        $this->filterStatus = null;
+        $this->search = '';
+        $this->resetPage();
+    }
+
+    /**
+     * Updated hooks - reset page on filter changes
      */
     public function updatedSearch(): void
+    {
+        $this->resetPage();
+    }
+
+    public function updatedFilterLocation(): void
+    {
+        $this->resetPage();
+    }
+
+    public function updatedFilterCategory(): void
+    {
+        $this->resetPage();
+    }
+
+    public function updatedFilterStatus(): void
     {
         $this->resetPage();
     }
@@ -76,10 +165,25 @@ class AssetIndex extends Component
         $this->resetPage();
     }
 
+    /**
+     * Check if any filters are active
+     */
+    public function hasActiveFilters(): bool
+    {
+        return $this->filterLocation !== null
+            || $this->filterCategory !== null
+            || $this->filterStatus !== null;
+    }
+
     public function render()
     {
         return view('livewire.assets.asset-index', [
             'assets' => $this->assets,
+            'locations' => $this->locations,
+            'categories' => $this->categories,
+            'statuses' => $this->statuses,
+            'hasActiveFilters' => $this->hasActiveFilters(),
         ]);
     }
 }
+
