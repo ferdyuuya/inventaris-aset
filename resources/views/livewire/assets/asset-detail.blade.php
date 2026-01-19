@@ -72,61 +72,47 @@
                 <flux:text class="mt-2">Asset transfer history between locations</flux:text>
 
                 <div class="flow-root mt-6">
-                    <ul role="list" class="-mb-8">
-                        {{-- History Entry 1 --}}
-                        <li>
-                            <div class="relative pb-8">
-                                <span class="absolute left-4 top-4 -ml-px h-full w-0.5 bg-zinc-200 dark:bg-zinc-700" aria-hidden="true"></span>
-                                <div class="relative flex space-x-3">
-                                    <div>
-                                        <span class="h-8 w-8 rounded-full bg-blue-500 flex items-center justify-center ring-4 ring-white dark:ring-zinc-900">
-                                            <flux:icon.arrows-right-left class="size-4 text-white" />
-                                        </span>
-                                    </div>
-                                    <div class="flex min-w-0 flex-1 justify-between space-x-4 pt-1.5">
-                                        <div>
-                                            <flux:text>
-                                                Transferred from <span class="font-medium">Warehouse A</span> to <span class="font-medium">IT Department - Floor 3</span>
-                                            </flux:text>
-                                            <flux:text size="sm" class="text-zinc-500 mt-1">
-                                                Performed by: John Admin
-                                            </flux:text>
+                    @if($locationHistory && $locationHistory->count() > 0)
+                        <ul role="list" class="-mb-8">
+                            @foreach($locationHistory as $index => $transaction)
+                                <li>
+                                    <div class="relative @if(!$loop->last) pb-8 @endif">
+                                        @if(!$loop->last)
+                                            <span class="absolute left-4 top-4 -ml-px h-full w-0.5 bg-zinc-200 dark:bg-zinc-700" aria-hidden="true"></span>
+                                        @endif
+                                        <div class="relative flex space-x-3">
+                                            <div>
+                                                <span class="h-8 w-8 rounded-full bg-blue-500 flex items-center justify-center ring-4 ring-white dark:ring-zinc-900">
+                                                    <flux:icon.arrows-right-left class="size-4 text-white" />
+                                                </span>
+                                            </div>
+                                            <div class="flex min-w-0 flex-1 justify-between space-x-4 pt-1.5">
+                                                <div>
+                                                    <flux:text>
+                                                        Transferred from <span class="font-medium">{{ $transaction->fromLocation->name ?? 'Unknown' }}</span> to <span class="font-medium">{{ $transaction->toLocation->name ?? 'Unknown' }}</span>
+                                                    </flux:text>
+                                                    <flux:text size="sm" class="text-zinc-500 mt-1">
+                                                        Performed by: {{ $transaction->creator->name ?? 'System' }}
+                                                        @if($transaction->description)
+                                                            • {{ $transaction->description }}
+                                                        @endif
+                                                    </flux:text>
+                                                </div>
+                                                <flux:text size="sm" class="text-zinc-500 whitespace-nowrap">
+                                                    {{ $transaction->transaction_date?->format('d M Y') ?? 'N/A' }}
+                                                </flux:text>
+                                            </div>
                                         </div>
-                                        <flux:text size="sm" class="text-zinc-500 whitespace-nowrap">
-                                            10 Jan 2026
-                                        </flux:text>
                                     </div>
-                                </div>
-                            </div>
-                        </li>
-
-                        {{-- History Entry 2 --}}
-                        <li>
-                            <div class="relative pb-8">
-                                {{-- <span class="absolute left-4 top-4 -ml-px h-full w-0.5 bg-zinc-200 dark:bg-zinc-700" aria-hidden="true"></span> --}}
-                                <div class="relative flex space-x-3">
-                                    <div>
-                                        <span class="h-8 w-8 rounded-full bg-blue-500 flex items-center justify-center ring-4 ring-white dark:ring-zinc-900">
-                                            <flux:icon.arrows-right-left class="size-4 text-white" />
-                                        </span>
-                                    </div>
-                                    <div class="flex min-w-0 flex-1 justify-between space-x-4 pt-1.5">
-                                        <div>
-                                            <flux:text>
-                                                Transferred from <span class="font-medium">Main Office</span> to <span class="font-medium">Warehouse A</span>
-                                            </flux:text>
-                                            <flux:text size="sm" class="text-zinc-500 mt-1">
-                                                Performed by: Sarah Manager
-                                            </flux:text>
-                                        </div>
-                                        <flux:text size="sm" class="text-zinc-500 whitespace-nowrap">
-                                            05 Dec 2025
-                                        </flux:text>
-                                    </div>
-                                </div>
-                            </div>
-                        </li>
-                    </ul>
+                                </li>
+                            @endforeach
+                        </ul>
+                    @else
+                        <div class="text-center py-8">
+                            <flux:icon.inbox class="mx-auto size-10 text-zinc-300 dark:text-zinc-600" />
+                            <flux:text class="mt-2 text-zinc-500">No location history available</flux:text>
+                        </div>
+                    @endif
                 </div>
             </flux:card>
 
@@ -231,6 +217,16 @@
                         @endif
                     </div>
                 </div>
+
+                {{-- Transfer Location Button --}}
+                <flux:button
+                    variant="primary"
+                    class="w-full mt-6"
+                    icon="arrow-right"
+                    wire:click="openTransferModal"
+                >
+                    Transfer Location
+                </flux:button>
             </flux:card>
 
             {{-- ============================== --}}
@@ -382,3 +378,86 @@
     </div>
 </div>
 
+{{-- ============================================== --}}
+{{-- TRANSFER LOCATION MODAL                       --}}
+{{-- ============================================== --}}
+<flux:modal wire:model.self="showTransferModal" class="md:w-96" @close="closeTransferModal">
+    <form wire:submit="submitTransfer" class="space-y-6">
+        <div>
+            <flux:heading size="lg">Transfer Asset Location</flux:heading>
+            <flux:text class="mt-1 text-zinc-500">Move this asset to a different location</flux:text>
+        </div>
+
+        {{-- From Location (Read-only) --}}
+        <div>
+            <flux:field>
+                <flux:label>From Location</flux:label>
+                <flux:input
+                    type="text"
+                    disabled
+                    value="{{ $asset->location->name ?? 'Unknown' }}"
+                    placeholder="Current location"
+                />
+            </flux:field>
+        </div>
+
+        {{-- To Location (Dropdown) --}}
+        <div>
+            <flux:field>
+                <flux:label>To Location</flux:label>
+                <flux:select
+                    wire:model.live="transferLocationId"
+                    placeholder="Select destination location"
+                >
+                    <option value="">-- Choose a location --</option>
+                    @foreach($locations as $location)
+                        <option value="{{ $location->id }}">
+                            {{ $location->name }}
+                        </option>
+                    @endforeach
+                </flux:select>
+                <flux:error name="transferLocationId" />
+            </flux:field>
+        </div>
+
+        {{-- Transfer Date --}}
+        <div>
+            <flux:field>
+                <flux:label>Transfer Date</flux:label>
+                <flux:input
+                    type="date"
+                    wire:model="transferDate"
+                />
+                <flux:error name="transferDate" />
+            </flux:field>
+        </div>
+
+        {{-- Notes (Optional) --}}
+        <div>
+            <flux:field>
+                <flux:label>Notes <span class="text-zinc-500 text-sm">(optional)</span></flux:label>
+                <flux:textarea
+                    wire:model="transferNotes"
+                    placeholder="Add any notes about this transfer..."
+                    rows="3"
+                />
+                <flux:error name="transferNotes" />
+            </flux:field>
+        </div>
+
+        {{-- Action Buttons --}}
+        <div class="flex gap-3 justify-end">
+            <flux:modal.close>
+                <flux:button type="button" variant="ghost">
+                    Cancel
+                </flux:button>
+            </flux:modal.close>
+            <flux:button
+                type="submit"
+                variant="primary"
+            >
+                Transfer Asset
+            </flux:button>
+        </div>
+    </form>
+</flux:modal>

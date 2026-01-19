@@ -2,18 +2,19 @@
 
 namespace App\Livewire\Assets;
 
+use Log;
 use App\Models\Asset;
+use BaconQrCode\Writer;
+use Livewire\Component;
 use App\Models\Employee;
 use App\Models\Location;
+use Illuminate\Support\Str;
 use App\Services\AssetService;
+use Livewire\Attributes\Computed;
 use App\Services\AssetLocationService;
 use App\Services\AssetBorrowingService;
-use App\Services\AssetMaintenanceService;
-use Livewire\Component;
-use Livewire\Attributes\Computed;
 use BaconQrCode\Renderer\GDLibRenderer;
-use BaconQrCode\Writer;
-use Illuminate\Support\Str;
+use App\Services\AssetMaintenanceService;
 
 class AssetDetail extends Component
 {
@@ -26,7 +27,8 @@ class AssetDetail extends Component
 
     // Transfer Location form
     public ?int $transferLocationId = null;
-    public string $transferReason = '';
+    public ?string $transferDate = null;
+    public string $transferNotes = '';
 
     // Borrow Asset form
     public ?int $borrowEmployeeId = null;
@@ -167,8 +169,8 @@ class AssetDetail extends Component
      */
     public function openTransferModal(): void
     {
+        $this->transferDate = now()->toDateString();
         $this->showTransferModal = true;
-        $this->resetExcept('asset', 'activeTab', 'showBorrowModal', 'showMaintenanceModal');
     }
 
     /**
@@ -178,7 +180,8 @@ class AssetDetail extends Component
     {
         $this->showTransferModal = false;
         $this->transferLocationId = null;
-        $this->transferReason = '';
+        $this->transferDate = null;
+        $this->transferNotes = '';
     }
 
     /**
@@ -188,14 +191,15 @@ class AssetDetail extends Component
     {
         $this->validate([
             'transferLocationId' => 'required|exists:locations,id',
-            'transferReason' => 'required|string|max:500',
+            'transferDate' => 'required|date',
+            'transferNotes' => 'nullable|string|max:500',
         ]);
 
         try {
             app(AssetLocationService::class)->transferAsset(
                 $this->asset,
                 $this->transferLocationId,
-                $this->transferReason
+                $this->transferNotes
             );
 
             $this->asset->refresh();
