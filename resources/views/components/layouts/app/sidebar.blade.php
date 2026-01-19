@@ -24,6 +24,18 @@
                         {{ __('Asset List') }}
                     </flux:sidebar.item>
                 </flux:sidebar.group>
+
+
+                {{-- Maintenance Management --}}
+                <flux:sidebar.group :heading="__('Maintenances')" class="grid">
+                    <flux:sidebar.item icon="wrench-screwdriver" :href="route('maintenance.requests.index')" :current="request()->routeIs('maintenance.requests.*')" wire:navigate>
+                        {{ __('Maintenance Requests') }}
+                    </flux:sidebar.item>
+                    <flux:sidebar.item icon="cog-6-tooth" :href="route('maintenance.assets.index')" :current="request()->routeIs('maintenance.assets.*')" wire:navigate>
+                        {{ __('Asset Maintenances') }}
+                    </flux:sidebar.item>
+                </flux:sidebar.group>
+
                 {{-- Procurement Management --}}
                 <flux:sidebar.group :heading="__('Procurements')" class="grid">
                     <flux:sidebar.item icon="folder" :href="route('procurements')" :current="request()->routeIs('procurements')" wire:navigate>

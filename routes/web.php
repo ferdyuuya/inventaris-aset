@@ -84,4 +84,16 @@ Route::middleware(['auth', 'verified'])->prefix('assets')->name('assets.')->grou
     Route::post('/{asset}/complete-maintenance', [AssetController::class, 'completeMaintenance'])->name('complete-maintenance');
 });
 
+// ============================================================
+// MAINTENANCE MANAGEMENT ROUTES
+// ============================================================
+
+Route::middleware(['auth', 'verified'])->prefix('maintenance')->name('maintenance.')->group(function () {
+    // Maintenance requests list
+    Route::get('/requests', fn () => view('pages.maintenance.requests'))->name('requests.index');
+
+    // Asset maintenances list
+    Route::get('/assets', fn () => view('pages.maintenance.assets'))->name('assets.index');
+});
+
 require __DIR__.'/settings.php';
