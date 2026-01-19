@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Livewire;
+namespace App\Livewire\Procurements;
 
 use App\Models\AssetCategory;
 use App\Models\Location;
@@ -16,7 +16,7 @@ use Livewire\WithFileUploads;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
 
-class ProcurementManager extends Component
+class ProcurementIndex extends Component
 {
     use WithPagination, WithFileUploads;
 
@@ -117,7 +117,7 @@ class ProcurementManager extends Component
 
     public function render()
     {
-        return view('livewire.procurement-manager', [
+        return view('livewire.procurements.procurement-index', [
             'suppliers' => $this->suppliers,
             'categories' => $this->categories,
             'locations' => $this->locations,

@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Livewire;
+namespace App\Livewire\MasterData;
 
 use App\Models\Employee;
 use App\Models\User;
@@ -99,7 +99,7 @@ class EmployeeManager extends Component
 
     public function render()
     {
-        return view('livewire.employee-manager', [
+        return view('livewire.master-data.employee-manager', [
             'employees' => $this->employees,
             'users' => $this->availableUsers,
             'genderOptions' => Employee::getGenderOptions(),

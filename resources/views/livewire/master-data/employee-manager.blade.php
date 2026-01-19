@@ -23,7 +23,7 @@
             <h1 class="text-2xl font-semibold text-gray-900 dark:text-white">Employee Management</h1>
             <flux:modal.trigger name="createEmployee">
                 <flux:button variant="primary" wire:click="showCreateForm">
-                    <svg class="-ml-1 mr-th2 h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <svg class="-ml-1 mr-2 h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
                     </svg>
                     Add Employee
@@ -85,21 +85,6 @@
                 </div>
             </div>
 
-            {{-- <div class="space-y-4 border-t border-gray-200 dark:border-gray-700 pt-4">
-                <div>
-                    <flux:heading>Account Link</flux:heading>
-                </div>
-                <div>
-                    <flux:select wire:model="user_id" label="User Account" description="Link to existing user account (optional)">
-                        <flux:select.option value="">-- No User Account --</flux:select.option>
-                        @foreach($users as $user)
-                            <flux:select.option value="{{ $user->id }}">{{ $user->name }} ({{ $user->email }})</flux:select.option>
-                        @endforeach
-                    </flux:select>
-                    @error('user_id') <span class="text-red-500 text-xs">{{ $message }}</span> @enderror
-                </div>
-            </div> --}}
-
             <div class="flex gap-2 border-t border-gray-200 dark:border-gray-700 pt-4">
                 <flux:spacer />
                 <flux:modal.close>
@@ -152,21 +137,6 @@
                     @error('position') <span class="text-red-500 text-xs">{{ $message }}</span> @enderror
                 </div>
             </div>
-
-            {{-- <div class="space-y-4 border-t border-gray-200 dark:border-gray-700 pt-4">
-                <div>
-                    <flux:heading>Account Link</flux:heading>
-                </div>
-                <div>
-                    <flux:select wire:model="user_id" label="User Account" description="Link to existing user account (optional)">
-                        <flux:select.option value="">-- No User Account --</flux:select.option>
-                        @foreach($users as $user)
-                            <flux:select.option value="{{ $user->id }}">{{ $user->name }} ({{ $user->email }})</flux:select.option>
-                        @endforeach
-                    </flux:select>
-                    @error('user_id') <span class="text-red-500 text-xs">{{ $message }}</span> @enderror
-                </div>
-            </div> --}}
 
             <div class="flex gap-2 border-t border-gray-200 dark:border-gray-700 pt-4">
                 <flux:spacer />

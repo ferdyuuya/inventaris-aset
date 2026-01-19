@@ -68,25 +68,25 @@
                 @forelse($categories as $category)
                     <flux:table.row :key="$category->id">
                         <flux:table.cell>
-                            <flux:text size="sm" variant="subtle">{{ ($categories->currentPage() - 1) * $perPage + $loop->iteration }}</flux:text>
+                            <flux:text variant="subtle">{{ ($categories->currentPage() - 1) * $perPage + $loop->iteration }}</flux:text>
                         </flux:table.cell>
                         <flux:table.cell>
                             <flux:text variant="strong">{{ $category->name }}</flux:text>
                         </flux:table.cell>
                         <flux:table.cell>
-                            <flux:badge size="sm" color="blue" variant="outline">
+                            <flux:badge color="blue" variant="outline">
                                 {{ $category->code }}
                             </flux:badge>
                         </flux:table.cell>
                         <flux:table.cell>
-                            <flux:text size="sm">{{ $category->description ?? '-' }}</flux:text>
+                            <flux:text>{{ $category->description ?? '-' }}</flux:text>
                         </flux:table.cell>
                         <flux:table.cell>
-                            <flux:text size="sm">{{ $category->created_at->format('M d, Y') }}</flux:text>
+                            <flux:text>{{ $category->created_at->format('M d, Y') }}</flux:text>
                         </flux:table.cell>
                         <flux:table.cell>
                             <flux:dropdown position="bottom" align="end">
-                                <flux:button variant="ghost" size="sm" icon="ellipsis-horizontal" />
+                                <flux:button variant="ghost" icon="ellipsis-horizontal" />
                                 <flux:menu>
                                     <flux:menu.item icon="pencil" wire:click="showEditForm({{ $category->id }})">Edit</flux:menu.item>
                                     <flux:menu.separator />
@@ -167,6 +167,7 @@
                 <div>
                     <flux:input wire:model="code" icon="identification" label="Category Code" description="The code of the asset category" placeholder="Enter category code" required />
                     @error('code') <span class="text-red-500 text-xs">{{ $message }}</span> @enderror
+                </div>
 
                 <div>
                     <flux:input wire:model="description" icon="document-text" label="Description" description="Optional description for this category" placeholder="Enter description" />

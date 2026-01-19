@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Livewire;
+namespace App\Livewire\UserManagement;
 
 use App\Models\User;
 use Livewire\Component;
@@ -84,7 +84,7 @@ class UserManager extends Component
 
     public function render()
     {
-        return view('livewire.user-manager', [
+        return view('livewire.user-management.user-manager', [
             'users' => $this->users,
             'roleOptions' => $this->getRoleOptions(),
             'sortField' => $this->sortField,

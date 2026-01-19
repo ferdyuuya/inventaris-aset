@@ -14,7 +14,15 @@ class AssetController extends Controller
      */
     public function index(): View
     {
-        return view('assets.index');
+        return view('pages.assets.index');
+    }
+
+    /**
+     * Display asset summary page
+     */
+    public function summary(): View
+    {
+        return view('pages.assets.summary');
     }
 
     /**
@@ -24,6 +32,6 @@ class AssetController extends Controller
     {
         $asset->load(['category', 'location', 'supplier', 'transactions', 'loans', 'maintenances']);
 
-        return view('assets.show', compact('asset'));
+        return view('pages.assets.show', compact('asset'));
     }
 }

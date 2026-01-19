@@ -17,39 +17,51 @@ Route::view('dashboard', 'dashboard')
     ->middleware(['auth', 'verified'])
     ->name('dashboard');
 
-Route::view('/employees', 'employees')
+// ============================================================
+// MASTER DATA ROUTES
+// ============================================================
+
+Route::view('/employees', 'pages.masterdata.employee.index')
     ->middleware(['auth', 'verified'])
     ->name('employees');
 
-Route::view('/users', 'users')
-    ->middleware(['auth', 'verified'])
-    ->name('users');
-
-Route::view('/asset-categories', 'asset-categories')
+Route::view('/asset-categories', 'pages.masterdata.category.index')
     ->middleware(['auth', 'verified'])
     ->name('asset-categories');
 
-Route::view('/suppliers', 'suppliers')
+Route::view('/suppliers', 'pages.masterdata.supplier.index')
     ->middleware(['auth', 'verified'])
     ->name('suppliers');
 
-Route::view('/procurements', 'procurements')
+Route::view('/locations', 'pages.masterdata.location.index')
+    ->middleware(['auth', 'verified'])
+    ->name('locations');
+
+// ============================================================
+// USER MANAGEMENT ROUTES
+// ============================================================
+
+Route::view('/users', 'pages.users.index')
+    ->middleware(['auth', 'verified'])
+    ->name('users');
+
+// ============================================================
+// PROCUREMENT ROUTES
+// ============================================================
+
+Route::view('/procurements', 'pages.procurements.index')
     ->middleware(['auth', 'verified'])
     ->name('procurements');
 
 Route::get('/procurements/{id}', function ($id) {
     $procurement = \App\Models\Procurement::with(['category', 'supplier', 'location'])->findOrFail($id);
-    return view('procurements.detail', compact('id', 'procurement'));
+    return view('pages.procurements.detail', compact('id', 'procurement'));
 })
     ->name('procurements.detail')
     ->middleware(['auth', 'verified']);
 
-Route::view('/locations', 'locations')
-    ->middleware(['auth', 'verified'])
-    ->name('locations');
-
-// ASSET MANAGEMENT ROUTES
 // ============================================================
+// ASSET MANAGEMENT ROUTES
 // Assets are generated from procurement records.
 // Users cannot manually create, edit, or delete assets.
 // ============================================================

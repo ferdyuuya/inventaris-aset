@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Livewire;
+namespace App\Livewire\MasterData;
 
 use App\Models\Location;
 use App\Models\Employee;
@@ -40,7 +40,7 @@ class LocationManager extends Component
     {
         $employees = Employee::select('id', 'name')->orderBy('name')->get();
 
-        return view('livewire.location-manager', [
+        return view('livewire.master-data.location-manager', [
             'locations' => $this->locations,
             'employees' => $employees,
             'sortField' => $this->sortField,

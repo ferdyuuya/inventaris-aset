@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Livewire;
+namespace App\Livewire\Assets;
 
 use App\Models\Asset;
 use App\Models\Employee;
@@ -12,7 +12,7 @@ use App\Services\AssetMaintenanceService;
 use Livewire\Component;
 use Livewire\Attributes\Computed;
 
-class AssetDetailManager extends Component
+class AssetDetail extends Component
 {
     public Asset $asset;
     public string $activeTab = 'details';
@@ -290,7 +290,7 @@ class AssetDetailManager extends Component
 
     public function render()
     {
-        return view('livewire.asset-detail-manager', [
+        return view('livewire.assets.asset-detail', [
             'availableActions' => $this->availableActions,
             'locationHistory' => $this->locationHistory,
             'borrowingHistory' => $this->borrowingHistory,

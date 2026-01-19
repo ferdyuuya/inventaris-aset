@@ -1,13 +1,13 @@
 <?php
 
-namespace App\Livewire;
+namespace App\Livewire\MasterData;
 
 use App\Models\AssetCategory;
 use Livewire\Component;
 use Livewire\WithPagination;
 use Livewire\Attributes\Validate;
 
-class AssetCategoryManager extends Component
+class CategoryManager extends Component
 {
     use WithPagination;
 
@@ -74,7 +74,7 @@ class AssetCategoryManager extends Component
 
     public function render()
     {
-        return view('livewire.asset-category-manager', [
+        return view('livewire.master-data.category-manager', [
             'categories' => $this->categories,
             'sortField' => $this->sortField,
             'sortOrder' => $this->sortOrder,

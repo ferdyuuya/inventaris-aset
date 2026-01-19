@@ -17,9 +17,9 @@
                     </flux:sidebar.item>
                 {{-- Asset Management --}}
                 <flux:sidebar.group :heading="__('Assets')" class="grid">
-                    <flux:sidebar.item icon="archive-box" :href="route('assets.summary')" :current="request()->routeIs('assets.*')" wire:navigate>
+                    {{-- <flux:sidebar.item icon="archive-box" :href="route('assets.summary')" :current="request()->routeIs('assets.*')" wire:navigate>
                         {{ __('Asset Summary') }}
-                    </flux:sidebar.item>
+                    </flux:sidebar.item> --}}
                     <flux:sidebar.item icon="list-bullet" :href="route('assets.index')" :current="request()->routeIs('assets.index')" wire:navigate>
                         {{ __('Asset List') }}
                     </flux:sidebar.item>

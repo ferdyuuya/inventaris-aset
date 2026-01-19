@@ -1,30 +1,22 @@
 <?php
 
-namespace App\Livewire;
+namespace App\Livewire\Assets;
 
 use App\Models\Asset;
-use App\Services\AssetService;
+use App\Models\AssetCategory;
+use App\Models\Location;
 use Livewire\Component;
-use Livewire\Attributes\Computed;
 use Livewire\WithPagination;
+use Livewire\Attributes\Computed;
 
-class AssetSummaryManager extends Component
+class AssetIndex extends Component
 {
     use WithPagination;
 
-    public int $perPage = 10;
+    public int $perPage = 25;
+    public string $search = '';
     public string $sortField = 'asset_code';
     public string $sortOrder = 'desc';
-    public string $search = '';
-
-    /**
-     * Get summary metrics
-     */
-    #[Computed]
-    public function metrics()
-    {
-        return app(AssetService::class)->getSummaryMetrics();
-    }
 
     /**
      * Get filtered and paginated assets
@@ -76,18 +68,17 @@ class AssetSummaryManager extends Component
     }
 
     /**
-     * Refresh metrics (cache invalidation)
+     * Update per-page setting
      */
-    public function refresh(): void
+    public function updatePerPage(int $perPage): void
     {
-        app(AssetService::class)->invalidateSummaryCache();
-        $this->dispatch('notify', 'Metrics refreshed successfully');
+        $this->perPage = $perPage;
+        $this->resetPage();
     }
 
     public function render()
     {
-        return view('livewire.asset-summary-manager', [
-            'metrics' => $this->metrics,
+        return view('livewire.assets.asset-index', [
             'assets' => $this->assets,
         ]);
     }

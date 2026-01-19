@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Livewire;
+namespace App\Livewire\MasterData;
 
 use App\Models\Supplier;
 use Livewire\Component;
@@ -77,7 +77,7 @@ class SupplierManager extends Component
 
     public function render()
     {
-        return view('livewire.supplier-manager', [
+        return view('livewire.master-data.supplier-manager', [
             'suppliers' => $this->suppliers,
             'sortField' => $this->sortField,
             'sortOrder' => $this->sortOrder,

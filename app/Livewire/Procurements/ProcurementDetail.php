@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Livewire;
+namespace App\Livewire\Procurements;
 
 use App\Models\Procurement;
 use App\Models\AssetCategory;
@@ -187,7 +187,7 @@ class ProcurementDetail extends Component
      */
     public function render()
     {
-        return view('livewire.procurement-detail', [
+        return view('livewire.procurements.procurement-detail', [
             'procurement' => $this->getProcurement(),
             'suppliers' => Supplier::all(),
             'categories' => AssetCategory::all(),

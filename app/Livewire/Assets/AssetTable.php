@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Livewire;
+namespace App\Livewire\Assets;
 
 use App\Models\Asset;
 use App\Models\AssetCategory;
@@ -10,7 +10,7 @@ use Livewire\Component;
 use Livewire\WithPagination;
 use Livewire\Attributes\Computed;
 
-class AssetTableManager extends Component
+class AssetTable extends Component
 {
     use WithPagination;
 
@@ -92,7 +92,7 @@ class AssetTableManager extends Component
 
     public function render()
     {
-        return view('livewire.asset-table-manager', [
+        return view('livewire.assets.asset-table', [
             'assets' => $this->assets,
             'categories' => $this->categories,
             'locations' => $this->locations,
