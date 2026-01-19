@@ -233,6 +233,41 @@
                 </div>
             </flux:card>
 
+            {{-- ============================== --}}
+            {{-- B.2. Asset QR Code             --}}
+            {{-- ============================== --}}
+            <flux:card>
+                <div class="flex items-center justify-between">
+                    <flux:heading size="lg">Asset QR Code</flux:heading>
+                    <flux:badge color="blue" size="sm">Unique ID</flux:badge>
+                </div>
+                <flux:text class="mt-2">Unique identifier - Scan to track this asset</flux:text>
+
+                <div class="mt-6 flex flex-col items-center justify-center space-y-4">
+                    {{-- QR Code Container - Backend generated from asset_code --}}
+                    @if($qrCodeBase64)
+                        <div class="p-4 bg-white dark:bg-zinc-800 rounded-lg border-2 border-zinc-200 dark:border-zinc-700">
+                            <img src="{{ $qrCodeBase64 }}" alt="QR Code for {{ $asset->asset_code }}" class="w-48 h-48" />
+                        </div>
+                    @else
+                        <div class="p-4 bg-red-50 dark:bg-red-900/20 rounded-lg border-2 border-red-200 dark:border-red-700 text-center">
+                            <flux:text class="text-red-600">QR Code generation failed</flux:text>
+                        </div>
+                    @endif
+
+                    {{-- Asset Code Display - The unique identifier --}}
+                    <div class="text-center">
+                        <flux:text size="sm" class="text-zinc-500">Unique Asset Code</flux:text>
+                        <flux:text class="font-mono font-bold text-lg mt-1">{{ $asset->asset_code }}</flux:text>
+                    </div>
+
+                    {{-- Download Button --}}
+                    <flux:button variant="primary" icon="arrow-down-tray" wire:click="downloadQRCode">
+                        Download QR Code as {{ $asset->asset_code }}.png
+                    </flux:button>
+                </div>
+            </flux:card>
+
             {{-- Current Borrower Card (Shown when borrowed) --}}
             {{-- Example: Uncomment to see borrowed state --}}
             {{--
@@ -346,3 +381,4 @@
         </div>
     </div>
 </div>
+

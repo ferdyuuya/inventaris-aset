@@ -11,29 +11,27 @@ return new class extends Migration
      */
     public function up(): void
     {
-        if (!Schema::hasTable('asset_maintenances')) {
-            Schema::create('asset_maintenances', function (Blueprint $table) {
-                $table->id();
-                $table->unsignedBigInteger('asset_id');
-                $table->date('maintenance_date');
-                $table->date('estimated_completion_date')->nullable();
-                $table->date('completed_date')->nullable();
-                $table->text('description');
-                $table->enum('status', ['dalam_proses', 'selesai', 'dibatalkan'])->default('dalam_proses');
-                $table->unsignedBigInteger('created_by');
-                $table->timestamps();
+        Schema::create('asset_maintenances', function (Blueprint $table) {
+            $table->id();
+            $table->unsignedBigInteger('asset_id');
+            $table->date('maintenance_date');
+            $table->date('estimated_completion_date')->nullable();
+            $table->date('completed_date')->nullable();
+            $table->text('description');
+            $table->enum('status', ['dalam_proses', 'selesai', 'dibatalkan'])->default('dalam_proses');
+            $table->unsignedBigInteger('created_by')->nullable();
+            $table->timestamps();
 
-                $table->foreign('asset_id')
-                    ->references('id')
-                    ->on('assets')
-                    ->onDelete('cascade');
+            $table->foreign('asset_id')
+                ->references('id')
+                ->on('assets')
+                ->onDelete('cascade');
 
-                $table->foreign('created_by')
-                    ->references('id')
-                    ->on('users')
-                    ->onDelete('cascade');
-            });
-        }
+            $table->foreign('created_by')
+                ->references('id')
+                ->on('users')
+                ->onDelete('set null');
+        });
     }
 
     /**

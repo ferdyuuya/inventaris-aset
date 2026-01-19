@@ -51,10 +51,7 @@ return new class extends Migration
             $t->foreign('approved_by')->references('id')->on('users')->nullOnDelete(),
         ]);
 
-        Schema::table('asset_maintenances', fn($t)=>
-            $t->foreign('asset_id')->references('id')->on('assets')->cascadeOnDelete()
-        );
-
+        // asset_maintenances foreign keys are added in the create migration
         // Schema::table('reports', fn($t)=>
         //     $t->foreign('generated_by')->references('id')->on('users')->restrictOnDelete()
         // );
@@ -105,10 +102,7 @@ return new class extends Migration
             $t->dropForeign(['approved_by']),
         ]);
 
-        Schema::table('asset_maintenances', fn($t)=>
-            $t->dropForeign(['asset_id'])
-        );
-
+        // asset_maintenances foreign keys are dropped in the down method of create migration
         // Schema::table('reports', fn($t)=>
         //     $t->dropForeign(['generated_by'])
         // );

@@ -11,6 +11,11 @@ use App\Services\AssetBorrowingService;
 use App\Services\AssetMaintenanceService;
 use Livewire\Component;
 use Livewire\Attributes\Computed;
+use BaconQrCode\Renderer\ImageRenderer;
+use BaconQrCode\Renderer\RendererStyle\RendererStyle;
+use BaconQrCode\Renderer\Image\ImagickImageBackEnd;
+use BaconQrCode\Writer;
+use Illuminate\Support\Str;
 
 class AssetDetail extends Component
 {
@@ -33,9 +38,56 @@ class AssetDetail extends Component
     public string $maintenanceReason = '';
     public ?string $maintenanceEstimatedDate = null;
 
+    // QR Code
+    public ?string $qrCodeBase64 = null;
+
     public function mount(Asset $asset)
     {
         $this->asset = $asset->load(['category', 'location', 'supplier']);
+        $this->generateQRCode();
+    }
+
+    /**
+     * Generate QR code for the asset
+     */
+    public function generateQRCode(): void
+    {
+        try {
+            $renderer = new ImageRenderer(
+                new RendererStyle(200),
+                new ImagickImageBackEnd()
+            );
+            $writer = new Writer($renderer);
+            $qrCodeImage = $writer->writeString($this->asset->asset_code);
+            
+            // Convert to base64 for inline display
+            $this->qrCodeBase64 = 'data:image/png;base64,' . base64_encode($qrCodeImage);
+        } catch (\Exception $e) {
+            \Log::error('QR Code generation failed: ' . $e->getMessage());
+            $this->qrCodeBase64 = null;
+        }
+    }
+
+    /**
+     * Download QR code as PNG file
+     */
+    public function downloadQRCode()
+    {
+        try {
+            $renderer = new ImageRenderer(
+                new RendererStyle(200),
+                new ImagickImageBackEnd()
+            );
+            $writer = new Writer($renderer);
+            $qrCodeImage = $writer->writeString($this->asset->asset_code);
+            
+            return response($qrCodeImage)
+                ->header('Content-Type', 'image/png')
+                ->header('Content-Disposition', 'attachment; filename="' . $this->asset->asset_code . '.png"');
+        } catch (\Exception $e) {
+            \Log::error('QR Code download failed: ' . $e->getMessage());
+            $this->dispatch('notify-error', 'Failed to download QR code');
+        }
     }
 
     /**
@@ -299,6 +351,7 @@ class AssetDetail extends Component
             'currentMaintenance' => $this->currentMaintenance,
             'employees' => $this->employees,
             'locations' => $this->locations,
+            'qrCodeBase64' => $this->qrCodeBase64,
         ]);
     }
 }
