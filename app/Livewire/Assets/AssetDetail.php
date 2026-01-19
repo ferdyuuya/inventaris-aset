@@ -11,9 +11,7 @@ use App\Services\AssetBorrowingService;
 use App\Services\AssetMaintenanceService;
 use Livewire\Component;
 use Livewire\Attributes\Computed;
-use BaconQrCode\Renderer\ImageRenderer;
-use BaconQrCode\Renderer\RendererStyle\RendererStyle;
-use BaconQrCode\Renderer\Image\ImagickImageBackEnd;
+use BaconQrCode\Renderer\GDLibRenderer;
 use BaconQrCode\Writer;
 use Illuminate\Support\Str;
 
@@ -53,10 +51,7 @@ class AssetDetail extends Component
     public function generateQRCode(): void
     {
         try {
-            $renderer = new ImageRenderer(
-                new RendererStyle(200),
-                new ImagickImageBackEnd()
-            );
+            $renderer = new GDLibRenderer(200);
             $writer = new Writer($renderer);
             $qrCodeImage = $writer->writeString($this->asset->asset_code);
             
@@ -74,10 +69,7 @@ class AssetDetail extends Component
     public function downloadQRCode()
     {
         try {
-            $renderer = new ImageRenderer(
-                new RendererStyle(200),
-                new ImagickImageBackEnd()
-            );
+            $renderer = new GDLibRenderer(200);
             $writer = new Writer($renderer);
             $qrCodeImage = $writer->writeString($this->asset->asset_code);
             
