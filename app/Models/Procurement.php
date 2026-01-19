@@ -18,7 +18,7 @@ class Procurement extends Model
         'location_id',
         'supplier_id',
         'procurement_date',
-        'invoice_number',
+        'documents',
         'quantity',
         'unit_price',
         'total_cost',
@@ -35,6 +35,7 @@ class Procurement extends Model
         'quantity' => 'integer',
         'unit_price' => 'decimal:0',
         'total_cost' => 'decimal:0',
+        'documents' => 'array', // Cast documents JSON to array
     ];
 
     /**

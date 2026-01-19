@@ -18,7 +18,7 @@ return new class extends Migration
             $table->unsignedBigInteger('location_id');
             $table->unsignedBigInteger('supplier_id');
             $table->date('procurement_date');
-            $table->string('invoice_number')->nullable();
+            $table->json('documents'); // Store file paths as JSON array
             $table->integer('quantity');
             $table->decimal('unit_price', 15, 0);
             $table->decimal('total_cost', 15, 0);

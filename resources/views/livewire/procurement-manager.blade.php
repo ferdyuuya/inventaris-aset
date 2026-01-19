@@ -114,12 +114,32 @@
                 </div>
 
                 <div>
-                    <flux:input wire:model="invoice_number" 
-                               icon="document"
-                               label="Invoice Number" 
-                               description="Invoice number (optional)"
-                               placeholder="e.g., INV-2026-001" />
-                    @error('invoice_number') <span class="text-red-500 text-xs">{{ $message }}</span> @enderror
+                    <x-file-upload
+                        wire:model="temporaryDocuments"
+                        label="Documents (Invoice, Warranty, etc.)"
+                        accept=".pdf"
+                        multiple
+                        hint="PDF files only • Max 2MB each • Up to 3 files maximum" />
+                    
+                    @if(count($temporaryDocuments) > 0)
+                        <div class="mt-3 space-y-2">
+                            <p class="text-xs font-medium text-gray-600 dark:text-gray-400">Uploaded files:</p>
+                            @foreach($temporaryDocuments as $index => $doc)
+                                <div class="flex items-center justify-between bg-blue-50 dark:bg-blue-900/30 p-2 rounded border border-blue-200 dark:border-blue-700">
+                                    <span class="text-sm text-gray-700 dark:text-gray-300">
+                                        📄 {{ $doc->getClientOriginalName() }}
+                                    </span>
+                                    <button type="button" 
+                                            wire:click="removeDocument({{ $index }})"
+                                            class="text-red-500 hover:text-red-700 text-sm font-medium">
+                                        Remove
+                                    </button>
+                                </div>
+                            @endforeach
+                        </div>
+                    @endif
+                    
+                    @error('documents') <span class="text-red-500 text-xs block mt-2">{{ $message }}</span> @enderror
                 </div>
 
                 <div>
@@ -248,12 +268,53 @@
                 </div>
 
                 <div>
-                    <flux:input wire:model="invoice_number" 
-                               icon="document"
-                               label="Invoice Number" 
-                               description="Invoice number (optional)"
-                               placeholder="e.g., INV-2026-001" />
-                    @error('invoice_number') <span class="text-red-500 text-xs">{{ $message }}</span> @enderror
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                        Documents (Invoice, Warranty, etc.)
+                    </label>
+                    
+                    @if(count($documents) > 0)
+                        <div class="mb-3 space-y-2">
+                            <p class="text-xs font-medium text-gray-600 dark:text-gray-400">Current documents:</p>
+                            @foreach($documents as $index => $doc)
+                                <div class="flex items-center justify-between bg-green-50 dark:bg-green-900/30 p-2 rounded border border-green-200 dark:border-green-700">
+                                    <span class="text-sm text-gray-700 dark:text-gray-300">
+                                        📄 {{ basename($doc) }}
+                                    </span>
+                                    <button type="button" 
+                                            wire:click="removeDocument({{ $index }})"
+                                            class="text-red-500 hover:text-red-700 text-sm font-medium">
+                                        Remove
+                                    </button>
+                                </div>
+                            @endforeach
+                        </div>
+                    @endif
+                    
+                    <x-file-upload
+                        wire:model="temporaryDocuments"
+                        accept=".pdf"
+                        multiple
+                        hint="Add more documents (PDF only • Max 2MB each • {{ 3 - count($documents) - count($temporaryDocuments) }} slot(s) available)" />
+                    
+                    @if(count($temporaryDocuments) > 0)
+                        <div class="mt-3 space-y-2">
+                            <p class="text-xs font-medium text-gray-600 dark:text-gray-400">New files:</p>
+                            @foreach($temporaryDocuments as $index => $doc)
+                                <div class="flex items-center justify-between bg-blue-50 dark:bg-blue-900/30 p-2 rounded border border-blue-200 dark:border-blue-700">
+                                    <span class="text-sm text-gray-700 dark:text-gray-300">
+                                        📄 {{ $doc->getClientOriginalName() }}
+                                    </span>
+                                    <button type="button" 
+                                            wire:click="removeDocument({{ $index }})"
+                                            class="text-red-500 hover:text-red-700 text-sm font-medium">
+                                        Remove
+                                    </button>
+                                </div>
+                            @endforeach
+                        </div>
+                    @endif
+                    
+                    @error('documents') <span class="text-red-500 text-xs block mt-2">{{ $message }}</span> @enderror
                 </div>
 
                 <div>
