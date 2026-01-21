@@ -15,6 +15,8 @@ class MaintenanceRequest extends Model
         'requested_by',
         'request_date',
         'issue_description',
+        'result',
+        'feedback',
         'status',
         'approved_by',
     ];

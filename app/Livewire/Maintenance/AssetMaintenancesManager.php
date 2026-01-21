@@ -24,6 +24,10 @@ class AssetMaintenancesManager extends Component
     public ?AssetMaintenance $selectedMaintenance = null;
     public string $cancelReason = '';
 
+    // Complete maintenance form fields
+    public string $completeResult = '';
+    public string $completeFeedback = '';
+
     /**
      * Get all asset maintenance records
      */
@@ -74,7 +78,9 @@ class AssetMaintenancesManager extends Component
             return;
         }
 
-        $this->selectedMaintenance = $maintenance;
+        $this->selectedMaintenance = $maintenance->load('asset', 'maintenanceRequest');
+        $this->completeResult = '';
+        $this->completeFeedback = '';
         $this->showCompleteModal = true;
     }
 
@@ -94,6 +100,17 @@ class AssetMaintenancesManager extends Component
                 return;
             }
 
+            // Validate required fields
+            if (empty($this->completeResult)) {
+                $this->dispatch('notify', type: 'error', message: 'Please select a result (Baik or Rusak).');
+                return;
+            }
+
+            if (empty(trim($this->completeFeedback))) {
+                $this->dispatch('notify', type: 'error', message: 'Feedback is required.');
+                return;
+            }
+
             // Reload to ensure fresh data
             $maintenance = AssetMaintenance::with('asset', 'maintenanceRequest')
                 ->findOrFail($this->selectedMaintenance->id);
@@ -107,7 +124,12 @@ class AssetMaintenancesManager extends Component
 
             // Delegate to service (handles all updates atomically)
             $service = new MaintenanceWorkflowService();
-            $completed = $service->completeMaintenance($maintenance, Auth::user());
+            $completed = $service->completeMaintenance(
+                $maintenance, 
+                Auth::user(),
+                $this->completeResult,
+                $this->completeFeedback
+            );
 
             $this->dispatch('notify', type: 'success', message: 'Maintenance completed. Asset restored to active.');
             $this->closeModals();
@@ -128,6 +150,8 @@ class AssetMaintenancesManager extends Component
         $this->showCancelModal = false;
         $this->selectedMaintenance = null;
         $this->cancelReason = '';
+        $this->completeResult = '';
+        $this->completeFeedback = '';
     }
 
     /**

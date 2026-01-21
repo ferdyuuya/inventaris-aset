@@ -94,27 +94,45 @@ class MaintenanceWorkflowService
      * 
      * ATOMIC OPERATION:
      * 1. Validate maintenance is in 'dalam_proses' status
-     * 2. Update maintenance record: status → 'selesai', set completed_date
-     * 3. Update related maintenance request: status → 'selesai'
+     * 2. Update asset_maintenances: result, feedback, status → 'selesai', completed_date
+     * 3. Update maintenance_requests: result, feedback, status → 'selesai'
      * 4. Update asset:
      *    - status → 'aktif' (back to active)
      *    - is_available → true (available for use)
-     *    - condition → 'good' (reset to good condition)
+     *    - condition → based on result ('baik' if result is 'baik', 'rusak' if result is 'rusak')
      * 
      * @param AssetMaintenance $maintenance The maintenance to complete
      * @param User $admin The admin completing the maintenance
+     * @param string $result The maintenance result: 'baik' or 'rusak'
+     * @param string $feedback Technical explanation of work done (required)
      * 
      * @return AssetMaintenance The completed maintenance record
      * 
      * @throws Exception If maintenance is not in progress or any operation fails
      */
-    public function completeMaintenance(AssetMaintenance $maintenance, User $admin): AssetMaintenance
-    {
+    public function completeMaintenance(
+        AssetMaintenance $maintenance, 
+        User $admin, 
+        string $result, 
+        string $feedback
+    ): AssetMaintenance {
         // Validation: Only in-progress maintenance can be completed
         if ($maintenance->status !== 'dalam_proses') {
             throw new Exception(
                 "Cannot complete maintenance. Status is '{$maintenance->status}', expected 'dalam_proses'."
             );
+        }
+
+        // Validation: Result must be valid
+        if (!in_array($result, ['baik', 'rusak'])) {
+            throw new Exception(
+                "Invalid result value. Expected 'baik' or 'rusak', got '{$result}'."
+            );
+        }
+
+        // Validation: Feedback is required
+        if (empty(trim($feedback))) {
+            throw new Exception("Feedback is required when completing maintenance.");
         }
 
         // Ensure relationships are loaded
@@ -127,26 +145,30 @@ class MaintenanceWorkflowService
 
         // Atomic transaction: All operations must succeed or all rollback
         try {
-            return DB::transaction(function () use ($maintenance, $admin): AssetMaintenance {
-                // STEP 1: Mark maintenance as completed
+            return DB::transaction(function () use ($maintenance, $admin, $result, $feedback): AssetMaintenance {
+                // STEP 1: Mark maintenance as completed with result and feedback
                 $maintenance->update([
+                    'result' => $result,
+                    'feedback' => $feedback,
                     'completed_date' => now()->toDateString(),
                     'status' => 'selesai',
                 ]);
 
-                // STEP 2: Mark related maintenance request as completed
+                // STEP 2: Propagate result and feedback to maintenance request
                 if ($maintenance->maintenanceRequest) {
                     $maintenance->maintenanceRequest->update([
+                        'result' => $result,
+                        'feedback' => $feedback,
                         'status' => 'selesai',
                     ]);
                 }
 
-                // STEP 3: Restore asset to active state
+                // STEP 3: Restore asset to active state with condition based on result
                 if ($maintenance->asset) {
                     $maintenance->asset->update([
-                        'status' => 'aktif',           // Back to active (valid status)
+                        'status' => 'aktif',           // Back to active
                         'is_available' => true,        // Available for use
-                        'condition' => 'baik',         // Reset to good condition
+                        'condition' => $result,        // Set condition based on maintenance result
                     ]);
                 }
 

@@ -205,6 +205,7 @@ class MaintenanceRequestsManager extends Component
                 'issue_description' => $validated['createDescription'],
                 'status' => 'diajukan',
             ]);
+            // Asset::where('id', $validated['createAssetId'])->update(['is_available' => '0']);
 
             $this->dispatch('notify', type: 'success', message: 'Maintenance request submitted successfully.');
             $this->closeModals();

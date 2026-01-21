@@ -16,6 +16,8 @@ class AssetMaintenance extends Model
         'estimated_completion_date',
         'completed_date',
         'description',
+        'result',
+        'feedback',
         'status',
         'created_by',
     ];

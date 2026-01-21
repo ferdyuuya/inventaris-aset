@@ -293,18 +293,61 @@
     <flux:modal wire:model.defer="showCompleteModal">
         <div class="space-y-6">
             <div>
-                <flux:heading size="lg">Mark Maintenance as Completed?</flux:heading>
-                <flux:text class="mt-2">Are you sure you want to mark this maintenance as completed?</flux:text>
+                <flux:heading size="lg">Complete Maintenance</flux:heading>
+                <flux:text class="mt-2">Provide the maintenance result and feedback to complete this maintenance.</flux:text>
             </div>
 
             @if($selectedMaintenance)
-                <div class="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg p-4">
-                    <p class="text-sm text-green-900 dark:text-green-100">
-                        <strong>{{ $selectedMaintenance->asset->asset_code }}</strong> - {{ $selectedMaintenance->asset->name }}
+                <div class="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
+                    <p class="text-sm text-blue-900 dark:text-blue-100">
+                        <strong>{{ $selectedMaintenance->asset->asset_code ?? 'N/A' }}</strong> - {{ $selectedMaintenance->asset->name ?? 'Unknown Asset' }}
                     </p>
-                    <p class="text-sm text-green-700 dark:text-green-200 mt-1">
-                        This will update the asset status back to "Available".
+                    <p class="text-sm text-blue-700 dark:text-blue-200 mt-1">
+                        The asset condition will be updated based on the result you select.
                     </p>
+                </div>
+
+                <div class="space-y-4">
+                    {{-- Result Selection --}}
+                    <div>
+                        <flux:label>Maintenance Result <span class="text-red-500">*</span></flux:label>
+                        <div class="flex gap-4 mt-2">
+                            <label class="flex items-center gap-2 cursor-pointer">
+                                <input 
+                                    type="radio" 
+                                    wire:model="completeResult" 
+                                    value="baik" 
+                                    class="w-4 h-4 text-green-600 border-gray-300 focus:ring-green-500"
+                                >
+                                <span class="text-sm font-medium text-gray-700 dark:text-gray-300">
+                                    <flux:badge color="green">Baik (Good)</flux:badge>
+                                </span>
+                            </label>
+                            <label class="flex items-center gap-2 cursor-pointer">
+                                <input 
+                                    type="radio" 
+                                    wire:model="completeResult" 
+                                    value="rusak" 
+                                    class="w-4 h-4 text-red-600 border-gray-300 focus:ring-red-500"
+                                >
+                                <span class="text-sm font-medium text-gray-700 dark:text-gray-300">
+                                    <flux:badge color="red">Rusak (Damaged)</flux:badge>
+                                </span>
+                            </label>
+                        </div>
+                    </div>
+
+                    {{-- Feedback --}}
+                    <div>
+                        <flux:label for="completeFeedback">Technical Feedback <span class="text-red-500">*</span></flux:label>
+                        <flux:textarea
+                            wire:model="completeFeedback"
+                            id="completeFeedback"
+                            rows="4"
+                            placeholder="Describe the maintenance work performed, parts replaced, issues found, etc..."
+                            class="mt-1"
+                        />
+                    </div>
                 </div>
             @endif
 
@@ -317,7 +360,7 @@
                     color="green"
                     wire:click="completeMaintenance"
                 >
-                    Mark as Completed
+                    Complete Maintenance
                 </flux:button>
             </div>
         </div>
