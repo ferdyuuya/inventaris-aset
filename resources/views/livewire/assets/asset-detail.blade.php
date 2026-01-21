@@ -230,6 +230,16 @@
                 >
                     Transfer Location
                 </flux:button>
+
+                {{-- Request Maintenance Button --}}
+                <flux:button
+                    variant="primary"
+                    class="w-full mt-3"
+                    icon="wrench-screwdriver"
+                    wire:click="openRequestMaintenanceModal"
+                >
+                    Request Maintenance
+                </flux:button>
             </flux:card>
 
             {{-- ============================== --}}
@@ -460,6 +470,52 @@
                 variant="primary"
             >
                 Transfer Asset
+            </flux:button>
+        </div>
+    </form>
+</flux:modal>
+
+{{-- ============================================== --}}
+{{-- QUICK MAINTENANCE REQUEST MODAL               --}}
+{{-- ============================================== --}}
+<flux:modal wire:model.defer="showRequestMaintenanceModal" class="md:w-96" @close="closeRequestMaintenanceModal">
+    <form wire:submit="submitRequestMaintenance" class="space-y-6">
+        <div>
+            <flux:heading size="lg">Request Maintenance</flux:heading>
+            <flux:text class="mt-1 text-zinc-500">Submit a maintenance request for this asset</flux:text>
+        </div>
+
+        {{-- Asset Info (Read-only Display) --}}
+        <div class="space-y-2 p-3 bg-zinc-50 dark:bg-zinc-800 rounded-lg border border-zinc-200 dark:border-zinc-700">
+            <flux:label class="text-zinc-700 dark:text-zinc-300">Asset</flux:label>
+            <flux:text class="font-medium">{{ $asset->asset_code }} - {{ $asset->name }}</flux:text>
+        </div>
+
+        {{-- Description (Required) --}}
+        <div>
+            <flux:field>
+                <flux:label>Issue Description <span class="text-red-500">*</span></flux:label>
+                <flux:textarea
+                    wire:model="requestMaintenanceDescription"
+                    placeholder="Describe the maintenance issue or reason..."
+                    rows="4"
+                />
+                <flux:error name="requestMaintenanceDescription" />
+            </flux:field>
+        </div>
+
+        {{-- Action Buttons --}}
+        <div class="flex gap-3 justify-end">
+            <flux:modal.close>
+                <flux:button type="button" variant="ghost">
+                    Cancel
+                </flux:button>
+            </flux:modal.close>
+            <flux:button
+                type="submit"
+                variant="primary"
+            >
+                Submit Request
             </flux:button>
         </div>
     </form>

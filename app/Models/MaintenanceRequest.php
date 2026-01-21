@@ -52,7 +52,7 @@ class MaintenanceRequest extends Model
      */
     public function maintenance(): HasOne
     {
-        return $this->hasOne(AssetMaintenance::class, 'id');
+        return $this->hasOne(AssetMaintenance::class, 'maintenance_request_id');
     }
 
     /**

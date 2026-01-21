@@ -2,19 +2,22 @@
 
 namespace App\Livewire\Assets;
 
-use Log;
 use App\Models\Asset;
 use BaconQrCode\Writer;
 use Livewire\Component;
 use App\Models\Employee;
 use App\Models\Location;
+use App\Models\MaintenanceRequest;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Str;
 use App\Services\AssetService;
 use Livewire\Attributes\Computed;
+use Livewire\Attributes\Validate;
 use App\Services\AssetLocationService;
 use App\Services\AssetBorrowingService;
 use BaconQrCode\Renderer\GDLibRenderer;
 use App\Services\AssetMaintenanceService;
+use Illuminate\Support\Facades\Log;
 
 class AssetDetail extends Component
 {
@@ -24,6 +27,7 @@ class AssetDetail extends Component
     public bool $showTransferModal = false;
     public bool $showBorrowModal = false;
     public bool $showMaintenanceModal = false;
+    public bool $showRequestMaintenanceModal = false;
 
     // Transfer Location form
     public ?int $transferLocationId = null;
@@ -37,6 +41,10 @@ class AssetDetail extends Component
     // Maintenance form
     public string $maintenanceReason = '';
     public ?string $maintenanceEstimatedDate = null;
+
+    // Quick Maintenance Request form
+    #[Validate('required|string|min:5|max:500')]
+    public string $requestMaintenanceDescription = '';
 
     // QR Code
     public ?string $qrCodeBase64 = null;
@@ -60,7 +68,7 @@ class AssetDetail extends Component
             // Convert to base64 for inline display
             $this->qrCodeBase64 = 'data:image/png;base64,' . base64_encode($qrCodeImage);
         } catch (\Exception $e) {
-            \Log::error('QR Code generation failed: ' . $e->getMessage());
+            Log::error('QR Code generation failed: ' . $e->getMessage());
             $this->qrCodeBase64 = null;
         }
     }
@@ -79,7 +87,7 @@ class AssetDetail extends Component
                 ->header('Content-Type', 'image/png')
                 ->header('Content-Disposition', 'attachment; filename="' . $this->asset->asset_code . '.png"');
         } catch (\Exception $e) {
-            \Log::error('QR Code download failed: ' . $e->getMessage());
+            Log::error('QR Code download failed: ' . $e->getMessage());
             $this->dispatch('notify-error', 'Failed to download QR code');
         }
     }
@@ -279,7 +287,7 @@ class AssetDetail extends Component
     public function openMaintenanceModal(): void
     {
         $this->showMaintenanceModal = true;
-        $this->resetExcept('asset', 'activeTab', 'showTransferModal', 'showBorrowModal');
+        $this->resetExcept('asset', 'activeTab', 'showTransferModal', 'showBorrowModal', 'showRequestMaintenanceModal');
     }
 
     /**
@@ -290,6 +298,63 @@ class AssetDetail extends Component
         $this->showMaintenanceModal = false;
         $this->maintenanceReason = '';
         $this->maintenanceEstimatedDate = null;
+    }
+
+    /**
+     * Open quick maintenance request modal
+     */
+    public function openRequestMaintenanceModal(): void
+    {
+        $this->resetRequestMaintenanceForm();
+        $this->showRequestMaintenanceModal = true;
+    }
+
+    /**
+     * Close quick maintenance request modal
+     */
+    public function closeRequestMaintenanceModal(): void
+    {
+        $this->showRequestMaintenanceModal = false;
+        $this->resetRequestMaintenanceForm();
+    }
+
+    /**
+     * Reset maintenance request form
+     */
+    public function resetRequestMaintenanceForm(): void
+    {
+        $this->requestMaintenanceDescription = '';
+        $this->resetValidation();
+    }
+
+    /**
+     * Submit quick maintenance request for current asset
+     */
+    public function submitRequestMaintenance(): void
+    {
+        $validated = $this->validate();
+
+        try {
+            $user = Auth::user();
+
+            if (!$user) {
+                $this->dispatch('notify', 'error', 'You must be logged in to request maintenance.');
+                return;
+            }
+
+            MaintenanceRequest::create([
+                'asset_id' => $this->asset->id,
+                'requested_by' => $user->id,
+                'request_date' => now()->toDateString(),
+                'issue_description' => $validated['requestMaintenanceDescription'],
+                'status' => 'diajukan',
+            ]);
+
+            $this->dispatch('notify', 'Maintenance request submitted successfully.');
+            $this->closeRequestMaintenanceModal();
+        } catch (\Exception $e) {
+            $this->dispatch('notify', 'error', 'Error creating maintenance request: ' . $e->getMessage());
+        }
     }
 
     /**

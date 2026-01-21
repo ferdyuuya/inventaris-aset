@@ -13,8 +13,8 @@
 
     <flux:separator />
 
-    {{-- Search Bar --}}
-    <div class="flex flex-col gap-4 lg:flex-row lg:items-center">
+    {{-- Search Bar and Create Button --}}
+    <div class="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
         <div class="flex-1 max-w-md">
             <flux:input
                 wire:model.live="search"
@@ -25,6 +25,18 @@
                 class="text-gray-900 dark:text-white"
             />
         </div>
+
+        {{-- Create Request Button --}}
+        <flux:modal.trigger name="create-request-modal">
+            <flux:button
+                variant="filled"
+                color="blue"
+                icon="plus"
+                class="w-full lg:w-auto"
+            >
+                Create Request
+            </flux:button>
+        </flux:modal.trigger>
     </div>
 
     <flux:separator />
@@ -128,7 +140,7 @@
     {{-- ============================================== --}}
     {{-- VIEW REQUEST MODAL --}}
     {{-- ============================================== --}}
-    <flux:modal name="view-request-modal" :show="$showViewModal" wire:close="closeModals">
+    <flux:modal wire:model.defer="showViewModal">
         <div class="space-y-6">
             <div>
                 <flux:heading size="lg">Maintenance Request Details</flux:heading>
@@ -209,7 +221,7 @@
     {{-- ============================================== --}}
     {{-- APPROVE REQUEST MODAL --}}
     {{-- ============================================== --}}
-    <flux:modal name="approve-request-modal" :show="$showApproveModal" wire:close="closeModals">
+    <flux:modal wire:model.defer="showApproveModal">
         <div class="space-y-6">
             <div>
                 <flux:heading size="lg">Approve Maintenance Request?</flux:heading>
@@ -234,7 +246,7 @@
                 <flux:button
                     variant="filled"
                     color="blue"
-                    wire:click="approveRequest"
+                    wire:click="approveRequest({{ $selectedRequest?->id }})"
                 >
                     Approve Request
                 </flux:button>
@@ -245,7 +257,7 @@
     {{-- ============================================== --}}
     {{-- REJECT REQUEST MODAL --}}
     {{-- ============================================== --}}
-    <flux:modal name="reject-request-modal" :show="$showRejectModal" wire:close="closeModals">
+    <flux:modal wire:model.defer="showRejectModal">
         <div class="space-y-6">
             <div>
                 <flux:heading size="lg">Reject Maintenance Request?</flux:heading>
@@ -270,9 +282,73 @@
                 <flux:button
                     variant="filled"
                     color="red"
-                    wire:click="rejectRequest"
+                    wire:click="rejectRequest({{ $selectedRequest?->id }})"
                 >
                     Reject Request
+                </flux:button>
+            </div>
+        </div>
+    </flux:modal>
+
+    {{-- ============================================== --}}
+    {{-- CREATE MAINTENANCE REQUEST MODAL --}}
+    {{-- ============================================== --}}
+    <flux:modal name="create-request-modal" class="md:w-full md:max-w-md" @close="$wire.closeModals()">
+        <div class="space-y-6">
+            <div>
+                <flux:heading size="lg">Create Maintenance Request</flux:heading>
+                <flux:text class="mt-2">Submit a new maintenance request for an asset</flux:text>
+            </div>
+
+            <div class="space-y-4">
+                {{-- Asset Select --}}
+                <div>
+                    <flux:label for="createAssetId">Select Asset</flux:label>
+                    <flux:select
+                        id="createAssetId"
+                        wire:model="createAssetId"
+                        placeholder="Choose an asset..."
+                        class="mt-2"
+                    >
+                        @foreach($availableAssets as $asset)
+                            <option value="{{ $asset->id }}">
+                                {{ $asset->asset_code }} - {{ $asset->name }}
+                            </option>
+                        @endforeach
+                    </flux:select>
+                    @error('createAssetId')
+                        <flux:error class="mt-1">{{ $message }}</flux:error>
+                    @enderror
+                </div>
+
+                {{-- Description --}}
+                <div>
+                    <flux:label for="createDescription">Issue Description</flux:label>
+                    <flux:textarea
+                        id="createDescription"
+                        wire:model="createDescription"
+                        placeholder="Describe the issue or reason for maintenance..."
+                        rows="4"
+                        class="mt-2"
+                    />
+                    @error('createDescription')
+                        <flux:error class="mt-1">{{ $message }}</flux:error>
+                    @enderror
+                </div>
+            </div>
+
+            <div class="flex justify-end gap-3">
+                <flux:modal.close>
+                    <flux:button variant="ghost">
+                        Cancel
+                    </flux:button>
+                </flux:modal.close>
+                <flux:button
+                    variant="filled"
+                    color="blue"
+                    wire:click="submitCreateMaintenance"
+                >
+                    Submit Request
                 </flux:button>
             </div>
         </div>

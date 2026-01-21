@@ -3,6 +3,8 @@
 namespace App\Livewire\Maintenance;
 
 use App\Models\AssetMaintenance;
+use App\Services\Maintenance\MaintenanceWorkflowService;
+use Illuminate\Support\Facades\Auth;
 use Livewire\Component;
 use Livewire\WithPagination;
 use Livewire\Attributes\Computed;
@@ -76,42 +78,41 @@ class AssetMaintenancesManager extends Component
 
     /**
      * Mark maintenance as completed
-     * - Sets completed_date
-     * - Updates maintenance status to selesai
-     * - Updates related maintenance request status to selesai
-     * - Updates asset status back to available
+     * 
+     * Delegates business logic to MaintenanceWorkflowService.
+     * This method is UI-only: validation, service call, error handling, feedback.
+     * All state transitions (maintenance, request, asset) handled by service atomically.
      */
     public function completeMaintenance(): void
     {
-        if (!$this->selectedMaintenance || $this->selectedMaintenance->status !== 'dalam_proses') {
-            $this->dispatch('notify', type: 'error', message: 'Invalid maintenance state.');
-            $this->closeModals();
-            return;
-        }
-
         try {
-            $maintenance = $this->selectedMaintenance;
-
-            // Update maintenance record
-            $maintenance->update([
-                'completed_date' => now()->toDateString(),
-                'status' => 'selesai',
-            ]);
-
-            // Update related maintenance request status
-            if ($maintenance->maintenanceRequest) {
-                $maintenance->maintenanceRequest->update(['status' => 'selesai']);
+            if (!$this->selectedMaintenance || $this->selectedMaintenance->status !== 'dalam_proses') {
+                $this->dispatch('notify', type: 'error', message: 'Invalid maintenance state.');
+                $this->closeModals();
+                return;
             }
 
-            // Update asset status back to available
-            if ($maintenance->asset) {
-                $maintenance->asset->update(['status' => 'available']);
+            // Reload to ensure fresh data
+            $maintenance = AssetMaintenance::with('asset', 'maintenanceRequest')
+                ->findOrFail($this->selectedMaintenance->id);
+
+            // Validate state
+            if ($maintenance->status !== 'dalam_proses') {
+                $this->dispatch('notify', type: 'error', message: 'Only in-progress maintenance can be completed.');
+                $this->closeModals();
+                return;
             }
 
-            $this->dispatch('notify', type: 'success', message: 'Maintenance marked as completed.');
+            // Delegate to service (handles all updates atomically)
+            $service = new MaintenanceWorkflowService();
+            $completed = $service->completeMaintenance($maintenance, Auth::user());
+
+            $this->dispatch('notify', type: 'success', message: 'Maintenance completed. Asset restored to active.');
             $this->closeModals();
         } catch (\Exception $e) {
+            // Service exceptions have context; show user-friendly message
             $this->dispatch('notify', type: 'error', message: 'Error completing maintenance: ' . $e->getMessage());
+            report($e);
         }
     }
 

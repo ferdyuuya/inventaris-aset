@@ -4,9 +4,13 @@ namespace App\Livewire\Maintenance;
 
 use App\Models\MaintenanceRequest;
 use App\Models\Asset;
+use App\Models\AssetMaintenance;
+use App\Services\Maintenance\MaintenanceWorkflowService;
+use Illuminate\Support\Facades\Auth;
 use Livewire\Component;
 use Livewire\WithPagination;
 use Livewire\Attributes\Computed;
+use Livewire\Attributes\Validate;
 
 class MaintenanceRequestsManager extends Component
 {
@@ -21,6 +25,13 @@ class MaintenanceRequestsManager extends Component
     public bool $showRejectModal = false;
     public ?MaintenanceRequest $selectedRequest = null;
     public string $rejectReason = '';
+
+    // Create maintenance request form
+    #[Validate('required|integer|exists:assets,id')]
+    public ?int $createAssetId = null;
+
+    #[Validate('required|string|min:5|max:500')]
+    public string $createDescription = '';
 
     /**
      * Get all maintenance requests with default ordering
@@ -74,44 +85,36 @@ class MaintenanceRequestsManager extends Component
 
     /**
      * Approve a maintenance request
-     * - Updates status to disetujui
-     * - Auto-generates asset maintenance record
+     * 
+     * Delegates business logic to MaintenanceWorkflowService.
+     * This method is UI-only: validation, service call, error handling, feedback.
+     * All state transitions handled by service in atomic transaction.
      */
-    public function approveRequest(): void
+    public function approveRequest($requestId): void
     {
-        if (!$this->selectedRequest || $this->selectedRequest->status !== 'diajukan') {
-            $this->dispatch('notify', type: 'error', message: 'Invalid request state.');
-            $this->closeModals();
-            return;
-        }
-
         try {
-            $request = $this->selectedRequest;
+            $request = MaintenanceRequest::with('asset')->findOrFail($requestId);
 
-            // Update request status
-            $request->update([
-                'status' => 'disetujui',
-                'approved_by' => auth()->id(),
-            ]);
+            // Validate request status for user feedback
+            if ($request->status !== 'diajukan') {
+                $this->dispatch('notify', type: 'error', message: 'Only pending requests can be approved.');
+                $this->closeModals();
+                return;
+            }
 
-            // Auto-generate asset maintenance record
-            \App\Models\AssetMaintenance::create([
-                'asset_id' => $request->asset_id,
-                'maintenance_request_id' => $request->id,
-                'maintenance_date' => $request->request_date,
-                'estimated_completion_date' => $request->request_date->addDays(7),
-                'description' => $request->issue_description,
-                'status' => 'dalam_proses',
-                'created_by' => auth()->id(),
-            ]);
+            // Delegate to service (handles transaction, all updates, atomicity)
+            $service = new MaintenanceWorkflowService();
+            $maintenance = $service->approveRequest($request, Auth::user());
 
-            // Update asset status to dipelihara
-            $request->asset->update(['status' => 'dipelihara']);
-
-            $this->dispatch('notify', type: 'success', message: 'Maintenance request approved and maintenance record created.');
+            $this->dispatch('notify', 
+                type: 'success', 
+                message: 'Maintenance request approved. Asset maintenance record created.'
+            );
             $this->closeModals();
         } catch (\Exception $e) {
+            // Service exceptions have context; show user-friendly message
             $this->dispatch('notify', type: 'error', message: 'Error approving request: ' . $e->getMessage());
+            report($e);
         }
     }
 
@@ -135,18 +138,20 @@ class MaintenanceRequestsManager extends Component
      * - Updates status to ditolak
      * - Does NOT create asset maintenance
      */
-    public function rejectRequest(): void
+    public function rejectRequest($requestId): void
     {
-        if (!$this->selectedRequest || $this->selectedRequest->status !== 'diajukan') {
-            $this->dispatch('notify', type: 'error', message: 'Invalid request state.');
+        $request = MaintenanceRequest::findOrFail($requestId);
+
+        if ($request->status !== 'diajukan') {
+            $this->dispatch('notify', type: 'error', message: 'Only pending requests can be rejected.');
             $this->closeModals();
             return;
         }
 
         try {
-            $this->selectedRequest->update([
+            $request->update([
                 'status' => 'ditolak',
-                'approved_by' => auth()->id(),
+                'approved_by' => Auth::user()->id,
             ]);
 
             $this->dispatch('notify', type: 'success', message: 'Maintenance request rejected.');
@@ -164,14 +169,68 @@ class MaintenanceRequestsManager extends Component
         $this->showViewModal = false;
         $this->showApproveModal = false;
         $this->showRejectModal = false;
-        $this->selectedRequest = null;
         $this->rejectReason = '';
+        $this->resetCreateForm();
+    }
+
+    /**
+     * Reset create maintenance request form
+     */
+    public function resetCreateForm(): void
+    {
+        $this->createAssetId = null;
+        $this->createDescription = '';
+        $this->resetValidation();
+    }
+
+    /**
+     * Submit create maintenance request form
+     */
+    public function submitCreateMaintenance(): void
+    {
+        $validated = $this->validate();
+
+        try {
+            $user = Auth::user();
+
+            if (!$user) {
+                $this->dispatch('notify', type: 'error', message: 'You must be logged in to create a maintenance request.');
+                return;
+            }
+
+            MaintenanceRequest::create([
+                'asset_id' => $validated['createAssetId'],
+                'requested_by' => $user->id,
+                'request_date' => now()->toDateString(),
+                'issue_description' => $validated['createDescription'],
+                'status' => 'diajukan',
+            ]);
+
+            $this->dispatch('notify', type: 'success', message: 'Maintenance request submitted successfully.');
+            $this->closeModals();
+            $this->resetPage();
+        } catch (\Exception $e) {
+            $this->dispatch('notify', type: 'error', message: 'Error creating maintenance request: ' . $e->getMessage());
+        }
+    }
+
+    /**
+     * Get all available assets for dropdown
+     */
+    #[Computed]
+    public function availableAssets()
+    {
+        return Asset::query()
+            ->where('status', 'available')
+            ->orderBy('asset_code', 'asc')
+            ->get(['id', 'asset_code', 'name']);
     }
 
     public function render()
     {
         return view('livewire.maintenance.maintenance-requests-manager', [
             'requests' => $this->requests,
+            'availableAssets' => $this->availableAssets,
         ]);
     }
 }
