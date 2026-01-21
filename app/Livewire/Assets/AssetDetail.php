@@ -17,6 +17,7 @@ use App\Services\AssetLocationService;
 use App\Services\AssetBorrowingService;
 use BaconQrCode\Renderer\GDLibRenderer;
 use App\Services\AssetMaintenanceService;
+use App\Services\AssetDisposalService;
 use Illuminate\Support\Facades\Log;
 
 class AssetDetail extends Component
@@ -28,6 +29,7 @@ class AssetDetail extends Component
     public bool $showBorrowModal = false;
     public bool $showMaintenanceModal = false;
     public bool $showRequestMaintenanceModal = false;
+    public bool $showDisposeModal = false;
 
     // Transfer Location form
     public ?int $transferLocationId = null;
@@ -45,6 +47,10 @@ class AssetDetail extends Component
     // Quick Maintenance Request form
     #[Validate('required|string|min:5|max:500')]
     public string $requestMaintenanceDescription = '';
+
+    // Dispose Asset form
+    #[Validate('required|string|min:5|max:500')]
+    public string $disposeReason = '';
 
     // QR Code
     public ?string $qrCodeBase64 = null;
@@ -401,6 +407,87 @@ class AssetDetail extends Component
         }
     }
 
+    /**
+     * Open dispose asset modal
+     */
+    public function openDisposeModal(): void
+    {
+        // Check if asset can be disposed
+        $check = app(AssetDisposalService::class)->canDispose($this->asset);
+        
+        if (!$check['can_dispose']) {
+            $this->dispatch('notify', type: 'error', message: $check['reason']);
+            return;
+        }
+
+        $this->disposeReason = '';
+        $this->showDisposeModal = true;
+    }
+
+    /**
+     * Close dispose asset modal
+     */
+    public function closeDisposeModal(): void
+    {
+        $this->showDisposeModal = false;
+        $this->disposeReason = '';
+        $this->resetValidation('disposeReason');
+    }
+
+    /**
+     * Submit asset disposal
+     * 
+     * Delegates business logic to AssetDisposalService.
+     * This method is UI-only: validation, service call, error handling, feedback.
+     * All state transitions handled by service atomically.
+     */
+    public function submitDispose(): void
+    {
+        $this->validate([
+            'disposeReason' => 'required|string|min:5|max:500',
+        ]);
+
+        try {
+            $user = Auth::user();
+
+            if (!$user) {
+                $this->dispatch('notify', type: 'error', message: 'You must be logged in to dispose assets.');
+                return;
+            }
+
+            // Delegate to service (handles all updates atomically)
+            app(AssetDisposalService::class)->dispose(
+                $this->asset,
+                $user,
+                $this->disposeReason
+            );
+
+            $this->asset->refresh();
+            $this->dispatch('notify', type: 'success', message: 'Asset disposed successfully. This action is irreversible.');
+            $this->closeDisposeModal();
+        } catch (\Exception $e) {
+            $this->dispatch('notify', type: 'error', message: 'Disposal failed: ' . $e->getMessage());
+        }
+    }
+
+    /**
+     * Check if asset can be disposed (for UI visibility)
+     */
+    #[Computed]
+    public function canDispose(): bool
+    {
+        return $this->asset->canBeDisposed();
+    }
+
+    /**
+     * Get disposal record if asset is disposed
+     */
+    #[Computed]
+    public function disposalRecord()
+    {
+        return app(AssetDisposalService::class)->getDisposalRecord($this->asset);
+    }
+
     public function render()
     {
         return view('livewire.assets.asset-detail', [
@@ -413,6 +500,8 @@ class AssetDetail extends Component
             'employees' => $this->employees,
             'locations' => $this->locations,
             'qrCodeBase64' => $this->qrCodeBase64,
+            'canDispose' => $this->canDispose,
+            'disposalRecord' => $this->disposalRecord,
         ]);
     }
 }

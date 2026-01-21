@@ -21,12 +21,14 @@ class Asset extends Model
         'condition',
         'is_available',
         'status',
+        'disposed_at',
     ];
 
     protected $casts = [
         'purchase_date' => 'date',
         'purchase_price' => 'decimal:0',
         'is_available' => 'boolean',
+        'disposed_at' => 'datetime',
     ];
 
     /**
@@ -86,6 +88,52 @@ class Asset extends Model
     }
 
     /**
+     * Get the disposal record for this asset (if disposed).
+     */
+    public function disposal()
+    {
+        return $this->hasOne(AssetDisposal::class, 'asset_id');
+    }
+
+    /**
+     * Check if asset is disposed.
+     */
+    public function isDisposed(): bool
+    {
+        return $this->status === 'dihapuskan';
+    }
+
+    /**
+     * Check if asset is currently borrowed.
+     */
+    public function isBorrowed(): bool
+    {
+        return $this->status === 'dipinjam';
+    }
+
+    /**
+     * Check if asset is under active maintenance.
+     */
+    public function isUnderMaintenance(): bool
+    {
+        return $this->status === 'dipelihara';
+    }
+
+    /**
+     * Check if asset can be disposed.
+     * Asset can be disposed only if:
+     * - Not already disposed
+     * - Not currently borrowed
+     * - Not under active maintenance
+     */
+    public function canBeDisposed(): bool
+    {
+        return !$this->isDisposed() 
+            && !$this->isBorrowed() 
+            && !$this->isUnderMaintenance();
+    }
+
+    /**
      * Get the current active loan if any.
      */
     public function activeLoan()
@@ -121,7 +169,24 @@ class Asset extends Model
      */
     public function scopeActive($query)
     {
-        return $query->where('status', '!=', 'nonaktif');
+        return $query->where('status', '!=', 'nonaktif')
+            ->where('status', '!=', 'dihapuskan');
+    }
+
+    /**
+     * Scope to exclude disposed assets (default for most queries).
+     */
+    public function scopeNotDisposed($query)
+    {
+        return $query->where('status', '!=', 'dihapuskan');
+    }
+
+    /**
+     * Scope to get only disposed assets.
+     */
+    public function scopeDisposed($query)
+    {
+        return $query->where('status', 'dihapuskan');
     }
 
     /**
