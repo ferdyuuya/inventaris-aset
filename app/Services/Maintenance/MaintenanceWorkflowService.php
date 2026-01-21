@@ -146,7 +146,7 @@ class MaintenanceWorkflowService
                     $maintenance->asset->update([
                         'status' => 'aktif',           // Back to active (valid status)
                         'is_available' => true,        // Available for use
-                        'condition' => 'good',         // Reset to good condition
+                        'condition' => 'baik',         // Reset to good condition
                     ]);
                 }
 
@@ -155,6 +155,91 @@ class MaintenanceWorkflowService
         } catch (Exception $e) {
             // Re-throw with context for Livewire to handle
             throw new Exception("Failed to complete maintenance: {$e->getMessage()}", 0, $e);
+        }
+    }
+
+    /**
+     * Cancel an in-progress maintenance
+     * 
+     * ATOMIC OPERATION:
+     * 1. Validate maintenance is NOT already completed or cancelled
+     * 2. Update maintenance record: status → 'dibatalkan'
+     * 3. Update related maintenance request: status → 'dibatalkan'
+     * 4. Update asset:
+     *    - status → 'aktif' (back to active)
+     *    - is_available → true (available for use)
+     *    - condition → unchanged (do NOT reset condition on cancellation)
+     * 
+     * @param AssetMaintenance $maintenance The maintenance to cancel
+     * @param User $admin The admin cancelling the maintenance
+     * @param string|null $reason Optional reason for cancellation
+     * 
+     * @return AssetMaintenance The cancelled maintenance record
+     * 
+     * @throws Exception If maintenance is already completed/cancelled or any operation fails
+     */
+    public function cancelMaintenance(AssetMaintenance $maintenance, User $admin, ?string $reason = null): AssetMaintenance
+    {
+        // Validation: Only in-progress maintenance can be cancelled
+        if ($maintenance->status === 'selesai') {
+            throw new Exception(
+                "Cannot cancel maintenance. Status is 'selesai' (completed). Completed maintenance cannot be cancelled."
+            );
+        }
+
+        if ($maintenance->status === 'dibatalkan') {
+            throw new Exception(
+                "Cannot cancel maintenance. Status is already 'dibatalkan' (cancelled)."
+            );
+        }
+
+        // Ensure relationships are loaded
+        if (!$maintenance->asset) {
+            $maintenance->load('asset');
+        }
+        if (!$maintenance->maintenanceRequest) {
+            $maintenance->load('maintenanceRequest');
+        }
+
+        // Atomic transaction: All operations must succeed or all rollback
+        try {
+            return DB::transaction(function () use ($maintenance, $admin, $reason): AssetMaintenance {
+                // STEP 1: Mark maintenance as cancelled
+                $updateData = [
+                    'status' => 'dibatalkan',
+                ];
+                
+                // If reason provided and description column can hold it, append to description
+                if ($reason) {
+                    $updateData['description'] = $maintenance->description 
+                        ? $maintenance->description . "\n\n[CANCELLED] " . $reason
+                        : "[CANCELLED] " . $reason;
+                }
+                
+                $maintenance->update($updateData);
+
+                // STEP 2: Mark related maintenance request as rejected/cancelled
+                // Note: maintenance_requests uses 'ditolak' (rejected) as the cancelled status
+                if ($maintenance->maintenanceRequest) {
+                    $maintenance->maintenanceRequest->update([
+                        'status' => 'ditolak',
+                    ]);
+                }
+
+                // STEP 3: Restore asset to active state WITHOUT changing condition
+                if ($maintenance->asset) {
+                    $maintenance->asset->update([
+                        'status' => 'aktif',           // Back to active
+                        'is_available' => true,        // Available for use
+                        // condition is NOT changed - remains as-is
+                    ]);
+                }
+
+                return $maintenance;
+            });
+        } catch (Exception $e) {
+            // Re-throw with context for Livewire to handle
+            throw new Exception("Failed to cancel maintenance: {$e->getMessage()}", 0, $e);
         }
     }
 }

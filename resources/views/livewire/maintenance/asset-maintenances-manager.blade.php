@@ -160,6 +160,15 @@
                                         icon="check"
                                         class="text-green-600 dark:text-green-400"
                                         wire:click="openCompleteModal({{ $maintenance->id }})"
+                                        title="Complete Maintenance"
+                                    />
+                                    <flux:button
+                                        size="sm"
+                                        variant="ghost"
+                                        icon="x-mark"
+                                        class="text-red-600 dark:text-red-400"
+                                        wire:click="openCancelModal({{ $maintenance->id }})"
+                                        title="Cancel Maintenance"
                                     />
                                 @endif
                             </div>
@@ -185,7 +194,7 @@
     {{-- ============================================== --}}
     {{-- VIEW MAINTENANCE MODAL --}}
     {{-- ============================================== --}}
-    <flux:modal name="view-maintenance-modal" :show="$showViewModal" wire:close="closeModals">
+    <flux:modal wire:model.defer="showViewModal">
         <div class="space-y-6">
             <div>
                 <flux:heading size="lg">Maintenance Record Details</flux:heading>
@@ -281,7 +290,7 @@
     {{-- ============================================== --}}
     {{-- COMPLETE MAINTENANCE MODAL --}}
     {{-- ============================================== --}}
-    <flux:modal name="complete-maintenance-modal" :show="$showCompleteModal" wire:close="closeModals">
+    <flux:modal wire:model.defer="showCompleteModal">
         <div class="space-y-6">
             <div>
                 <flux:heading size="lg">Mark Maintenance as Completed?</flux:heading>
@@ -309,6 +318,53 @@
                     wire:click="completeMaintenance"
                 >
                     Mark as Completed
+                </flux:button>
+            </div>
+        </div>
+    </flux:modal>
+
+    {{-- ============================================== --}}
+    {{-- CANCEL MAINTENANCE MODAL --}}
+    {{-- ============================================== --}}
+    <flux:modal wire:model.defer="showCancelModal">
+        <div class="space-y-6">
+            <div>
+                <flux:heading size="lg">Cancel Maintenance?</flux:heading>
+                <flux:text class="mt-2">Are you sure you want to cancel this maintenance? This action cannot be undone.</flux:text>
+            </div>
+
+            @if($selectedMaintenance)
+                <div class="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-4">
+                    <p class="text-sm text-red-900 dark:text-red-100">
+                        <strong>{{ $selectedMaintenance->asset->asset_code ?? 'N/A' }}</strong> - {{ $selectedMaintenance->asset->name ?? 'Unknown Asset' }}
+                    </p>
+                    <p class="text-sm text-red-700 dark:text-red-200 mt-1">
+                        The asset will be restored to "Active" status. Condition will remain unchanged.
+                    </p>
+                </div>
+
+                <div>
+                    <flux:label for="cancelReason">Reason for Cancellation (Optional)</flux:label>
+                    <flux:textarea
+                        wire:model="cancelReason"
+                        id="cancelReason"
+                        rows="3"
+                        placeholder="Enter reason for cancelling this maintenance..."
+                        class="mt-1"
+                    />
+                </div>
+            @endif
+
+            <div class="flex justify-end gap-3">
+                <flux:button variant="ghost" wire:click="closeModals">
+                    Close
+                </flux:button>
+                <flux:button
+                    variant="filled"
+                    color="red"
+                    wire:click="cancelMaintenance"
+                >
+                    Confirm Cancellation
                 </flux:button>
             </div>
         </div>

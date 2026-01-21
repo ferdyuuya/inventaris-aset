@@ -20,7 +20,9 @@ class AssetMaintenancesManager extends Component
     // Modal states
     public bool $showViewModal = false;
     public bool $showCompleteModal = false;
+    public bool $showCancelModal = false;
     public ?AssetMaintenance $selectedMaintenance = null;
+    public string $cancelReason = '';
 
     /**
      * Get all asset maintenance records
@@ -123,7 +125,76 @@ class AssetMaintenancesManager extends Component
     {
         $this->showViewModal = false;
         $this->showCompleteModal = false;
+        $this->showCancelModal = false;
         $this->selectedMaintenance = null;
+        $this->cancelReason = '';
+    }
+
+    /**
+     * Open cancel modal
+     */
+    public function openCancelModal(AssetMaintenance $maintenance): void
+    {
+        // Can only cancel if NOT completed and NOT already cancelled
+        if ($maintenance->status === 'selesai') {
+            $this->dispatch('notify', type: 'error', message: 'Completed maintenance cannot be cancelled.');
+            return;
+        }
+
+        if ($maintenance->status === 'dibatalkan') {
+            $this->dispatch('notify', type: 'error', message: 'This maintenance is already cancelled.');
+            return;
+        }
+
+        $this->selectedMaintenance = $maintenance->load('asset', 'maintenanceRequest');
+        $this->cancelReason = '';
+        $this->showCancelModal = true;
+    }
+
+    /**
+     * Cancel maintenance
+     * 
+     * Delegates business logic to MaintenanceWorkflowService.
+     * This method is UI-only: validation, service call, error handling, feedback.
+     * All state transitions (maintenance, request, asset) handled by service atomically.
+     */
+    public function cancelMaintenance(): void
+    {
+        try {
+            if (!$this->selectedMaintenance) {
+                $this->dispatch('notify', type: 'error', message: 'No maintenance selected.');
+                $this->closeModals();
+                return;
+            }
+
+            // Reload to ensure fresh data
+            $maintenance = AssetMaintenance::with('asset', 'maintenanceRequest')
+                ->findOrFail($this->selectedMaintenance->id);
+
+            // Validate state - cannot cancel completed or already cancelled
+            if ($maintenance->status === 'selesai') {
+                $this->dispatch('notify', type: 'error', message: 'Completed maintenance cannot be cancelled.');
+                $this->closeModals();
+                return;
+            }
+
+            if ($maintenance->status === 'dibatalkan') {
+                $this->dispatch('notify', type: 'error', message: 'This maintenance is already cancelled.');
+                $this->closeModals();
+                return;
+            }
+
+            // Delegate to service (handles all updates atomically)
+            $service = new MaintenanceWorkflowService();
+            $cancelled = $service->cancelMaintenance($maintenance, Auth::user(), $this->cancelReason ?: null);
+
+            $this->dispatch('notify', type: 'success', message: 'Maintenance cancelled. Asset restored to active.');
+            $this->closeModals();
+        } catch (\Exception $e) {
+            // Service exceptions have context; show user-friendly message
+            $this->dispatch('notify', type: 'error', message: 'Error cancelling maintenance: ' . $e->getMessage());
+            report($e);
+        }
     }
 
     public function render()
