@@ -44,7 +44,7 @@
 
                 {{-- Procurement Management --}}
                 <flux:sidebar.group :heading="__('Procurements')" class="grid">
-                    <flux:sidebar.item icon="folder" :href="route('procurements')" :current="request()->routeIs('procurements')" wire:navigate>
+                    <flux:sidebar.item icon="shopping-cart" :href="route('procurements')" :current="request()->routeIs('procurements*')" wire:navigate>
                         {{ __('Procurements') }}
                     </flux:sidebar.item>
                 </flux:sidebar.group>

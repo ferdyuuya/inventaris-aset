@@ -4,9 +4,7 @@
         <div class="rounded-md bg-green-50 p-4 dark:bg-green-900/50">
             <div class="flex">
                 <div class="flex-shrink-0">
-                    <svg class="h-5 w-5 text-green-400" viewBox="0 0 20 20" fill="currentColor">
-                        <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />
-                    </svg>
+                    <flux:icon.check-circle class="h-5 w-5 text-green-400" />
                 </div>
                 <div class="ml-3">
                     <p class="text-sm font-medium text-green-800 dark:text-green-200">
@@ -21,9 +19,7 @@
         <div class="rounded-md bg-red-50 p-4 dark:bg-red-900/50">
             <div class="flex">
                 <div class="flex-shrink-0">
-                    <svg class="h-5 w-5 text-red-400" viewBox="0 0 20 20" fill="currentColor">
-                        <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd" />
-                    </svg>
+                    <flux:icon.x-circle class="h-5 w-5 text-red-400" />
                 </div>
                 <div class="ml-3">
                     <p class="text-sm font-medium text-red-800 dark:text-red-200">
@@ -34,104 +30,142 @@
         </div>
     @endif
 
-    {{-- Edit Button --}}
-    <div class="flex justify-end mb-4">
+    {{-- Header --}}
+    <div class="flex items-center justify-between">
+        <div>
+            <flux:heading size="xl" class="text-gray-900 dark:text-white">{{ $procurement->name }}</flux:heading>
+            <flux:subheading class="text-gray-600 dark:text-gray-400 mt-2">
+                @if($procurement->invoice_number)
+                    Invoice: {{ $procurement->invoice_number }} •
+                @endif
+                Created {{ $procurement->created_at->format('d M Y') }}
+            </flux:subheading>
+        </div>
         <flux:button variant="primary" wire:click="openEditModal" icon="pencil">
             Edit Procurement
         </flux:button>
     </div>
 
-    {{-- Procurement Information Card --}}
-    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-        {{-- Left Column --}}
-        <div class="space-y-4">
-            <div class="bg-white dark:bg-zinc-800 rounded-lg border border-gray-200 dark:border-gray-700 p-6 space-y-4">
-                <h2 class="text-lg font-semibold text-gray-900 dark:text-white">Procurement Information</h2>
+    <flux:separator />
 
+    <flux:separator />
+
+    {{-- Procurement Information Card --}}
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {{-- Left Column - Basic Information --}}
+        <div class="shadow-sm ring-1 ring-gray-200 dark:ring-gray-700 rounded-lg overflow-hidden bg-white dark:bg-zinc-800">
+            <div class="px-6 py-4 border-b border-gray-200 dark:border-gray-700">
+                <flux:heading size="lg">Procurement Information</flux:heading>
+            </div>
+            <div class="p-6 space-y-4">
                 <div>
-                    <label class="text-sm font-medium text-gray-700 dark:text-gray-300">Product Name</label>
-                    <p class="mt-1 text-gray-900 dark:text-white font-medium">{{ $procurement->name }}</p>
+                    <flux:text class="text-sm font-medium text-gray-500 dark:text-gray-400">Product Name</flux:text>
+                    <flux:text class="mt-1 text-gray-900 dark:text-white font-medium">{{ $procurement->name }}</flux:text>
                 </div>
 
                 <div>
-                    <label class="text-sm font-medium text-gray-700 dark:text-gray-300">Category</label>
+                    <flux:text class="text-sm font-medium text-gray-500 dark:text-gray-400">Category</flux:text>
                     <div class="mt-1">
-                        <flux:badge color="blue" inset="top bottom">
+                        <flux:badge color="blue" size="sm">
                             {{ $procurement->category->name }}
                         </flux:badge>
                     </div>
                 </div>
 
                 <div>
-                    <label class="text-sm font-medium text-gray-700 dark:text-gray-300">Supplier</label>
-                    <p class="mt-1 text-gray-900 dark:text-white">{{ $procurement->supplier->name }}</p>
+                    <flux:text class="text-sm font-medium text-gray-500 dark:text-gray-400">Supplier</flux:text>
+                    <flux:text class="mt-1 text-gray-900 dark:text-white">{{ $procurement->supplier->name }}</flux:text>
                 </div>
 
                 <div>
-                    <label class="text-sm font-medium text-gray-700 dark:text-gray-300">Location</label>
-                    <p class="mt-1 text-gray-900 dark:text-white">{{ $procurement->location->name }}</p>
+                    <flux:text class="text-sm font-medium text-gray-500 dark:text-gray-400">Location</flux:text>
+                    <div class="mt-1 flex items-center gap-1">
+                        <flux:icon.map-pin class="h-4 w-4 text-blue-500 dark:text-blue-400" />
+                        <flux:text class="text-gray-900 dark:text-white">{{ $procurement->location->name }}</flux:text>
+                    </div>
                 </div>
 
                 <div>
-                    <label class="text-sm font-medium text-gray-700 dark:text-gray-300">Procurement Date</label>
-                    <p class="mt-1 text-gray-900 dark:text-white">{{ $procurement->procurement_date->format('d F Y') }}</p>
+                    <flux:text class="text-sm font-medium text-gray-500 dark:text-gray-400">Procurement Date</flux:text>
+                    <div class="mt-1 flex items-center gap-1">
+                        <flux:icon.calendar class="h-4 w-4 text-gray-400" />
+                        <flux:text class="text-gray-900 dark:text-white">{{ $procurement->procurement_date->format('d F Y') }}</flux:text>
+                    </div>
                 </div>
 
                 <div>
-                    <label class="text-sm font-medium text-gray-700 dark:text-gray-300">Invoice Number</label>
-                    <p class="mt-1 text-gray-900 dark:text-white">{{ $procurement->invoice_number ?? '-' }}</p>
+                    <flux:text class="text-sm font-medium text-gray-500 dark:text-gray-400">Invoice Number</flux:text>
+                    <flux:text class="mt-1 text-gray-900 dark:text-white font-mono">{{ $procurement->invoice_number ?? '-' }}</flux:text>
+                </div>
+
+                <div>
+                    <flux:text class="text-sm font-medium text-gray-500 dark:text-gray-400">Created By</flux:text>
+                    <flux:text class="mt-1 text-gray-900 dark:text-white">{{ $procurement->creator->name ?? 'System' }}</flux:text>
                 </div>
             </div>
         </div>
 
-        {{-- Right Column --}}
-        <div class="space-y-4">
-            {{-- Pricing Card --}}
-            <div class="bg-white dark:bg-zinc-800 rounded-lg border border-gray-200 dark:border-gray-700 p-6 space-y-4">
-                <h2 class="text-lg font-semibold text-gray-900 dark:text-white">Pricing Information</h2>
-
+        {{-- Middle Column - Pricing Information --}}
+        <div class="shadow-sm ring-1 ring-gray-200 dark:ring-gray-700 rounded-lg overflow-hidden bg-white dark:bg-zinc-800">
+            <div class="px-6 py-4 border-b border-gray-200 dark:border-gray-700">
+                <flux:heading size="lg">Pricing Information</flux:heading>
+            </div>
+            <div class="p-6 space-y-4">
                 <div>
-                    <label class="text-sm font-medium text-gray-700 dark:text-gray-300">Quantity</label>
-                    <p class="mt-1 text-gray-900 dark:text-white font-medium text-lg">{{ $procurement->quantity }}</p>
+                    <flux:text class="text-sm font-medium text-gray-500 dark:text-gray-400">Quantity</flux:text>
+                    <div class="mt-1">
+                        <flux:badge color="zinc" size="lg" variant="soft">{{ $procurement->quantity }} units</flux:badge>
+                    </div>
                 </div>
 
                 <div>
-                    <label class="text-sm font-medium text-gray-700 dark:text-gray-300">Unit Price (Rp)</label>
-                    <p class="mt-1 text-gray-900 dark:text-white font-medium text-lg">
+                    <flux:text class="text-sm font-medium text-gray-500 dark:text-gray-400">Unit Price</flux:text>
+                    <flux:text class="mt-1 text-gray-900 dark:text-white font-medium text-lg">
                         Rp {{ number_format($procurement->unit_price, 0, ',', '.') }}
-                    </p>
+                    </flux:text>
                 </div>
 
-                <div class="border-t border-gray-200 dark:border-gray-700 pt-4">
-                    <label class="text-sm font-medium text-gray-700 dark:text-gray-300">Total Cost (Rp)</label>
-                    <p class="mt-1 text-gray-900 dark:text-white font-bold text-2xl text-blue-600 dark:text-blue-400">
+                <flux:separator />
+
+                <div class="pt-2">
+                    <flux:text class="text-sm font-medium text-gray-500 dark:text-gray-400">Total Cost</flux:text>
+                    <flux:text class="mt-1 text-2xl font-bold text-blue-600 dark:text-blue-400">
                         Rp {{ number_format($procurement->total_cost, 0, ',', '.') }}
-                    </p>
+                    </flux:text>
                 </div>
             </div>
+        </div>
 
-            {{-- Documents Card --}}
-            <div class="bg-white dark:bg-zinc-800 rounded-lg border border-gray-200 dark:border-gray-700 p-6 space-y-4">
-                <h2 class="text-lg font-semibold text-gray-900 dark:text-white">Documents</h2>
-
+        {{-- Right Column - Documents --}}
+        <div class="shadow-sm ring-1 ring-gray-200 dark:ring-gray-700 rounded-lg overflow-hidden bg-white dark:bg-zinc-800">
+            <div class="px-6 py-4 border-b border-gray-200 dark:border-gray-700">
+                <flux:heading size="lg">Documents</flux:heading>
+            </div>
+            <div class="p-6">
                 @if(count($documents) > 0)
-                    <div class="space-y-2">
+                    <div class="space-y-3">
                         @foreach($documents as $doc)
-                            <div class="flex items-center justify-between bg-gray-50 dark:bg-gray-700/50 p-3 rounded border border-gray-200 dark:border-gray-600">
-                                <div class="flex items-center gap-2">
-                                    <svg class="h-5 w-5 text-red-500" fill="currentColor" viewBox="0 0 20 20">
-                                        <path d="M4 3a2 2 0 012-2h5.5a1 1 0 01.82.4l2.5 3.25H14a2 2 0 012 2v6a2 2 0 01-2 2H6a2 2 0 01-2-2V3z" />
-                                    </svg>
-                                    <span class="text-sm text-gray-700 dark:text-gray-300">{{ basename($doc) }}</span>
+                            <div class="flex items-center justify-between bg-gray-50 dark:bg-gray-700/50 p-3 rounded-lg border border-gray-200 dark:border-gray-600">
+                                <div class="flex items-center gap-3">
+                                    <div class="flex-shrink-0">
+                                        <flux:icon.document-text class="h-6 w-6 text-red-500" />
+                                    </div>
+                                    <flux:text size="sm" class="text-gray-700 dark:text-gray-300 truncate max-w-[150px]">{{ basename($doc) }}</flux:text>
                                 </div>
-                                <a href="{{ Storage::disk('public')->url($doc) }}" target="_blank" class="text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 text-sm font-medium">
-                                    View
+                                <a href="{{ Storage::disk('public')->url($doc) }}" 
+                                   target="_blank" 
+                                   class="text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300"
+                                >
+                                    <flux:icon.arrow-top-right-on-square class="h-5 w-5" />
                                 </a>
                             </div>
                         @endforeach
                     </div>
                 @else
-                    <p class="text-gray-500 dark:text-gray-400 text-sm">No documents attached.</p>
+                    <div class="text-center py-6">
+                        <flux:icon.document class="h-10 w-10 text-gray-300 dark:text-gray-600 mx-auto mb-2" />
+                        <flux:text class="text-gray-500 dark:text-gray-400 text-sm">No documents attached</flux:text>
+                    </div>
                 @endif
             </div>
         </div>
@@ -291,64 +325,113 @@
     </flux:modal>
 
     {{-- Connected Assets Section --}}
+    <flux:separator />
+
     <div class="space-y-4">
-        <h2 class="text-2xl font-semibold text-gray-900 dark:text-white">Generated Assets ({{ count($procurement->assets) }})</h2>
+        <div class="flex items-center justify-between">
+            <div>
+                <flux:heading size="lg">Generated Assets</flux:heading>
+                <flux:subheading class="text-gray-600 dark:text-gray-400 mt-1">
+                    {{ count($procurement->assets) }} asset(s) generated from this procurement
+                </flux:subheading>
+            </div>
+        </div>
 
         @if(count($procurement->assets) > 0)
             <div class="overflow-x-auto">
-                <flux:table>
-                    <flux:table.columns>
-                        <flux:table.column class="w-12">#</flux:table.column>
-                        <flux:table.column>Asset Code</flux:table.column>
-                        <flux:table.column>Asset Name</flux:table.column>
-                        <flux:table.column>Category</flux:table.column>
-                        <flux:table.column>Location</flux:table.column>
-                        <flux:table.column>Status</flux:table.column>
-                        <flux:table.column>Purchase Price</flux:table.column>
-                        <flux:table.column>Actions</flux:table.column>
-                    </flux:table.columns>
+                <div class="shadow-sm ring-1 ring-gray-200 dark:ring-gray-700 rounded-lg overflow-hidden">
+                    <flux:table>
+                        <flux:table.columns>
+                            <flux:table.column class="w-12">#</flux:table.column>
+                            <flux:table.column>Asset Code</flux:table.column>
+                            <flux:table.column>Name</flux:table.column>
+                            <flux:table.column>Status</flux:table.column>
+                            <flux:table.column>Condition</flux:table.column>
+                            <flux:table.column>Location</flux:table.column>
+                            <flux:table.column>Created</flux:table.column>
+                            <flux:table.column>Actions</flux:table.column>
+                        </flux:table.columns>
 
-                    <flux:table.rows>
-                        @foreach($this->assets as $asset)
-                            <flux:table.row :key="$asset->id">
-                                <flux:table.cell>
-                                    <flux:text variant="subtle">{{ ($this->assets->currentPage() - 1) * $assetsPerPage + $loop->iteration }}</flux:text>
-                                </flux:table.cell>
-                                <flux:table.cell>
-                                    <flux:text variant="strong" class="font-mono">{{ $asset->asset_code }}</flux:text>
-                                </flux:table.cell>
-                                <flux:table.cell>
-                                    <flux:text>{{ $asset->name }}</flux:text>
-                                </flux:table.cell>
-                                <flux:table.cell>
-                                    <flux:badge color="blue" inset="top bottom">
-                                        {{ $asset->category->name }}
-                                    </flux:badge>
-                                </flux:table.cell>
-                                <flux:table.cell>
-                                    <flux:text>{{ $asset->location->name }}</flux:text>
-                                </flux:table.cell>
-                                <flux:table.cell>
-                                    @if($asset->status === 'aktif')
-                                        <flux:badge color="green" inset="top bottom">Active</flux:badge>
-                                    @elseif($asset->status === 'dipinjam')
-                                        <flux:badge color="yellow" inset="top bottom">On Loan</flux:badge>
-                                    @else
-                                        <flux:badge color="red" inset="top bottom">Inactive</flux:badge>
-                                    @endif
-                                </flux:table.cell>
-                                <flux:table.cell>
-                                    <flux:text>Rp {{ number_format($asset->purchase_price, 0, ',', '.') }}</flux:text>
-                                </flux:table.cell>
-                                <flux:table.cell>
-                                    <a href="" class="text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 text-sm font-medium">
-                                        View
-                                    </a>
-                                </flux:table.cell>
-                            </flux:table.row>
-                        @endforeach
-                    </flux:table.rows>
-                </flux:table>
+                        <flux:table.rows>
+                            @foreach($this->assets as $asset)
+                                <flux:table.row 
+                                    :key="$asset->id"
+                                    class="cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors"
+                                    wire:click="$dispatch('navigate', { url: '{{ route('assets.show', $asset) }}' })"
+                                >
+                                    <flux:table.cell>
+                                        <flux:text size="sm" variant="subtle">{{ ($this->assets->currentPage() - 1) * $assetsPerPage + $loop->iteration }}</flux:text>
+                                    </flux:table.cell>
+                                    <flux:table.cell>
+                                        <flux:text variant="strong" color="blue" class="font-mono">{{ $asset->asset_code }}</flux:text>
+                                    </flux:table.cell>
+                                    <flux:table.cell>
+                                        <flux:text variant="strong">{{ $asset->name }}</flux:text>
+                                    </flux:table.cell>
+                                    <flux:table.cell>
+                                        @switch($asset->status)
+                                            @case('aktif')
+                                                <flux:badge color="green" size="sm">
+                                                    <flux:icon.check-circle class="size-3 mr-1" />
+                                                    Active
+                                                </flux:badge>
+                                                @break
+                                            @case('dipinjam')
+                                                <flux:badge color="yellow" size="sm">
+                                                    <flux:icon.arrow-right-circle class="size-3 mr-1" />
+                                                    On Loan
+                                                </flux:badge>
+                                                @break
+                                            @case('dipelihara')
+                                                <flux:badge color="blue" size="sm">
+                                                    <flux:icon.wrench class="size-3 mr-1" />
+                                                    Maintenance
+                                                </flux:badge>
+                                                @break
+                                            @case('nonaktif')
+                                                <flux:badge color="red" size="sm">
+                                                    <flux:icon.x-circle class="size-3 mr-1" />
+                                                    Inactive
+                                                </flux:badge>
+                                                @break
+                                            @default
+                                                <flux:badge color="zinc" size="sm">{{ $asset->status }}</flux:badge>
+                                        @endswitch
+                                    </flux:table.cell>
+                                    <flux:table.cell>
+                                        @if($asset->condition === 'baik')
+                                            <flux:badge color="green" size="sm" variant="soft">Good</flux:badge>
+                                        @elseif($asset->condition === 'rusak_ringan')
+                                            <flux:badge color="yellow" size="sm" variant="soft">Minor Damage</flux:badge>
+                                        @elseif($asset->condition === 'rusak_berat')
+                                            <flux:badge color="red" size="sm" variant="soft">Major Damage</flux:badge>
+                                        @else
+                                            <flux:badge color="zinc" size="sm" variant="soft">{{ $asset->condition ?? '-' }}</flux:badge>
+                                        @endif
+                                    </flux:table.cell>
+                                    <flux:table.cell>
+                                        <div class="flex items-center gap-1">
+                                            <flux:icon.map-pin class="h-4 w-4 text-blue-500 dark:text-blue-400" />
+                                            <flux:text>{{ $asset->location->name ?? '-' }}</flux:text>
+                                        </div>
+                                    </flux:table.cell>
+                                    <flux:table.cell>
+                                        <flux:text variant="subtle" size="sm">{{ $asset->created_at->diffForHumans() }}</flux:text>
+                                    </flux:table.cell>
+                                    <flux:table.cell onclick="event.stopPropagation()">
+                                        <flux:button 
+                                            variant="ghost" 
+                                            size="sm" 
+                                            icon="eye"
+                                            href="{{ route('assets.show', $asset) }}"
+                                            wire:navigate
+                                        />
+                                    </flux:table.cell>
+                                </flux:table.row>
+                            @endforeach
+                        </flux:table.rows>
+                    </flux:table>
+                </div>
             </div>
 
             {{-- Pagination --}}
@@ -358,11 +441,10 @@
                 </div>
             @endif
         @else
-            <div class="bg-white dark:bg-zinc-800 rounded-lg border border-gray-200 dark:border-gray-700 p-8 text-center">
-                <svg class="h-12 w-12 text-gray-400 dark:text-gray-600 mx-auto mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4" />
-                </svg>
-                <p class="text-gray-600 dark:text-gray-400">No assets generated from this procurement yet.</p>
+            <div class="shadow-sm ring-1 ring-gray-200 dark:ring-gray-700 rounded-lg overflow-hidden bg-white dark:bg-zinc-800 p-12 text-center">
+                <flux:icon.cube class="h-12 w-12 text-gray-300 dark:text-gray-600 mx-auto mb-3" />
+                <flux:heading size="lg" class="text-zinc-600 dark:text-zinc-400">No assets generated</flux:heading>
+                <flux:text class="mt-2 text-zinc-500">Assets will appear here once they are generated from this procurement.</flux:text>
             </div>
         @endif
     </div>
