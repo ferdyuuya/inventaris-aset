@@ -64,7 +64,7 @@ Route::get('/procurements/{id}', function ($id) {
 // ASSET MANAGEMENT ROUTES
 // Assets are generated from procurement records.
 // Users cannot manually create, edit, or delete assets.
-// ============================================================
+    // ============================================================
 
 Route::middleware(['auth', 'verified'])->prefix('assets')->name('assets.')->group(function () {
     // Summary page (overview with metrics)
@@ -85,6 +85,16 @@ Route::middleware(['auth', 'verified'])->prefix('assets')->name('assets.')->grou
 });
 
 // ============================================================
+// ASSET LOAN MANAGEMENT ROUTES
+// Admin-controlled borrowing workflow
+// ============================================================
+
+Route::middleware(['auth', 'verified'])->prefix('asset-loans')->name('asset-loans.')->group(function () {
+    // Asset loans list page
+    Route::get('/', fn () => view('pages.asset-loans.index'))->name('index');
+});
+
+// ============================================================
 // MAINTENANCE MANAGEMENT ROUTES
 // ============================================================
 
@@ -94,6 +104,15 @@ Route::middleware(['auth', 'verified'])->prefix('maintenance')->name('maintenanc
 
     // Asset maintenances list
     Route::get('/assets', fn () => view('pages.maintenance.assets'))->name('assets.index');
+});
+
+// ============================================================
+// INSPECTION ROUTES
+// ============================================================
+
+Route::middleware(['auth', 'verified'])->prefix('inspections')->name('inspections.')->group(function () {
+    // Inspection index (list all inspections)
+    Route::get('/', fn () => view('pages.inspections.index'))->name('index');
 });
 
 require __DIR__.'/settings.php';

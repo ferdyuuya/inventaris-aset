@@ -1,12 +1,19 @@
-<div>
-    {{-- Page Header --}}
-    <div class="mb-6">
-        <flux:heading size="xl">Asset Loans</flux:heading>
-        <flux:text class="mt-1 text-zinc-500">Manage asset borrowings and returns</flux:text>
+<div class="space-y-6">
+    {{-- Header --}}
+    <div class="flex items-center justify-between">
+        <div>
+            <flux:heading size="xl" class="text-gray-900 dark:text-white">Asset Loans</flux:heading>
+            <flux:subheading class="text-gray-600 dark:text-gray-400 mt-2">Manage asset borrowings and returns</flux:subheading>
+        </div>
+        <flux:button variant="primary" icon="plus" wire:click="openCreateModal">
+            New Loan
+        </flux:button>
     </div>
 
+    <flux:separator />
+
     {{-- Summary Cards --}}
-    <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
         <flux:card class="text-center">
             <flux:text class="text-zinc-500">Total Loans</flux:text>
             <flux:heading size="xl" class="text-zinc-700 dark:text-zinc-300">{{ $summaryMetrics['total_loans'] }}</flux:heading>
@@ -25,152 +32,293 @@
         </flux:card>
     </div>
 
-    {{-- Filters and Actions --}}
-    <flux:card class="mb-6">
-        <div class="flex flex-col md:flex-row gap-4 items-start md:items-center justify-between">
-            <div class="flex flex-col md:flex-row gap-4 items-start md:items-center flex-1">
-                {{-- Search --}}
-                <div class="w-full md:w-64">
-                    <flux:input
-                        wire:model.live.debounce.300ms="search"
-                        placeholder="Search asset or borrower..."
-                        icon="magnifying-glass"
-                    />
-                </div>
+    <flux:separator />
 
+    {{-- Search and Filter Bar --}}
+    <div class="space-y-4">
+        <div class="flex flex-col gap-4 lg:flex-row lg:items-center">
+            {{-- Search Input --}}
+            <div class="flex-1 max-w-md">
+                <flux:input
+                    wire:model.live.debounce.300ms="search"
+                    type="text"
+                    placeholder="Search asset or borrower..."
+                    icon="magnifying-glass"
+                    clearable
+                    class="text-gray-900 dark:text-white"
+                />
+            </div>
+
+            {{-- Vertical Separator --}}
+            <div class="hidden lg:block w-px h-8 bg-gray-300 dark:bg-gray-600"></div>
+
+            {{-- Filter Dropdowns --}}
+            <div class="flex flex-wrap gap-3">
                 {{-- Status Filter --}}
-                <div class="w-full md:w-48">
-                    <flux:select wire:model.live="statusFilter">
-                        <option value="">All Statuses</option>
-                        <option value="dipinjam">Active (Dipinjam)</option>
-                        <option value="selesai">Completed (Selesai)</option>
-                    </flux:select>
-                </div>
+                <flux:dropdown position="bottom" align="start">
+                    <flux:button
+                        variant="ghost"
+                        size="sm"
+                        icon="funnel"
+                        :badge="$statusFilter ? '1' : null"
+                    >
+                        Status
+                    </flux:button>
+
+                    <flux:menu>
+                        <flux:menu.item
+                            wire:click="$set('statusFilter', '')"
+                            :class="$statusFilter === '' ? 'bg-blue-50 dark:bg-blue-900/30' : ''"
+                        >
+                            <span :class="$statusFilter === '' ? 'font-semibold text-blue-600 dark:text-blue-400' : ''">
+                                All Statuses
+                            </span>
+                        </flux:menu.item>
+                        <flux:separator />
+                        <flux:menu.item
+                            wire:click="$set('statusFilter', 'dipinjam')"
+                            @class([
+                                'bg-blue-50 dark:bg-blue-900/30' => $statusFilter === 'dipinjam',
+                            ])
+                        >
+                            <span @class([
+                                'font-semibold text-blue-600 dark:text-blue-400' => $statusFilter === 'dipinjam',
+                            ])>
+                                Active (Dipinjam)
+                            </span>
+                        </flux:menu.item>
+                        <flux:menu.item
+                            wire:click="$set('statusFilter', 'selesai')"
+                            @class([
+                                'bg-blue-50 dark:bg-blue-900/30' => $statusFilter === 'selesai',
+                            ])
+                        >
+                            <span @class([
+                                'font-semibold text-blue-600 dark:text-blue-400' => $statusFilter === 'selesai',
+                            ])>
+                                Completed (Selesai)
+                            </span>
+                        </flux:menu.item>
+                    </flux:menu>
+                </flux:dropdown>
 
                 {{-- Overdue Filter --}}
-                <div class="w-full md:w-48">
-                    <flux:select wire:model.live="overdueFilter">
-                        <option value="">All Loans</option>
-                        <option value="overdue">Overdue Only</option>
-                    </flux:select>
-                </div>
+                <flux:dropdown position="bottom" align="start">
+                    <flux:button
+                        variant="ghost"
+                        size="sm"
+                        icon="funnel"
+                        :badge="$overdueFilter ? '1' : null"
+                    >
+                        Overdue
+                    </flux:button>
 
-                {{-- Clear Filters --}}
+                    <flux:menu>
+                        <flux:menu.item
+                            wire:click="$set('overdueFilter', '')"
+                            :class="$overdueFilter === '' ? 'bg-blue-50 dark:bg-blue-900/30' : ''"
+                        >
+                            <span :class="$overdueFilter === '' ? 'font-semibold text-blue-600 dark:text-blue-400' : ''">
+                                All Loans
+                            </span>
+                        </flux:menu.item>
+                        <flux:separator />
+                        <flux:menu.item
+                            wire:click="$set('overdueFilter', 'overdue')"
+                            @class([
+                                'bg-blue-50 dark:bg-blue-900/30' => $overdueFilter === 'overdue',
+                            ])
+                        >
+                            <span @class([
+                                'font-semibold text-blue-600 dark:text-blue-400' => $overdueFilter === 'overdue',
+                            ])>
+                                Overdue Only
+                            </span>
+                        </flux:menu.item>
+                    </flux:menu>
+                </flux:dropdown>
+
+                {{-- Clear Filters Button --}}
                 @if($search || $statusFilter || $overdueFilter)
-                <flux:button variant="ghost" size="sm" wire:click="clearFilters">
-                    Clear Filters
+                    <flux:button
+                        variant="ghost"
+                        size="sm"
+                        icon="x-mark"
+                        wire:click="clearFilters"
+                    >
+                        Clear
+                    </flux:button>
+                @endif
+            </div>
+        </div>
+
+        {{-- Active Filters Summary --}}
+        @if($search || $statusFilter || $overdueFilter)
+            <div class="flex flex-wrap gap-2 items-center text-sm">
+                <flux:text class="text-gray-600 dark:text-gray-400">Active filters:</flux:text>
+                @if($search)
+                    <flux:badge color="blue" size="sm">
+                        Search: <strong>{{ $search }}</strong>
+                    </flux:badge>
+                @endif
+                @if($statusFilter)
+                    <flux:badge color="blue" size="sm">
+                        Status: <strong>{{ $statusFilter === 'dipinjam' ? 'Active' : 'Completed' }}</strong>
+                    </flux:badge>
+                @endif
+                @if($overdueFilter)
+                    <flux:badge color="blue" size="sm">
+                        <strong>Overdue Only</strong>
+                    </flux:badge>
+                @endif
+            </div>
+        @endif
+    </div>
+
+    <flux:separator />
+
+    {{-- Loans Table --}}
+    <div class="overflow-x-auto">
+        <div class="shadow-sm ring-1 ring-gray-200 dark:ring-gray-700 rounded-lg overflow-hidden">
+        @if($loans->count() > 0)
+            <flux:table>
+                <flux:table.columns>
+                    <flux:table.column class="w-12">#</flux:table.column>
+                    <flux:table.column>Asset</flux:table.column>
+                    <flux:table.column>Borrower</flux:table.column>
+                    <flux:table.column>Borrow Date</flux:table.column>
+                    <flux:table.column>Expected Return</flux:table.column>
+                    <flux:table.column>Return Date</flux:table.column>
+                    <flux:table.column>Status</flux:table.column>
+                    <flux:table.column>Actions</flux:table.column>
+                </flux:table.columns>
+                <flux:table.rows>
+                    @foreach($loans as $loan)
+                    <flux:table.row 
+                        class="cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors"
+                        wire:click="$dispatch('navigate', { url: '{{ route('assets.show', $loan->asset) }}' })"
+                    >
+                        <flux:table.cell>
+                            <flux:text size="sm" variant="subtle">{{ ($loans->currentPage() - 1) * $loans->perPage() + $loop->iteration }}</flux:text>
+                        </flux:table.cell>
+                        <flux:table.cell>
+                            <div>
+                                <flux:text variant="strong" color="blue">{{ $loan->asset->asset_code }}</flux:text>
+                                <flux:text size="sm" class="text-zinc-500">{{ $loan->asset->name }}</flux:text>
+                            </div>
+                        </flux:table.cell>
+                        <flux:table.cell>
+                            <div>
+                                <flux:text variant="strong">{{ $loan->borrower->name ?? 'Unknown' }}</flux:text>
+                                @if($loan->borrower->position)
+                                <flux:text size="sm" class="text-zinc-500">{{ $loan->borrower->position }}</flux:text>
+                                @endif
+                            </div>
+                        </flux:table.cell>
+                        <flux:table.cell>
+                            <div class="flex items-center gap-1">
+                                <flux:icon.calendar class="size-3 text-gray-400" />
+                                <flux:text size="sm">{{ $loan->loan_date->format('d M Y') }}</flux:text>
+                            </div>
+                        </flux:table.cell>
+                        <flux:table.cell>
+                            @if($loan->expected_return_date)
+                                <div class="flex items-center gap-1">
+                                    <flux:icon.calendar class="size-3 {{ $loan->isOverdue() ? 'text-red-500' : 'text-gray-400' }}" />
+                                    <flux:text size="sm" class="{{ $loan->isOverdue() ? 'text-red-600 dark:text-red-400 font-medium' : '' }}">
+                                        {{ $loan->expected_return_date->format('d M Y') }}
+                                    </flux:text>
+                                </div>
+                            @else
+                                <flux:text variant="subtle" size="sm">-</flux:text>
+                            @endif
+                        </flux:table.cell>
+                        <flux:table.cell>
+                            @if($loan->return_date)
+                                <div class="flex items-center gap-1">
+                                    <flux:icon.check-circle class="size-3 text-green-500" />
+                                    <flux:text size="sm">{{ $loan->return_date->format('d M Y') }}</flux:text>
+                                </div>
+                            @else
+                                <flux:text variant="subtle" size="sm">-</flux:text>
+                            @endif
+                        </flux:table.cell>
+                        <flux:table.cell>
+                            @if($loan->status === 'dipinjam')
+                                <flux:badge color="purple" size="sm">
+                                    <flux:icon.arrow-right-circle class="size-3 mr-1" />
+                                    Borrowed
+                                </flux:badge>
+                                @if($loan->isOverdue())
+                                    <flux:badge color="red" size="sm" class="ml-1">
+                                        <flux:icon.exclamation-triangle class="size-3 mr-1" />
+                                        Overdue
+                                    </flux:badge>
+                                @endif
+                            @else
+                                <flux:badge color="green" size="sm">
+                                    <flux:icon.check-circle class="size-3 mr-1" />
+                                    Returned
+                                </flux:badge>
+                                @if($loan->condition_after_return === 'rusak')
+                                    <flux:badge color="orange" size="sm" variant="soft" class="ml-1">
+                                        Damaged
+                                    </flux:badge>
+                                @endif
+                            @endif
+                        </flux:table.cell>
+                        <flux:table.cell onclick="event.stopPropagation()">
+                            @if($loan->isActive())
+                                <flux:button variant="primary" size="sm" icon="arrow-uturn-left" wire:click="openReturnModal({{ $loan->id }})">
+                                    Return
+                                </flux:button>
+                            @else
+                                <flux:dropdown position="bottom" align="end">
+                                    <flux:button variant="ghost" size="sm" icon="eye" />
+
+                                    <flux:menu>
+                                        <flux:menu.item
+                                            href="{{ route('assets.show', $loan->asset) }}"
+                                            icon="eye"
+                                            wire:navigate
+                                        >
+                                            View Asset
+                                        </flux:menu.item>
+                                    </flux:menu>
+                                </flux:dropdown>
+                            @endif
+                        </flux:table.cell>
+                    </flux:table.row>
+                    @endforeach
+                </flux:table.rows>
+            </flux:table>
+        @else
+            <div class="text-center py-12">
+                <flux:icon.inbox class="mx-auto size-12 text-zinc-300 dark:text-zinc-600" />
+                <flux:heading size="lg" class="mt-4 text-zinc-600 dark:text-zinc-400">No loans found</flux:heading>
+                <flux:text class="mt-2 text-zinc-500">
+                    @if($search || $statusFilter || $overdueFilter)
+                        Try adjusting your filters or search term.
+                    @else
+                        Get started by creating your first asset loan.
+                    @endif
+                </flux:text>
+                @if(!$search && !$statusFilter && !$overdueFilter)
+                <flux:button variant="primary" class="mt-4" icon="plus" wire:click="openCreateModal">
+                    Create First Loan
                 </flux:button>
                 @endif
             </div>
-
-            {{-- Create Loan Button --}}
-            <flux:button variant="primary" icon="plus" wire:click="openCreateModal">
-                New Loan
-            </flux:button>
-        </div>
-    </flux:card>
-
-    {{-- Loans Table --}}
-    <flux:card>
-        @if($loans->count() > 0)
-        <flux:table>
-            <flux:table.columns>
-                <flux:table.column>Asset</flux:table.column>
-                <flux:table.column>Borrower</flux:table.column>
-                <flux:table.column>Borrow Date</flux:table.column>
-                <flux:table.column>Expected Return</flux:table.column>
-                <flux:table.column>Return Date</flux:table.column>
-                <flux:table.column>Status</flux:table.column>
-                <flux:table.column>Actions</flux:table.column>
-            </flux:table.columns>
-            <flux:table.rows>
-                @foreach($loans as $loan)
-                <flux:table.row>
-                    <flux:table.cell>
-                        <div>
-                            <a href="{{ route('assets.show', $loan->asset) }}" class="font-medium text-blue-600 dark:text-blue-400 hover:underline" wire:navigate>
-                                {{ $loan->asset->asset_code }}
-                            </a>
-                            <flux:text size="sm" class="text-zinc-500">{{ $loan->asset->name }}</flux:text>
-                        </div>
-                    </flux:table.cell>
-                    <flux:table.cell>
-                        <div>
-                            <flux:text class="font-medium">{{ $loan->borrower->name ?? 'Unknown' }}</flux:text>
-                            @if($loan->borrower->position)
-                            <flux:text size="sm" class="text-zinc-500">{{ $loan->borrower->position }}</flux:text>
-                            @endif
-                        </div>
-                    </flux:table.cell>
-                    <flux:table.cell>{{ $loan->loan_date->format('d M Y') }}</flux:table.cell>
-                    <flux:table.cell>
-                        @if($loan->expected_return_date)
-                            <span class="{{ $loan->isOverdue() ? 'text-red-600 dark:text-red-400 font-medium' : '' }}">
-                                {{ $loan->expected_return_date->format('d M Y') }}
-                            </span>
-                        @else
-                            <span class="text-zinc-400">-</span>
-                        @endif
-                    </flux:table.cell>
-                    <flux:table.cell>
-                        @if($loan->return_date)
-                            {{ $loan->return_date->format('d M Y') }}
-                        @else
-                            <span class="text-zinc-400">-</span>
-                        @endif
-                    </flux:table.cell>
-                    <flux:table.cell>
-                        @if($loan->status === 'dipinjam')
-                            <flux:badge color="purple">Borrowed</flux:badge>
-                            @if($loan->isOverdue())
-                                <flux:badge color="red" size="sm" class="ml-1">Overdue</flux:badge>
-                            @endif
-                        @else
-                            <flux:badge color="green">Returned</flux:badge>
-                            @if($loan->condition_after_return === 'rusak')
-                                <flux:badge color="red" size="sm" class="ml-1">Damaged</flux:badge>
-                            @endif
-                        @endif
-                    </flux:table.cell>
-                    <flux:table.cell>
-                        @if($loan->isActive())
-                        <flux:button variant="primary" size="sm" wire:click="openReturnModal({{ $loan->id }})">
-                            Return
-                        </flux:button>
-                        @else
-                        <flux:text size="sm" class="text-zinc-400">Completed</flux:text>
-                        @endif
-                    </flux:table.cell>
-                </flux:table.row>
-                @endforeach
-            </flux:table.rows>
-        </flux:table>
-
-        {{-- Pagination --}}
-        @if($loans->hasPages())
-        <div class="mt-4 px-4">
-            {{ $loans->links() }}
-        </div>
         @endif
-        @else
-        <div class="text-center py-12">
-            <flux:icon.inbox class="mx-auto size-12 text-zinc-300 dark:text-zinc-600" />
-            <flux:heading size="lg" class="mt-4 text-zinc-600 dark:text-zinc-400">No loans found</flux:heading>
-            <flux:text class="mt-2 text-zinc-500">
-                @if($search || $statusFilter || $overdueFilter)
-                    Try adjusting your filters or search term.
-                @else
-                    Get started by creating your first asset loan.
-                @endif
-            </flux:text>
-            @if(!$search && !$statusFilter && !$overdueFilter)
-            <flux:button variant="primary" class="mt-4" icon="plus" wire:click="openCreateModal">
-                Create First Loan
-            </flux:button>
-            @endif
         </div>
-        @endif
-    </flux:card>
+    </div>
+
+    {{-- Pagination --}}
+    @if($loans->hasPages())
+        <div class="mt-6">
+            <flux:pagination :paginator="$loans" />
+        </div>
+    @endif
 
     {{-- ============================================== --}}
     {{-- CREATE LOAN MODAL                             --}}
