@@ -168,6 +168,29 @@
                 </flux:table>
                 </div>
             </flux:card>
+            <flux:card>
+                <flux:heading size="lg">Maintenance History</flux:heading>
+
+                <div class="space-y-3 mt-4">
+                    <div class="p-3 bg-zinc-50 dark:bg-zinc-800 rounded-lg">
+                        <div class="flex items-center justify-between mb-2">
+                            <flux:text class="font-medium">Screen Repair</flux:text>
+                            <flux:badge color="green" size="sm">Completed</flux:badge>
+                        </div>
+                        <flux:text size="sm" class="text-zinc-500">Aug 2025 • 5 days</flux:text>
+                    </div>
+                </div>
+
+                {{-- Empty State (alternative) --}}
+                {{--
+                <div class="text-center py-6">
+                    <flux:icon.wrench-screwdriver class="mx-auto size-10 text-zinc-300 dark:text-zinc-600" />
+                    <flux:text class="mt-2 text-zinc-500">No maintenance history</flux:text>
+                </div>
+                --}}
+            </flux:card>
+
+
         </div>
 
         {{-- Right Column (1/3 width on large screens) --}}
@@ -196,6 +219,9 @@
                             @case('nonaktif')
                                 <flux:badge color="red" size="lg">Inactive</flux:badge>
                                 @break
+                            @case('dihapuskan')
+                                <flux:badge color="zinc" size="lg">Disposed</flux:badge>
+                                @break
                             @default
                                 <flux:badge color="zinc" size="lg">Unknown</flux:badge>
                         @endswitch
@@ -222,6 +248,7 @@
                 </div>
 
                 {{-- Transfer Location Button --}}
+                @if(!$asset->isDisposed())
                 <flux:button
                     variant="primary"
                     class="w-full mt-6"
@@ -240,7 +267,68 @@
                 >
                     Request Maintenance
                 </flux:button>
+
+                {{-- Inspect Asset Button --}}
+                @if($canInspect)
+                <flux:button
+                    variant="primary"
+                    class="w-full mt-3"
+                    icon="clipboard-document-check"
+                    wire:click="openInspectModal"
+                >
+                    Inspect Asset
+                </flux:button>
+                @endif
+
+                {{-- Dispose Asset Button (Admin only, if asset can be disposed) --}}
+                @if($canDispose)
+                <flux:button
+                    variant="danger"
+                    class="w-full mt-3"
+                    icon="trash"
+                    wire:click="openDisposeModal"
+                >
+                    Dispose Asset
+                </flux:button>
+                @endif
+                @endif
             </flux:card>
+
+            {{-- ============================== --}}
+            {{-- DISPOSED ASSET INFO CARD       --}}
+            {{-- (Shown when asset is disposed) --}}
+            {{-- ============================== --}}
+            @if($asset->isDisposed() && $disposalRecord)
+            <flux:card class="space-y-4 border-zinc-400 dark:border-zinc-600 bg-zinc-100 dark:bg-zinc-800/50">
+                <div class="flex items-center gap-2">
+                    <flux:icon.archive-box-x-mark class="size-5 text-zinc-500" />
+                    <flux:heading size="lg" class="text-zinc-700 dark:text-zinc-300">Asset Disposed</flux:heading>
+                </div>
+
+                <div class="p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg">
+                    <flux:text size="sm" class="text-red-700 dark:text-red-300 font-medium">
+                        This asset has been permanently disposed and cannot be used for any operations.
+                    </flux:text>
+                </div>
+
+                <div class="space-y-3">
+                    <div class="flex justify-between">
+                        <flux:text class="text-zinc-500">Disposed By</flux:text>
+                        <flux:text class="font-medium">{{ $disposalRecord->disposedBy->name ?? 'Unknown' }}</flux:text>
+                    </div>
+                    <div class="flex justify-between">
+                        <flux:text class="text-zinc-500">Disposal Date</flux:text>
+                        <flux:text>{{ $disposalRecord->disposed_at->format('d M Y, H:i') }}</flux:text>
+                    </div>
+                    <div>
+                        <flux:text class="text-zinc-500">Reason</flux:text>
+                        <flux:text class="mt-1 p-2 bg-white dark:bg-zinc-900 rounded border border-zinc-200 dark:border-zinc-700">
+                            {{ $disposalRecord->reason }}
+                        </flux:text>
+                    </div>
+                </div>
+            </flux:card>
+            @endif
 
             {{-- ============================== --}}
             {{-- B.2. Asset QR Code             --}}
@@ -366,7 +454,7 @@
             </flux:card>
 
             {{-- Maintenance History Card --}}
-            <flux:card>
+            {{-- <flux:card>
                 <flux:heading size="lg">Maintenance History</flux:heading>
 
                 <div class="space-y-3 mt-4">
@@ -386,7 +474,7 @@
                     <flux:text class="mt-2 text-zinc-500">No maintenance history</flux:text>
                 </div>
                 --}}
-            </flux:card>
+            {{-- </flux:card> --}}
         </div>
     </div>
 </div>
@@ -516,6 +604,182 @@
                 variant="primary"
             >
                 Submit Request
+            </flux:button>
+        </div>
+    </form>
+</flux:modal>
+
+{{-- ============================================== --}}
+{{-- DISPOSE ASSET MODAL                           --}}
+{{-- ============================================== --}}
+<flux:modal wire:model.defer="showDisposeModal" class="md:w-96" @close="closeDisposeModal">
+    <form wire:submit="submitDispose" class="space-y-6">
+        <div>
+            <flux:heading size="lg" class="text-red-600 dark:text-red-400">Dispose Asset</flux:heading>
+            <flux:text class="mt-1 text-zinc-500">Permanently retire this asset from operational use</flux:text>
+        </div>
+
+        {{-- Strong Warning --}}
+        <div class="p-4 bg-red-50 dark:bg-red-900/20 border-2 border-red-300 dark:border-red-700 rounded-lg">
+            <div class="flex items-start gap-3">
+                <flux:icon.exclamation-triangle class="size-6 text-red-600 dark:text-red-400 flex-shrink-0 mt-0.5" />
+                <div>
+                    <flux:text class="font-semibold text-red-700 dark:text-red-300">Warning: This action is IRREVERSIBLE</flux:text>
+                    <flux:text size="sm" class="text-red-600 dark:text-red-400 mt-1">
+                        Once disposed, this asset:
+                    </flux:text>
+                    <ul class="list-disc list-inside text-sm text-red-600 dark:text-red-400 mt-1 space-y-1">
+                        <li>Cannot be borrowed</li>
+                        <li>Cannot be maintained</li>
+                        <li>Cannot be transferred</li>
+                        <li>Cannot be restored</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        {{-- Asset Info (Read-only Display) --}}
+        <div class="space-y-2 p-3 bg-zinc-50 dark:bg-zinc-800 rounded-lg border border-zinc-200 dark:border-zinc-700">
+            <flux:label class="text-zinc-700 dark:text-zinc-300">Asset to Dispose</flux:label>
+            <flux:text class="font-medium">{{ $asset->asset_code }} - {{ $asset->name }}</flux:text>
+        </div>
+
+        {{-- Disposal Reason (Required) --}}
+        <div>
+            <flux:field>
+                <flux:label>Disposal Reason <span class="text-red-500">*</span></flux:label>
+                <flux:textarea
+                    wire:model="disposeReason"
+                    placeholder="Explain why this asset is being disposed (e.g., beyond repair, obsolete, lost, etc.)..."
+                    rows="4"
+                />
+                <flux:error name="disposeReason" />
+                <flux:description>Minimum 5 characters. This reason will be recorded for audit purposes.</flux:description>
+            </flux:field>
+        </div>
+
+        {{-- Action Buttons --}}
+        <div class="flex gap-3 justify-end">
+            <flux:modal.close>
+                <flux:button type="button" variant="ghost">
+                    Cancel
+                </flux:button>
+            </flux:modal.close>
+            <flux:button
+                type="submit"
+                variant="danger"
+            >
+                Confirm Disposal
+            </flux:button>
+        </div>
+    </form>
+</flux:modal>
+
+{{-- ============================================== --}}
+{{-- INSPECT ASSET MODAL                           --}}
+{{-- ============================================== --}}
+<flux:modal wire:model.defer="showInspectModal" class="md:w-96">
+    <form wire:submit="submitInspection" class="space-y-6">
+        <div>
+            <flux:heading size="lg">Inspect Asset</flux:heading>
+            <flux:text class="mt-1 text-zinc-500">Evaluate and record asset condition</flux:text>
+        </div>
+
+        {{-- Asset Info (Read-only Display) --}}
+        <div class="space-y-2 p-3 bg-zinc-50 dark:bg-zinc-800 rounded-lg border border-zinc-200 dark:border-zinc-700">
+            <flux:label class="text-zinc-700 dark:text-zinc-300">Asset</flux:label>
+            <flux:text class="font-medium">{{ $asset->asset_code }} - {{ $asset->name }}</flux:text>
+            <div class="flex items-center gap-2 mt-1">
+                <flux:text size="sm" class="text-zinc-500">Current condition:</flux:text>
+                @switch($asset->condition)
+                    @case('baik')
+                        <flux:badge color="green" size="sm">Good</flux:badge>
+                        @break
+                    @case('rusak')
+                        <flux:badge color="red" size="sm">Damaged</flux:badge>
+                        @break
+                    @case('perlu_perbaikan')
+                        <flux:badge color="yellow" size="sm">Needs Repair</flux:badge>
+                        @break
+                    @default
+                        <flux:badge color="zinc" size="sm">Unknown</flux:badge>
+                @endswitch
+            </div>
+        </div>
+
+        {{-- Condition Result --}}
+        <div>
+            <flux:field>
+                <flux:label>Condition Result <span class="text-red-500">*</span></flux:label>
+                <div class="flex flex-col gap-2 mt-2">
+                    <label class="flex items-center gap-3 p-3 rounded-lg border border-zinc-200 dark:border-zinc-700 cursor-pointer hover:bg-zinc-50 dark:hover:bg-zinc-800 transition-colors">
+                        <input 
+                            type="radio" 
+                            wire:model="inspectCondition" 
+                            value="baik" 
+                            class="w-4 h-4 text-green-600 border-gray-300 focus:ring-green-500"
+                        >
+                        <div class="flex items-center gap-2">
+                            <flux:badge color="green">Good (Baik)</flux:badge>
+                        </div>
+                    </label>
+                    <label class="flex items-center gap-3 p-3 rounded-lg border border-zinc-200 dark:border-zinc-700 cursor-pointer hover:bg-zinc-50 dark:hover:bg-zinc-800 transition-colors">
+                        <input 
+                            type="radio" 
+                            wire:model="inspectCondition" 
+                            value="perlu_perbaikan" 
+                            class="w-4 h-4 text-yellow-600 border-gray-300 focus:ring-yellow-500"
+                        >
+                        <div class="flex items-center gap-2">
+                            <flux:badge color="yellow">Needs Repair</flux:badge>
+                        </div>
+                    </label>
+                    <label class="flex items-center gap-3 p-3 rounded-lg border border-zinc-200 dark:border-zinc-700 cursor-pointer hover:bg-zinc-50 dark:hover:bg-zinc-800 transition-colors">
+                        <input 
+                            type="radio" 
+                            wire:model="inspectCondition" 
+                            value="rusak" 
+                            class="w-4 h-4 text-red-600 border-gray-300 focus:ring-red-500"
+                        >
+                        <div class="flex items-center gap-2">
+                            <flux:badge color="red">Damaged (Rusak)</flux:badge>
+                        </div>
+                    </label>
+                </div>
+                <flux:error name="inspectCondition" />
+            </flux:field>
+        </div>
+
+        {{-- Description / Notes --}}
+        <div>
+            <flux:field>
+                <flux:label>Notes <span class="text-zinc-500 text-sm">(optional)</span></flux:label>
+                <flux:textarea
+                    wire:model="inspectDescription"
+                    placeholder="Add any notes about the inspection findings..."
+                    rows="3"
+                />
+                <flux:error name="inspectDescription" />
+            </flux:field>
+        </div>
+
+        {{-- Info Notice --}}
+        <div class="p-3 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg">
+            <flux:text size="sm" class="text-blue-700 dark:text-blue-300">
+                <strong>Note:</strong> This inspection will update the asset's condition field only. 
+                It will NOT change the asset's status or availability.
+            </flux:text>
+        </div>
+
+        {{-- Action Buttons --}}
+        <div class="flex gap-3 justify-end">
+            <flux:modal.close>
+                <flux:button type="button" variant="ghost">
+                    Cancel
+                </flux:button>
+            </flux:modal.close>
+            <flux:button type="submit" variant="primary">
+                Record Inspection
             </flux:button>
         </div>
     </form>

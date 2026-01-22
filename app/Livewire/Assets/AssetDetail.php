@@ -18,6 +18,7 @@ use App\Services\AssetBorrowingService;
 use BaconQrCode\Renderer\GDLibRenderer;
 use App\Services\AssetMaintenanceService;
 use App\Services\AssetDisposalService;
+use App\Services\InspectionService;
 use Illuminate\Support\Facades\Log;
 
 class AssetDetail extends Component
@@ -30,6 +31,7 @@ class AssetDetail extends Component
     public bool $showMaintenanceModal = false;
     public bool $showRequestMaintenanceModal = false;
     public bool $showDisposeModal = false;
+    public bool $showInspectModal = false;
 
     // Transfer Location form
     public ?int $transferLocationId = null;
@@ -51,6 +53,10 @@ class AssetDetail extends Component
     // Dispose Asset form
     #[Validate('required|string|min:5|max:500')]
     public string $disposeReason = '';
+
+    // Inspect Asset form
+    public string $inspectCondition = '';
+    public string $inspectDescription = '';
 
     // QR Code
     public ?string $qrCodeBase64 = null;
@@ -488,6 +494,87 @@ class AssetDetail extends Component
         return app(AssetDisposalService::class)->getDisposalRecord($this->asset);
     }
 
+    /**
+     * Check if asset can be inspected
+     */
+    #[Computed]
+    public function canInspect(): bool
+    {
+        return !$this->asset->isDisposed();
+    }
+
+    /**
+     * Get inspection history for this asset
+     */
+    #[Computed]
+    public function inspectionHistory()
+    {
+        return app(InspectionService::class)->getInspectionHistory($this->asset);
+    }
+
+    /**
+     * Open inspect modal
+     */
+    public function openInspectModal(): void
+    {
+        if ($this->asset->isDisposed()) {
+            $this->dispatch('notify', type: 'error', message: 'Cannot inspect a disposed asset.');
+            return;
+        }
+
+        $this->inspectCondition = '';
+        $this->inspectDescription = '';
+        $this->showInspectModal = true;
+    }
+
+    /**
+     * Close inspect modal
+     */
+    public function closeInspectModal(): void
+    {
+        $this->showInspectModal = false;
+        $this->inspectCondition = '';
+        $this->inspectDescription = '';
+        $this->resetValidation(['inspectCondition', 'inspectDescription']);
+    }
+
+    /**
+     * Submit asset inspection
+     * 
+     * Delegates business logic to InspectionService.
+     * Updates asset.condition ONLY - does NOT change status or availability.
+     */
+    public function submitInspection(): void
+    {
+        $this->validate([
+            'inspectCondition' => 'required|in:baik,rusak,perlu_perbaikan',
+            'inspectDescription' => 'nullable|string|max:1000',
+        ]);
+
+        try {
+            $user = Auth::user();
+
+            if (!$user) {
+                $this->dispatch('notify', type: 'error', message: 'You must be logged in to perform inspections.');
+                return;
+            }
+
+            // Delegate to service (handles atomic transaction)
+            app(InspectionService::class)->createInspection(
+                $this->asset,
+                $this->inspectCondition,
+                $this->inspectDescription ?: null,
+                $user
+            );
+
+            $this->asset->refresh();
+            $this->dispatch('notify', type: 'success', message: 'Inspection recorded. Asset condition updated.');
+            $this->closeInspectModal();
+        } catch (\Exception $e) {
+            $this->dispatch('notify', type: 'error', message: 'Inspection failed: ' . $e->getMessage());
+        }
+    }
+
     public function render()
     {
         return view('livewire.assets.asset-detail', [
@@ -502,6 +589,8 @@ class AssetDetail extends Component
             'qrCodeBase64' => $this->qrCodeBase64,
             'canDispose' => $this->canDispose,
             'disposalRecord' => $this->disposalRecord,
+            'canInspect' => $this->canInspect,
+            'inspectionHistory' => $this->inspectionHistory,
         ]);
     }
 }

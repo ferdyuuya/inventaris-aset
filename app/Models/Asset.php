@@ -88,6 +88,22 @@ class Asset extends Model
     }
 
     /**
+     * Get all inspection records for this asset.
+     */
+    public function inspections(): HasMany
+    {
+        return $this->hasMany(Inspection::class, 'asset_id');
+    }
+
+    /**
+     * Get the latest inspection for this asset.
+     */
+    public function latestInspection()
+    {
+        return $this->hasOne(Inspection::class, 'asset_id')->latestOfMany('inspected_at');
+    }
+
+    /**
      * Get the disposal record for this asset (if disposed).
      */
     public function disposal()

@@ -34,6 +34,9 @@
                     <flux:sidebar.item icon="cog-6-tooth" :href="route('maintenance.assets.index')" :current="request()->routeIs('maintenance.assets.*')" wire:navigate>
                         {{ __('Asset Maintenances') }}
                     </flux:sidebar.item>
+                    <flux:sidebar.item icon="cog-6-tooth" :href="route('inspections.index')" :current="request()->routeIs('inspection.assets.*')" wire:navigate>
+                        {{ __('Inspection Assets') }}
+                    </flux:sidebar.item>
                 </flux:sidebar.group>
 
                 {{-- Procurement Management --}}
