@@ -17,35 +17,54 @@ Route::view('dashboard', 'dashboard')
     ->middleware(['auth', 'verified'])
     ->name('dashboard');
 
-Route::view('/employees', 'employees')
+// ============================================================
+// MASTER DATA ROUTES
+// ============================================================
+
+Route::view('/employees', 'pages.masterdata.employee.index')
     ->middleware(['auth', 'verified'])
     ->name('employees');
 
-Route::view('/users', 'users')
-    ->middleware(['auth', 'verified'])
-    ->name('users');
-
-Route::view('/asset-categories', 'asset-categories')
+Route::view('/asset-categories', 'pages.masterdata.category.index')
     ->middleware(['auth', 'verified'])
     ->name('asset-categories');
 
-Route::view('/suppliers', 'suppliers')
+Route::view('/suppliers', 'pages.masterdata.supplier.index')
     ->middleware(['auth', 'verified'])
     ->name('suppliers');
 
-Route::view('/procurements', 'procurements')
-    ->middleware(['auth', 'verified'])
-    ->name('procurements');
-
-Route::view('/locations', 'locations')
+Route::view('/locations', 'pages.masterdata.location.index')
     ->middleware(['auth', 'verified'])
     ->name('locations');
 
-// ASSET MANAGEMENT ROUTES
 // ============================================================
+// USER MANAGEMENT ROUTES
+// ============================================================
+
+Route::view('/users', 'pages.users.index')
+    ->middleware(['auth', 'verified'])
+    ->name('users');
+
+// ============================================================
+// PROCUREMENT ROUTES
+// ============================================================
+
+Route::view('/procurements', 'pages.procurements.index')
+    ->middleware(['auth', 'verified'])
+    ->name('procurements');
+
+Route::get('/procurements/{id}', function ($id) {
+    $procurement = \App\Models\Procurement::with(['category', 'supplier', 'location'])->findOrFail($id);
+    return view('pages.procurements.detail', compact('id', 'procurement'));
+})
+    ->name('procurements.detail')
+    ->middleware(['auth', 'verified']);
+
+// ============================================================
+// ASSET MANAGEMENT ROUTES
 // Assets are generated from procurement records.
 // Users cannot manually create, edit, or delete assets.
-// ============================================================
+    // ============================================================
 
 Route::middleware(['auth', 'verified'])->prefix('assets')->name('assets.')->group(function () {
     // Summary page (overview with metrics)
@@ -63,6 +82,37 @@ Route::middleware(['auth', 'verified'])->prefix('assets')->name('assets.')->grou
     Route::post('/{asset}/return', [AssetController::class, 'returnAsset'])->name('return');
     Route::post('/{asset}/send-maintenance', [AssetController::class, 'sendMaintenance'])->name('send-maintenance');
     Route::post('/{asset}/complete-maintenance', [AssetController::class, 'completeMaintenance'])->name('complete-maintenance');
+});
+
+// ============================================================
+// ASSET LOAN MANAGEMENT ROUTES
+// Admin-controlled borrowing workflow
+// ============================================================
+
+Route::middleware(['auth', 'verified'])->prefix('asset-loans')->name('asset-loans.')->group(function () {
+    // Asset loans list page
+    Route::get('/', fn () => view('pages.asset-loans.index'))->name('index');
+});
+
+// ============================================================
+// MAINTENANCE MANAGEMENT ROUTES
+// ============================================================
+
+Route::middleware(['auth', 'verified'])->prefix('maintenance')->name('maintenance.')->group(function () {
+    // Maintenance requests list
+    Route::get('/requests', fn () => view('pages.maintenance.requests'))->name('requests.index');
+
+    // Asset maintenances list
+    Route::get('/assets', fn () => view('pages.maintenance.assets'))->name('assets.index');
+});
+
+// ============================================================
+// INSPECTION ROUTES
+// ============================================================
+
+Route::middleware(['auth', 'verified'])->prefix('inspections')->name('inspections.')->group(function () {
+    // Inspection index (list all inspections)
+    Route::get('/', fn () => view('pages.inspections.index'))->name('index');
 });
 
 require __DIR__.'/settings.php';

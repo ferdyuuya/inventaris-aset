@@ -17,16 +17,34 @@
                     </flux:sidebar.item>
                 {{-- Asset Management --}}
                 <flux:sidebar.group :heading="__('Assets')" class="grid">
-                    <flux:sidebar.item icon="archive-box" :href="route('assets.summary')" :current="request()->routeIs('assets.*')" wire:navigate>
+                    {{-- <flux:sidebar.item icon="archive-box" :href="route('assets.summary')" :current="request()->routeIs('assets.*')" wire:navigate>
                         {{ __('Asset Summary') }}
-                    </flux:sidebar.item>
+                    </flux:sidebar.item> --}}
                     <flux:sidebar.item icon="list-bullet" :href="route('assets.index')" :current="request()->routeIs('assets.index')" wire:navigate>
                         {{ __('Asset List') }}
                     </flux:sidebar.item>
+                    <flux:sidebar.item icon="arrow-right-circle" :href="route('asset-loans.index')" :current="request()->routeIs('asset-loans.*')" wire:navigate>
+                        {{ __('Asset Loans') }}
+                    </flux:sidebar.item>
                 </flux:sidebar.group>
+
+
+                {{-- Maintenance Management --}}
+                <flux:sidebar.group :heading="__('Maintenances')" class="grid">
+                    <flux:sidebar.item icon="wrench-screwdriver" :href="route('maintenance.requests.index')" :current="request()->routeIs('maintenance.requests.*')" wire:navigate>
+                        {{ __('Maintenance Requests') }}
+                    </flux:sidebar.item>
+                    <flux:sidebar.item icon="cog-6-tooth" :href="route('maintenance.assets.index')" :current="request()->routeIs('maintenance.assets.*')" wire:navigate>
+                        {{ __('Asset Maintenances') }}
+                    </flux:sidebar.item>
+                    <flux:sidebar.item icon="cog-6-tooth" :href="route('inspections.index')" :current="request()->routeIs('inspection.assets.*')" wire:navigate>
+                        {{ __('Inspection Assets') }}
+                    </flux:sidebar.item>
+                </flux:sidebar.group>
+
                 {{-- Procurement Management --}}
                 <flux:sidebar.group :heading="__('Procurements')" class="grid">
-                    <flux:sidebar.item icon="folder" :href="route('procurements')" :current="request()->routeIs('procurements')" wire:navigate>
+                    <flux:sidebar.item icon="shopping-cart" :href="route('procurements')" :current="request()->routeIs('procurements*')" wire:navigate>
                         {{ __('Procurements') }}
                     </flux:sidebar.item>
                 </flux:sidebar.group>

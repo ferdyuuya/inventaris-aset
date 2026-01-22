@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Procurement extends Model
 {
@@ -18,7 +19,7 @@ class Procurement extends Model
         'location_id',
         'supplier_id',
         'procurement_date',
-        'invoice_number',
+        'documents',
         'quantity',
         'unit_price',
         'total_cost',
@@ -35,6 +36,7 @@ class Procurement extends Model
         'quantity' => 'integer',
         'unit_price' => 'decimal:0',
         'total_cost' => 'decimal:0',
+        'documents' => 'array', // Cast documents JSON to array
     ];
 
     /**
@@ -67,5 +69,13 @@ class Procurement extends Model
     public function creator(): BelongsTo
     {
         return $this->belongsTo(User::class, 'created_by');
+    }
+
+    /**
+     * Get all assets generated from this procurement.
+     */
+    public function assets(): HasMany
+    {
+        return $this->hasMany(Asset::class, 'procurement_id');
     }
 }

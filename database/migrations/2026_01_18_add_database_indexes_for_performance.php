@@ -63,7 +63,7 @@ return new class extends Migration
             $table->index('supplier_id');
             $table->index('asset_category_id');
             $table->index('location_id');
-            $table->index('invoice_number');
+            // $table->index('documents');
             $table->index('procurement_date');
             $table->index('created_at');
         });
@@ -121,7 +121,7 @@ return new class extends Migration
             $table->dropIndex(['supplier_id']);
             $table->dropIndex(['asset_category_id']);
             $table->dropIndex(['location_id']);
-            $table->dropIndex(['invoice_number']);
+            // $table->dropIndex(['documents']);
             $table->dropIndex(['procurement_date']);
             $table->dropIndex(['created_at']);
         });

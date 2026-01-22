@@ -11,10 +11,13 @@ class AssetMaintenance extends Model
 
     protected $fillable = [
         'asset_id',
+        'maintenance_request_id',
         'maintenance_date',
         'estimated_completion_date',
         'completed_date',
         'description',
+        'result',
+        'feedback',
         'status',
         'created_by',
     ];
@@ -31,6 +34,14 @@ class AssetMaintenance extends Model
     public function asset(): BelongsTo
     {
         return $this->belongsTo(Asset::class, 'asset_id');
+    }
+
+    /**
+     * Get the maintenance request that triggered this maintenance.
+     */
+    public function maintenanceRequest(): BelongsTo
+    {
+        return $this->belongsTo(MaintenanceRequest::class, 'maintenance_request_id');
     }
 
     /**

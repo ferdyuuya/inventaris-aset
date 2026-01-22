@@ -14,7 +14,7 @@ return new class extends Migration
         Schema::table('assets', function (Blueprint $table) {
             // Add procurement_id if it doesn't exist
             if (!Schema::hasColumn('assets', 'procurement_id')) {
-                $table->unsignedBigInteger('procurement_id')->nullable()->after('id');
+                $table->unsignedBigInteger('procurement_id')->after('id');
                 $table->foreign('procurement_id')
                     ->references('id')
                     ->on('procurements')
