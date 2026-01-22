@@ -23,6 +23,9 @@
                     <flux:sidebar.item icon="list-bullet" :href="route('assets.index')" :current="request()->routeIs('assets.index')" wire:navigate>
                         {{ __('Asset List') }}
                     </flux:sidebar.item>
+                    <flux:sidebar.item icon="arrow-right-circle" :href="route('asset-loans.index')" :current="request()->routeIs('asset-loans.*')" wire:navigate>
+                        {{ __('Asset Loans') }}
+                    </flux:sidebar.item>
                 </flux:sidebar.group>
 
 

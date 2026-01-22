@@ -127,45 +127,61 @@
                 <flux:text class="mt-2">Record of asset loans to employees</flux:text>
 
                 <div class="mt-6">
-
+                @if($borrowingHistory && $borrowingHistory->count() > 0)
                 <flux:table>
                     <flux:table.columns>
                         <flux:table.column>Borrower</flux:table.column>
-                        <flux:table.column>Department</flux:table.column>
-                        <flux:table.column>Loan Date</flux:table.column>
+                        <flux:table.column>Borrow Date</flux:table.column>
+                        <flux:table.column>Expected Return</flux:table.column>
                         <flux:table.column>Return Date</flux:table.column>
+                        <flux:table.column>Condition</flux:table.column>
                         <flux:table.column>Status</flux:table.column>
                     </flux:table.columns>
                     <flux:table.rows>
+                        @foreach($borrowingHistory as $loan)
                         <flux:table.row>
-                            <flux:table.cell class="font-medium">Michael Chen</flux:table.cell>
-                            <flux:table.cell>Software Development</flux:table.cell>
-                            <flux:table.cell>12 Jan 2026</flux:table.cell>
-                            <flux:table.cell>18 Jan 2026</flux:table.cell>
+                            <flux:table.cell class="font-medium">{{ $loan->borrower->name ?? 'Unknown' }}</flux:table.cell>
+                            <flux:table.cell>{{ $loan->loan_date->format('d M Y') }}</flux:table.cell>
+                            <flux:table.cell>{{ $loan->expected_return_date?->format('d M Y') ?? '-' }}</flux:table.cell>
+                            <flux:table.cell>{{ $loan->return_date?->format('d M Y') ?? '-' }}</flux:table.cell>
                             <flux:table.cell>
-                                <flux:badge color="green">Returned</flux:badge>
+                                @if($loan->condition_after_return)
+                                    @if($loan->condition_after_return === 'baik')
+                                        <flux:badge color="green" size="sm">Good</flux:badge>
+                                    @else
+                                        <flux:badge color="red" size="sm">Damaged</flux:badge>
+                                    @endif
+                                @else
+                                    <span class="text-zinc-400">-</span>
+                                @endif
+                            </flux:table.cell>
+                            <flux:table.cell>
+                                @if($loan->status === 'dipinjam')
+                                    <flux:badge color="purple">Borrowed</flux:badge>
+                                    @if($loan->isOverdue())
+                                        <flux:badge color="red" size="sm" class="ml-1">Overdue</flux:badge>
+                                    @endif
+                                @else
+                                    <flux:badge color="green">Returned</flux:badge>
+                                @endif
                             </flux:table.cell>
                         </flux:table.row>
-                        <flux:table.row>
-                            <flux:table.cell class="font-medium">Emily Rodriguez</flux:table.cell>
-                            <flux:table.cell>Marketing</flux:table.cell>
-                            <flux:table.cell>01 Dec 2025</flux:table.cell>
-                            <flux:table.cell>10 Dec 2025</flux:table.cell>
-                            <flux:table.cell>
-                                <flux:badge color="green">Returned</flux:badge>
-                            </flux:table.cell>
-                        </flux:table.row>
-                        <flux:table.row>
-                            <flux:table.cell class="font-medium">David Park</flux:table.cell>
-                            <flux:table.cell>Finance</flux:table.cell>
-                            <flux:table.cell>15 Oct 2025</flux:table.cell>
-                            <flux:table.cell>25 Oct 2025</flux:table.cell>
-                            <flux:table.cell>
-                                <flux:badge color="green">Returned</flux:badge>
-                            </flux:table.cell>
-                        </flux:table.row>
+                        @endforeach
                     </flux:table.rows>
                 </flux:table>
+                
+                {{-- Pagination --}}
+                @if($borrowingHistory->hasPages())
+                <div class="mt-4">
+                    {{ $borrowingHistory->links() }}
+                </div>
+                @endif
+                @else
+                <div class="text-center py-8">
+                    <flux:icon.inbox class="mx-auto size-10 text-zinc-300 dark:text-zinc-600" />
+                    <flux:text class="mt-2 text-zinc-500">No borrowing history available</flux:text>
+                </div>
+                @endif
                 </div>
             </flux:card>
             <flux:card>
@@ -247,16 +263,42 @@
                     </div>
                 </div>
 
-                {{-- Transfer Location Button --}}
                 @if(!$asset->isDisposed())
+                {{-- Borrow Asset Button - Only visible when asset is available --}}
+                @if($canBorrow)
                 <flux:button
                     variant="primary"
                     class="w-full mt-6"
+                    icon="arrow-right-circle"
+                    wire:click="openBorrowModal"
+                >
+                    Borrow Asset
+                </flux:button>
+                @endif
+
+                {{-- Return Asset Button - Only visible when asset is borrowed --}}
+                @if($asset->isBorrowed() && $activeLoan)
+                <flux:button
+                    variant="primary"
+                    class="w-full mt-6"
+                    icon="arrow-uturn-left"
+                    wire:click="openReturnModal"
+                >
+                    Return Asset
+                </flux:button>
+                @endif
+
+                {{-- Transfer Location Button --}}
+                @if($asset->is_available)
+                <flux:button
+                    variant="primary"
+                    class="w-full mt-3"
                     icon="arrow-right"
                     wire:click="openTransferModal"
                 >
                     Transfer Location
                 </flux:button>
+                @endif
 
                 {{-- Request Maintenance Button --}}
                 <flux:button
@@ -293,6 +335,78 @@
                 @endif
                 @endif
             </flux:card>
+
+            {{-- ============================== --}}
+            {{-- CURRENTLY BORROWED CARD        --}}
+            {{-- (Shown when asset is borrowed) --}}
+            {{-- ============================== --}}
+            @if($asset->isBorrowed() && $activeLoan)
+            <flux:card class="space-y-4 border-purple-200 dark:border-purple-800 bg-purple-50 dark:bg-purple-900/20">
+                <div class="flex items-center gap-2">
+                    <flux:icon.arrow-right-circle class="size-5 text-purple-500" />
+                    <flux:heading size="lg">Currently Borrowed</flux:heading>
+                </div>
+
+                @if($activeLoan->isOverdue())
+                <div class="p-3 bg-red-100 dark:bg-red-900/30 border border-red-300 dark:border-red-700 rounded-lg">
+                    <div class="flex items-center gap-2">
+                        <flux:icon.exclamation-triangle class="size-5 text-red-600 dark:text-red-400" />
+                        <flux:text class="font-medium text-red-700 dark:text-red-300">This loan is overdue!</flux:text>
+                    </div>
+                </div>
+                @endif
+
+                <div class="space-y-3">
+                    <div class="flex justify-between">
+                        <flux:text class="text-zinc-500">Borrower</flux:text>
+                        <flux:text class="font-medium">{{ $activeLoan->borrower->name ?? 'Unknown' }}</flux:text>
+                    </div>
+                    @if($activeLoan->borrower->position)
+                    <div class="flex justify-between">
+                        <flux:text class="text-zinc-500">Position</flux:text>
+                        <flux:text>{{ $activeLoan->borrower->position }}</flux:text>
+                    </div>
+                    @endif
+                    <div class="flex justify-between">
+                        <flux:text class="text-zinc-500">Borrowed Since</flux:text>
+                        <flux:text>{{ $activeLoan->loan_date->format('d M Y') }}</flux:text>
+                    </div>
+                    @if($activeLoan->expected_return_date)
+                    <div class="flex justify-between">
+                        <flux:text class="text-zinc-500">Expected Return</flux:text>
+                        <flux:text class="{{ $activeLoan->isOverdue() ? 'text-red-600 dark:text-red-400 font-medium' : '' }}">
+                            {{ $activeLoan->expected_return_date->format('d M Y') }}
+                            @if($activeLoan->getDaysUntilReturn() !== null)
+                                @if($activeLoan->getDaysUntilReturn() < 0)
+                                    ({{ abs($activeLoan->getDaysUntilReturn()) }} days overdue)
+                                @elseif($activeLoan->getDaysUntilReturn() == 0)
+                                    (Due today)
+                                @else
+                                    ({{ $activeLoan->getDaysUntilReturn() }} days left)
+                                @endif
+                            @endif
+                        </flux:text>
+                    </div>
+                    @endif
+                    <div class="flex justify-between">
+                        <flux:text class="text-zinc-500">Duration</flux:text>
+                        <flux:text>{{ $activeLoan->getDurationDays() }} days</flux:text>
+                    </div>
+                    @if($activeLoan->notes)
+                    <div>
+                        <flux:text class="text-zinc-500">Notes</flux:text>
+                        <flux:text class="mt-1 p-2 bg-white dark:bg-zinc-900 rounded border border-zinc-200 dark:border-zinc-700 text-sm">
+                            {{ $activeLoan->notes }}
+                        </flux:text>
+                    </div>
+                    @endif
+                </div>
+
+                <flux:button variant="primary" class="w-full" icon="arrow-uturn-left" wire:click="openReturnModal">
+                    Return Asset
+                </flux:button>
+            </flux:card>
+            @endif
 
             {{-- ============================== --}}
             {{-- DISPOSED ASSET INFO CARD       --}}
@@ -365,70 +479,6 @@
                 </div>
             </flux:card>
 
-            {{-- Current Borrower Card (Shown when borrowed) --}}
-            {{-- Example: Uncomment to see borrowed state --}}
-            {{--
-            <flux:card class="space-y-4 border-purple-200 dark:border-purple-800 bg-purple-50 dark:bg-purple-900/20">
-                <div class="flex items-center gap-2">
-                    <flux:icon.arrow-right-circle class="size-5 text-purple-500" />
-                    <flux:heading size="lg">Currently Borrowed</flux:heading>
-                </div>
-
-                <div class="space-y-3">
-                    <div class="flex justify-between">
-                        <flux:text class="text-zinc-500">Borrower</flux:text>
-                        <flux:text class="font-medium">Michael Chen</flux:text>
-                    </div>
-                    <div class="flex justify-between">
-                        <flux:text class="text-zinc-500">Department</flux:text>
-                        <flux:text>Software Development</flux:text>
-                    </div>
-                    <div class="flex justify-between">
-                        <flux:text class="text-zinc-500">Since</flux:text>
-                        <flux:text>12 Jan 2026</flux:text>
-                    </div>
-                    <div class="flex justify-between">
-                        <flux:text class="text-zinc-500">Expected Return</flux:text>
-                        <flux:text>20 Jan 2026</flux:text>
-                    </div>
-                </div>
-
-                <flux:button variant="primary" class="w-full" icon="arrow-uturn-left">
-                    Return Asset
-                </flux:button>
-            </flux:card>
-            --}}
-
-            {{-- Maintenance Alert Card (Shown when under maintenance) --}}
-            {{-- Example: Uncomment to see maintenance state --}}
-            {{--
-            <flux:card class="space-y-4 border-yellow-200 dark:border-yellow-800 bg-yellow-50 dark:bg-yellow-900/20">
-                <div class="flex items-center gap-2">
-                    <flux:icon.wrench-screwdriver class="size-5 text-yellow-500" />
-                    <flux:heading size="lg">Under Maintenance</flux:heading>
-                </div>
-
-                <div class="space-y-3">
-                    <div class="flex justify-between">
-                        <flux:text class="text-zinc-500">Started</flux:text>
-                        <flux:text>15 Jan 2026</flux:text>
-                    </div>
-                    <div class="flex justify-between">
-                        <flux:text class="text-zinc-500">Est. Completion</flux:text>
-                        <flux:text>22 Jan 2026</flux:text>
-                    </div>
-                    <div>
-                        <flux:text class="text-zinc-500">Reason</flux:text>
-                        <flux:text class="mt-1">Battery replacement and system upgrade</flux:text>
-                    </div>
-                </div>
-
-                <flux:button variant="primary" class="w-full" icon="check-circle">
-                    Complete Maintenance
-                </flux:button>
-            </flux:card>
-            --}}
-
             {{-- Quick Stats Card --}}
             <flux:card>
                 <flux:heading size="lg">Quick Stats</flux:heading>
@@ -478,6 +528,201 @@
         </div>
     </div>
 </div>
+
+{{-- ============================================== --}}
+{{-- BORROW ASSET MODAL                           --}}
+{{-- ============================================== --}}
+<flux:modal wire:model.self="showBorrowModal" class="md:w-96" @close="closeBorrowModal">
+    <form wire:submit="submitBorrow" class="space-y-6">
+        <div>
+            <flux:heading size="lg">Borrow Asset</flux:heading>
+            <flux:text class="mt-1 text-zinc-500">Assign this asset to an employee</flux:text>
+        </div>
+
+        {{-- Asset Info (Read-only Display) --}}
+        <div class="space-y-2 p-3 bg-zinc-50 dark:bg-zinc-800 rounded-lg border border-zinc-200 dark:border-zinc-700">
+            <flux:label class="text-zinc-700 dark:text-zinc-300">Asset</flux:label>
+            <flux:text class="font-medium">{{ $asset->asset_code }} - {{ $asset->name }}</flux:text>
+        </div>
+
+        {{-- Employee Selection (Required) --}}
+        <div>
+            <flux:field>
+                <flux:label>Employee <span class="text-red-500">*</span></flux:label>
+                <flux:select
+                    wire:model="borrowEmployeeId"
+                    placeholder="Select an employee"
+                >
+                    <option value="">-- Choose an employee --</option>
+                    @foreach($employees as $employee)
+                        <option value="{{ $employee->id }}">
+                            {{ $employee->name }} {{ $employee->position ? '(' . $employee->position . ')' : '' }}
+                        </option>
+                    @endforeach
+                </flux:select>
+                <flux:error name="borrowEmployeeId" />
+            </flux:field>
+        </div>
+
+        {{-- Borrow Date (Required) --}}
+        <div>
+            <flux:field>
+                <flux:label>Borrow Date <span class="text-red-500">*</span></flux:label>
+                <flux:input
+                    type="date"
+                    wire:model="borrowDate"
+                />
+                <flux:error name="borrowDate" />
+            </flux:field>
+        </div>
+
+        {{-- Expected Return Date (Optional) --}}
+        <div>
+            <flux:field>
+                <flux:label>Expected Return Date <span class="text-zinc-500 text-sm">(optional)</span></flux:label>
+                <flux:input
+                    type="date"
+                    wire:model="borrowExpectedReturnDate"
+                />
+                <flux:error name="borrowExpectedReturnDate" />
+            </flux:field>
+        </div>
+
+        {{-- Notes (Optional) --}}
+        <div>
+            <flux:field>
+                <flux:label>Notes <span class="text-zinc-500 text-sm">(optional)</span></flux:label>
+                <flux:textarea
+                    wire:model="borrowNotes"
+                    placeholder="Add any notes about this loan..."
+                    rows="3"
+                />
+                <flux:error name="borrowNotes" />
+            </flux:field>
+        </div>
+
+        {{-- Action Buttons --}}
+        <div class="flex gap-3 justify-end">
+            <flux:modal.close>
+                <flux:button type="button" variant="ghost">
+                    Cancel
+                </flux:button>
+            </flux:modal.close>
+            <flux:button
+                type="submit"
+                variant="primary"
+            >
+                Confirm Borrow
+            </flux:button>
+        </div>
+    </form>
+</flux:modal>
+
+{{-- ============================================== --}}
+{{-- RETURN ASSET MODAL                            --}}
+{{-- ============================================== --}}
+<flux:modal wire:model.self="showReturnModal" class="md:w-96" @close="closeReturnModal">
+    <form wire:submit="submitReturn" class="space-y-6">
+        <div>
+            <flux:heading size="lg">Return Asset</flux:heading>
+            <flux:text class="mt-1 text-zinc-500">Complete this loan and return the asset</flux:text>
+        </div>
+
+        {{-- Asset Info (Read-only Display) --}}
+        <div class="space-y-2 p-3 bg-zinc-50 dark:bg-zinc-800 rounded-lg border border-zinc-200 dark:border-zinc-700">
+            <flux:label class="text-zinc-700 dark:text-zinc-300">Asset</flux:label>
+            <flux:text class="font-medium">{{ $asset->asset_code }} - {{ $asset->name }}</flux:text>
+            @if($activeLoan)
+            <div class="mt-2 pt-2 border-t border-zinc-200 dark:border-zinc-700">
+                <flux:text size="sm" class="text-zinc-500">Borrowed by: <span class="font-medium text-zinc-700 dark:text-zinc-300">{{ $activeLoan->borrower->name ?? 'Unknown' }}</span></flux:text>
+                <flux:text size="sm" class="text-zinc-500">Since: {{ $activeLoan->loan_date->format('d M Y') }}</flux:text>
+            </div>
+            @endif
+        </div>
+
+        {{-- Return Date (Required) --}}
+        <div>
+            <flux:field>
+                <flux:label>Return Date <span class="text-red-500">*</span></flux:label>
+                <flux:input
+                    type="date"
+                    wire:model="returnDate"
+                />
+                <flux:error name="returnDate" />
+            </flux:field>
+        </div>
+
+        {{-- Condition After Return (Required) --}}
+        <div>
+            <flux:field>
+                <flux:label>Condition After Return <span class="text-red-500">*</span></flux:label>
+                <div class="flex flex-col gap-2 mt-2">
+                    <label class="flex items-center gap-3 p-3 rounded-lg border border-zinc-200 dark:border-zinc-700 cursor-pointer hover:bg-zinc-50 dark:hover:bg-zinc-800 transition-colors">
+                        <input 
+                            type="radio" 
+                            wire:model="returnCondition" 
+                            value="baik" 
+                            class="w-4 h-4 text-green-600 border-gray-300 focus:ring-green-500"
+                        >
+                        <div class="flex items-center gap-2">
+                            <flux:badge color="green">Good (Baik)</flux:badge>
+                            <flux:text size="sm" class="text-zinc-500">Asset is in good working condition</flux:text>
+                        </div>
+                    </label>
+                    <label class="flex items-center gap-3 p-3 rounded-lg border border-zinc-200 dark:border-zinc-700 cursor-pointer hover:bg-zinc-50 dark:hover:bg-zinc-800 transition-colors">
+                        <input 
+                            type="radio" 
+                            wire:model="returnCondition" 
+                            value="rusak" 
+                            class="w-4 h-4 text-red-600 border-gray-300 focus:ring-red-500"
+                        >
+                        <div class="flex items-center gap-2">
+                            <flux:badge color="red">Damaged (Rusak)</flux:badge>
+                            <flux:text size="sm" class="text-zinc-500">Asset has sustained damage</flux:text>
+                        </div>
+                    </label>
+                </div>
+                <flux:error name="returnCondition" />
+            </flux:field>
+        </div>
+
+        {{-- Notes (Optional) --}}
+        <div>
+            <flux:field>
+                <flux:label>Notes <span class="text-zinc-500 text-sm">(optional)</span></flux:label>
+                <flux:textarea
+                    wire:model="returnNotes"
+                    placeholder="Add any notes about the return (e.g., damage description)..."
+                    rows="3"
+                />
+                <flux:error name="returnNotes" />
+            </flux:field>
+        </div>
+
+        {{-- Info Notice --}}
+        <div class="p-3 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg">
+            <flux:text size="sm" class="text-blue-700 dark:text-blue-300">
+                <strong>Note:</strong> The asset's condition will be updated based on your selection.
+                The asset will become available for borrowing again after return.
+            </flux:text>
+        </div>
+
+        {{-- Action Buttons --}}
+        <div class="flex gap-3 justify-end">
+            <flux:modal.close>
+                <flux:button type="button" variant="ghost">
+                    Cancel
+                </flux:button>
+            </flux:modal.close>
+            <flux:button
+                type="submit"
+                variant="primary"
+            >
+                Confirm Return
+            </flux:button>
+        </div>
+    </form>
+</flux:modal>
 
 {{-- ============================================== --}}
 {{-- TRANSFER LOCATION MODAL                       --}}

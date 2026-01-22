@@ -14,7 +14,7 @@ use App\Services\AssetService;
 use Livewire\Attributes\Computed;
 use Livewire\Attributes\Validate;
 use App\Services\AssetLocationService;
-use App\Services\AssetBorrowingService;
+use App\Services\AssetLoanService;
 use BaconQrCode\Renderer\GDLibRenderer;
 use App\Services\AssetMaintenanceService;
 use App\Services\AssetDisposalService;
@@ -28,6 +28,7 @@ class AssetDetail extends Component
     
     public bool $showTransferModal = false;
     public bool $showBorrowModal = false;
+    public bool $showReturnModal = false;
     public bool $showMaintenanceModal = false;
     public bool $showRequestMaintenanceModal = false;
     public bool $showDisposeModal = false;
@@ -40,7 +41,14 @@ class AssetDetail extends Component
 
     // Borrow Asset form
     public ?int $borrowEmployeeId = null;
-    public ?string $borrowReturnDate = null;
+    public ?string $borrowDate = null;
+    public ?string $borrowExpectedReturnDate = null;
+    public string $borrowNotes = '';
+
+    // Return Asset form
+    public ?string $returnDate = null;
+    public string $returnCondition = 'baik';
+    public string $returnNotes = '';
 
     // Maintenance form
     public string $maintenanceReason = '';
@@ -128,7 +136,7 @@ class AssetDetail extends Component
     #[Computed]
     public function borrowingHistory()
     {
-        return app(AssetBorrowingService::class)->getBorrowingHistory($this->asset);
+        return app(AssetLoanService::class)->getBorrowingHistory($this->asset);
     }
 
     /**
@@ -141,12 +149,21 @@ class AssetDetail extends Component
     }
 
     /**
-     * Get current borrower
+     * Get current active loan
      */
     #[Computed]
-    public function currentBorrower()
+    public function activeLoan()
     {
-        return app(AssetBorrowingService::class)->getCurrentBorrower($this->asset);
+        return app(AssetLoanService::class)->getActiveLoan($this->asset);
+    }
+
+    /**
+     * Check if asset can be borrowed
+     */
+    #[Computed]
+    public function canBorrow(): bool
+    {
+        return app(AssetLoanService::class)->canBorrow($this->asset);
     }
 
     /**
@@ -235,8 +252,16 @@ class AssetDetail extends Component
      */
     public function openBorrowModal(): void
     {
+        if (!$this->canBorrow) {
+            $this->dispatch('notify', type: 'error', message: 'This asset cannot be borrowed.');
+            return;
+        }
+        
+        $this->borrowEmployeeId = null;
+        $this->borrowDate = now()->toDateString();
+        $this->borrowExpectedReturnDate = null;
+        $this->borrowNotes = '';
         $this->showBorrowModal = true;
-        $this->resetExcept('asset', 'activeTab', 'showTransferModal', 'showMaintenanceModal');
     }
 
     /**
@@ -246,7 +271,10 @@ class AssetDetail extends Component
     {
         $this->showBorrowModal = false;
         $this->borrowEmployeeId = null;
-        $this->borrowReturnDate = null;
+        $this->borrowDate = null;
+        $this->borrowExpectedReturnDate = null;
+        $this->borrowNotes = '';
+        $this->resetValidation(['borrowEmployeeId', 'borrowDate', 'borrowExpectedReturnDate', 'borrowNotes']);
     }
 
     /**
@@ -256,40 +284,92 @@ class AssetDetail extends Component
     {
         $this->validate([
             'borrowEmployeeId' => 'required|exists:employees,id',
-            'borrowReturnDate' => 'nullable|date|after_or_equal:today',
+            'borrowDate' => 'required|date',
+            'borrowExpectedReturnDate' => 'nullable|date|after_or_equal:borrowDate',
+            'borrowNotes' => 'nullable|string|max:1000',
         ]);
 
         try {
-            app(AssetBorrowingService::class)->borrowAsset(
+            $employee = \App\Models\Employee::findOrFail($this->borrowEmployeeId);
+            
+            app(AssetLoanService::class)->createLoan(
                 $this->asset,
-                $this->borrowEmployeeId,
-                $this->borrowReturnDate
+                $employee,
+                [
+                    'borrow_date' => $this->borrowDate,
+                    'expected_return_date' => $this->borrowExpectedReturnDate,
+                    'notes' => $this->borrowNotes,
+                ]
             );
 
             $this->asset->refresh();
-            $this->dispatch('notify', 'Asset borrowed successfully');
+            $this->dispatch('notify', type: 'success', message: 'Asset borrowed successfully.');
             $this->closeBorrowModal();
         } catch (\Exception $e) {
-            $this->dispatch('notify-error', 'Borrow failed: ' . $e->getMessage());
+            $this->dispatch('notify', type: 'error', message: 'Borrow failed: ' . $e->getMessage());
         }
     }
 
     /**
-     * Return borrowed asset
+     * Open return asset modal
      */
-    public function returnAsset(): void
+    public function openReturnModal(): void
     {
+        $activeLoan = $this->activeLoan;
+        if (!$activeLoan) {
+            $this->dispatch('notify', type: 'error', message: 'No active loan found for this asset.');
+            return;
+        }
+
+        $this->returnDate = now()->toDateString();
+        $this->returnCondition = 'baik';
+        $this->returnNotes = '';
+        $this->showReturnModal = true;
+    }
+
+    /**
+     * Close return asset modal
+     */
+    public function closeReturnModal(): void
+    {
+        $this->showReturnModal = false;
+        $this->returnDate = null;
+        $this->returnCondition = 'baik';
+        $this->returnNotes = '';
+        $this->resetValidation(['returnDate', 'returnCondition', 'returnNotes']);
+    }
+
+    /**
+     * Submit return asset
+     */
+    public function submitReturn(): void
+    {
+        $this->validate([
+            'returnDate' => 'required|date',
+            'returnCondition' => 'required|in:baik,rusak',
+            'returnNotes' => 'nullable|string|max:1000',
+        ]);
+
         try {
-            $loan = $this->currentBorrower;
-            if (!$loan) {
-                throw new \Exception('Asset is not currently borrowed');
+            $activeLoan = $this->activeLoan;
+            if (!$activeLoan) {
+                throw new \Exception('No active loan found for this asset.');
             }
 
-            app(AssetBorrowingService::class)->returnAsset($loan->id);
+            app(AssetLoanService::class)->finishLoan(
+                $activeLoan,
+                [
+                    'return_date' => $this->returnDate,
+                    'condition_after_return' => $this->returnCondition,
+                    'notes' => $this->returnNotes,
+                ]
+            );
+
             $this->asset->refresh();
-            $this->dispatch('notify', 'Asset returned successfully');
+            $this->dispatch('notify', type: 'success', message: 'Asset returned successfully.');
+            $this->closeReturnModal();
         } catch (\Exception $e) {
-            $this->dispatch('notify-error', 'Return failed: ' . $e->getMessage());
+            $this->dispatch('notify', type: 'error', message: 'Return failed: ' . $e->getMessage());
         }
     }
 
@@ -582,11 +662,12 @@ class AssetDetail extends Component
             'locationHistory' => $this->locationHistory,
             'borrowingHistory' => $this->borrowingHistory,
             'maintenanceHistory' => $this->maintenanceHistory,
-            'currentBorrower' => $this->currentBorrower,
+            'activeLoan' => $this->activeLoan,
             'currentMaintenance' => $this->currentMaintenance,
             'employees' => $this->employees,
             'locations' => $this->locations,
             'qrCodeBase64' => $this->qrCodeBase64,
+            'canBorrow' => $this->canBorrow,
             'canDispose' => $this->canDispose,
             'disposalRecord' => $this->disposalRecord,
             'canInspect' => $this->canInspect,
