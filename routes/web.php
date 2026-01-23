@@ -4,14 +4,10 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\TestAssetGenerationController;
 use App\Http\Controllers\AssetController;
 
-Route::get('/', function () {
-    return view('welcome');
-})->name('home');
-
-// Test route for asset generation
-// Route::get('/test-asset-generation', [TestAssetGenerationController::class, 'test'])
-//     ->middleware(['auth', 'verified'])
-//     ->name('test-asset-generation');
+// ============================================================
+// ROOT ROUTE - Redirect to Dashboard
+// ============================================================
+Route::redirect('/', '/dashboard');
 
 Route::view('dashboard', 'dashboard')
     ->middleware(['auth', 'verified'])
