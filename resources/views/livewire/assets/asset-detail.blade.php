@@ -186,24 +186,96 @@
             </flux:card>
             <flux:card>
                 <flux:heading size="lg">Maintenance History</flux:heading>
+                <flux:text class="mt-2">Service and repair records for this asset</flux:text>
 
-                <div class="space-y-3 mt-4">
-                    <div class="p-3 bg-zinc-50 dark:bg-zinc-800 rounded-lg">
-                        <div class="flex items-center justify-between mb-2">
-                            <flux:text class="font-medium">Screen Repair</flux:text>
-                            <flux:badge color="green" size="sm">Completed</flux:badge>
-                        </div>
-                        <flux:text size="sm" class="text-zinc-500">Aug 2025 • 5 days</flux:text>
+                <div class="mt-6">
+                @if($this->maintenanceHistory && $this->maintenanceHistory->count() > 0)
+                    <div class="shadow-sm ring-1 ring-gray-200 dark:ring-gray-700 rounded-lg overflow-hidden">
+                        <flux:table>
+                            <flux:table.columns>
+                                <flux:table.column>Date</flux:table.column>
+                                <flux:table.column>Status</flux:table.column>
+                                <flux:table.column>Result</flux:table.column>
+                                <flux:table.column>Performed By</flux:table.column>
+                                <flux:table.column>Actions</flux:table.column>
+                            </flux:table.columns>
+                            <flux:table.rows>
+                                @foreach($this->maintenanceHistory as $maintenance)
+                                <flux:table.row 
+                                    class="cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors"
+                                    wire:click="viewMaintenanceDetail({{ $maintenance->id }})"
+                                >
+                                    <flux:table.cell>
+                                        <div class="flex items-center gap-1">
+                                            <flux:icon.calendar class="size-3 text-gray-400" />
+                                            <flux:text size="sm">{{ $maintenance->maintenance_date?->format('d M Y, H:i') ?? 'N/A' }}</flux:text>
+                                        </div>
+                                    </flux:table.cell>
+                                    <flux:table.cell>
+                                        @switch($maintenance->status)
+                                            @case('dalam_proses')
+                                                <flux:badge color="yellow" size="sm">
+                                                    <flux:icon.wrench-screwdriver class="size-3 mr-1" />
+                                                    In Progress
+                                                </flux:badge>
+                                                @break
+                                            @case('selesai')
+                                                <flux:badge color="green" size="sm">
+                                                    <flux:icon.check-circle class="size-3 mr-1" />
+                                                    Completed
+                                                </flux:badge>
+                                                @break
+                                            @case('dibatalkan')
+                                                <flux:badge color="zinc" size="sm" variant="soft">
+                                                    <flux:icon.x-circle class="size-3 mr-1" />
+                                                    Cancelled
+                                                </flux:badge>
+                                                @break
+                                        @endswitch
+                                    </flux:table.cell>
+                                    <flux:table.cell>
+                                        @if($maintenance->status === 'selesai' && $maintenance->result)
+                                            @if($maintenance->result === 'baik')
+                                                <flux:badge color="green" size="sm" variant="soft">Good</flux:badge>
+                                            @elseif($maintenance->result === 'rusak')
+                                                <flux:badge color="red" size="sm" variant="soft">Damaged</flux:badge>
+                                            @else
+                                                <flux:badge color="zinc" size="sm" variant="soft">{{ $maintenance->result }}</flux:badge>
+                                            @endif
+                                        @else
+                                            <flux:text size="sm" variant="subtle">—</flux:text>
+                                        @endif
+                                    </flux:table.cell>
+                                    <flux:table.cell>
+                                        <flux:text size="sm">{{ $maintenance->creator->name ?? 'System' }}</flux:text>
+                                    </flux:table.cell>
+                                    <flux:table.cell onclick="event.stopPropagation()">
+                                        <flux:button
+                                            size="sm"
+                                            variant="ghost"
+                                            icon="eye"
+                                            wire:click="viewMaintenanceDetail({{ $maintenance->id }})"
+                                        />
+                                    </flux:table.cell>
+                                </flux:table.row>
+                                @endforeach
+                            </flux:table.rows>
+                        </flux:table>
                     </div>
-                </div>
 
-                {{-- Empty State (alternative) --}}
-                {{--
-                <div class="text-center py-6">
-                    <flux:icon.wrench-screwdriver class="mx-auto size-10 text-zinc-300 dark:text-zinc-600" />
-                    <flux:text class="mt-2 text-zinc-500">No maintenance history</flux:text>
+                    {{-- Pagination --}}
+                    @if($this->maintenanceHistory->hasPages())
+                    <div class="mt-4">
+                        {{ $this->maintenanceHistory->links() }}
+                    </div>
+                    @endif
+                @else
+                    <div class="text-center py-8">
+                        <flux:icon.wrench-screwdriver class="mx-auto size-10 text-zinc-300 dark:text-zinc-600" />
+                        <flux:text class="mt-2 text-zinc-500">No maintenance history available</flux:text>
+                    </div>
+                @endif
                 </div>
-                --}}
             </flux:card>
 
 
@@ -528,6 +600,147 @@
         </div>
     </div>
 </div>
+
+{{-- ============================================== --}}
+{{-- VIEW MAINTENANCE DETAIL MODAL                 --}}
+{{-- ============================================== --}}
+<flux:modal wire:model.self="showMaintenanceDetailModal" class="md:w-full md:max-w-md">
+    <div class="space-y-6">
+        {{-- Modal Header --}}
+        <div>
+            <flux:heading size="lg">Maintenance Detail</flux:heading>
+            <flux:text class="mt-1 text-zinc-500">Record #{{ $selectedMaintenanceRecord?->id ?? 'N/A' }}</flux:text>
+        </div>
+
+        @if($selectedMaintenanceRecord)
+            {{-- Asset Information Section --}}
+            <div class="space-y-2 p-3 bg-zinc-50 dark:bg-zinc-800 rounded-lg border border-zinc-200 dark:border-zinc-700">
+                <flux:label class="text-xs uppercase tracking-wide text-zinc-500 dark:text-zinc-400">Asset Information</flux:label>
+                <flux:text class="font-medium">
+                    {{ $asset->asset_code }} - {{ $asset->name }}
+                </flux:text>
+            </div>
+
+            {{-- Status Section --}}
+            <div class="flex items-center justify-between">
+                <flux:label class="text-xs uppercase tracking-wide text-zinc-500 dark:text-zinc-400">Status</flux:label>
+                @switch($selectedMaintenanceRecord->status)
+                    @case('dalam_proses')
+                        <flux:badge color="yellow">
+                            <flux:icon.wrench-screwdriver class="size-3 mr-1" />
+                            In Progress
+                        </flux:badge>
+                        @break
+                    @case('selesai')
+                        <flux:badge color="green">
+                            <flux:icon.check-circle class="size-3 mr-1" />
+                            Completed
+                        </flux:badge>
+                        @break
+                    @case('dibatalkan')
+                        <flux:badge color="zinc" variant="soft">
+                            <flux:icon.x-circle class="size-3 mr-1" />
+                            Cancelled
+                        </flux:badge>
+                        @break
+                @endswitch
+            </div>
+
+            {{-- Maintenance Period Section --}}
+            <div class="space-y-4 border-t border-zinc-200 dark:border-zinc-700 pt-4">
+                <flux:label class="text-xs uppercase tracking-wide text-zinc-500 dark:text-zinc-400">Maintenance Period</flux:label>
+                
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <flux:label class="text-zinc-500 dark:text-zinc-400">Start Date</flux:label>
+                        <div class="flex items-center gap-1 mt-1">
+                            <flux:icon.calendar class="size-3 text-gray-400" />
+                            <flux:text size="sm">{{ $selectedMaintenanceRecord->maintenance_date?->format('d M Y, H:i') ?? 'N/A' }}</flux:text>
+                        </div>
+                    </div>
+                    <div>
+                        <flux:label class="text-zinc-500 dark:text-zinc-400">Est. Completion</flux:label>
+                        <div class="flex items-center gap-1 mt-1">
+                            <flux:icon.clock class="size-3 text-gray-400" />
+                            <flux:text size="sm">{{ $selectedMaintenanceRecord->estimated_completion_date?->format('d M Y') ?? 'Not set' }}</flux:text>
+                        </div>
+                    </div>
+                </div>
+
+                @if($selectedMaintenanceRecord->completed_date)
+                    <div>
+                        <flux:label class="text-zinc-500 dark:text-zinc-400">Completion Date</flux:label>
+                        <div class="flex items-center gap-1 mt-1">
+                            <flux:icon.check-circle class="size-3 text-green-500" />
+                            <flux:text size="sm">{{ $selectedMaintenanceRecord->completed_date->format('d M Y, H:i') }}</flux:text>
+                        </div>
+                    </div>
+                @endif
+            </div>
+
+            {{-- Description Section --}}
+            @if($selectedMaintenanceRecord->description)
+                <div class="space-y-2 border-t border-zinc-200 dark:border-zinc-700 pt-4">
+                    <flux:label class="text-xs uppercase tracking-wide text-zinc-500 dark:text-zinc-400">Description</flux:label>
+                    <p class="text-sm text-zinc-600 dark:text-zinc-400">{{ $selectedMaintenanceRecord->description }}</p>
+                </div>
+            @endif
+
+            {{-- Result & Feedback Section (only for completed maintenance) --}}
+            @if($selectedMaintenanceRecord->status === 'selesai' && ($selectedMaintenanceRecord->result || $selectedMaintenanceRecord->feedback))
+                <div class="space-y-4 border-t border-zinc-200 dark:border-zinc-700 pt-4">
+                    <flux:label class="text-xs uppercase tracking-wide text-zinc-500 dark:text-zinc-400">Maintenance Outcome</flux:label>
+                    
+                    @if($selectedMaintenanceRecord->result)
+                        <div>
+                            <flux:label class="text-zinc-500 dark:text-zinc-400">Result</flux:label>
+                            <div class="mt-1">
+                                @if($selectedMaintenanceRecord->result === 'baik')
+                                    <flux:badge color="green">Good Condition</flux:badge>
+                                @elseif($selectedMaintenanceRecord->result === 'rusak')
+                                    <flux:badge color="red">Still Damaged</flux:badge>
+                                @else
+                                    <flux:badge color="zinc">{{ $selectedMaintenanceRecord->result }}</flux:badge>
+                                @endif
+                            </div>
+                        </div>
+                    @endif
+
+                    @if($selectedMaintenanceRecord->feedback)
+                        <div>
+                            <flux:label class="text-zinc-500 dark:text-zinc-400">Technical Feedback</flux:label>
+                            <p class="text-sm text-zinc-600 dark:text-zinc-400 mt-1">{{ $selectedMaintenanceRecord->feedback }}</p>
+                        </div>
+                    @endif
+                </div>
+            @endif
+
+            {{-- Created By Section --}}
+            <div class="space-y-2 border-t border-zinc-200 dark:border-zinc-700 pt-4">
+                <flux:label class="text-xs uppercase tracking-wide text-zinc-500 dark:text-zinc-400">Record Information</flux:label>
+                
+                <div class="flex items-center justify-between">
+                    <div>
+                        <flux:label class="text-zinc-500 dark:text-zinc-400">Created By</flux:label>
+                        <flux:text size="sm" class="mt-1">{{ $selectedMaintenanceRecord->creator->name ?? 'System' }}</flux:text>
+                    </div>
+                    @if($selectedMaintenanceRecord->maintenanceRequest)
+                        <flux:badge color="blue" size="sm" variant="soft">
+                            Request #{{ $selectedMaintenanceRecord->maintenanceRequest->id }}
+                        </flux:badge>
+                    @endif
+                </div>
+            </div>
+        @endif
+
+        {{-- Action Buttons --}}
+        <div class="flex justify-end border-t border-zinc-200 dark:border-zinc-700 pt-4">
+            <flux:button variant="ghost" wire:click="closeMaintenanceDetailModal">
+                Close
+            </flux:button>
+        </div>
+    </div>
+</flux:modal>
 
 {{-- ============================================== --}}
 {{-- BORROW ASSET MODAL                           --}}

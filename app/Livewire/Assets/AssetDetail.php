@@ -33,6 +33,10 @@ class AssetDetail extends Component
     public bool $showRequestMaintenanceModal = false;
     public bool $showDisposeModal = false;
     public bool $showInspectModal = false;
+    public bool $showMaintenanceDetailModal = false;
+
+    // Selected maintenance record for detail modal
+    public ?\App\Models\AssetMaintenance $selectedMaintenanceRecord = null;
 
     // Transfer Location form
     public ?int $transferLocationId = null;
@@ -616,6 +620,25 @@ class AssetDetail extends Component
         $this->inspectCondition = '';
         $this->inspectDescription = '';
         $this->resetValidation(['inspectCondition', 'inspectDescription']);
+    }
+
+    /**
+     * View maintenance detail modal
+     */
+    public function viewMaintenanceDetail(int $maintenanceId): void
+    {
+        $this->selectedMaintenanceRecord = \App\Models\AssetMaintenance::with(['creator', 'maintenanceRequest'])
+            ->find($maintenanceId);
+        $this->showMaintenanceDetailModal = true;
+    }
+
+    /**
+     * Close maintenance detail modal
+     */
+    public function closeMaintenanceDetailModal(): void
+    {
+        $this->showMaintenanceDetailModal = false;
+        $this->selectedMaintenanceRecord = null;
     }
 
     /**
