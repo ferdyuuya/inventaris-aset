@@ -6,7 +6,8 @@
             <flux:subheading class="text-gray-600 dark:text-gray-400 mt-2">Record and track asset condition evaluations</flux:subheading>
         </div>
 
-        {{-- Create Inspection Button --}}
+        {{-- Create Inspection Button (Admin Only) --}}
+        @if(auth()->user()->isAdmin())
         <flux:button
             variant="primary"
             icon="clipboard-document-check"
@@ -14,6 +15,7 @@
         >
             New Inspection
         </flux:button>
+        @endif
     </div>
 
     <flux:separator />
@@ -24,7 +26,7 @@
             {{-- Search Input --}}
             <div class="flex-1 max-w-md">
                 <flux:input
-                    wire:model.live="search"
+                    wire:model.live.debounce.300ms="search"
                     type="text"
                     placeholder="Search by asset code or name..."
                     icon="magnifying-glass"
@@ -33,17 +35,46 @@
                 />
             </div>
 
-            {{-- Clear Search --}}
-            @if($search)
-                <flux:button
-                    variant="ghost"
-                    size="sm"
-                    icon="x-mark"
-                    wire:click="$set('search', '')"
-                >
-                    Clear
-                </flux:button>
-            @endif
+            {{-- Vertical Separator --}}
+            <div class="hidden lg:block w-px h-8 bg-gray-300 dark:bg-gray-600"></div>
+
+            {{-- Sorting Dropdown --}}
+            <div class="flex flex-wrap gap-3">
+                <flux:dropdown position="bottom" align="start">
+                    <flux:button variant="ghost" size="sm" icon="arrows-up-down">
+                        Sort
+                    </flux:button>
+
+                    <flux:menu>
+                        <flux:text class="px-3 py-2 text-xs font-semibold uppercase text-gray-500 dark:text-gray-400">Sort By</flux:text>
+                        <flux:separator />
+                        
+                        <flux:menu.item wire:click="$set('sortDirection', 'desc')">
+                            <span @class(['font-semibold text-blue-600 dark:text-blue-400' => ($sortDirection ?? 'desc') === 'desc'])>
+                                Newest
+                            </span>
+                        </flux:menu.item>
+
+                        <flux:menu.item wire:click="$set('sortDirection', 'asc')">
+                            <span @class(['font-semibold text-blue-600 dark:text-blue-400' => ($sortDirection ?? 'desc') === 'asc'])>
+                                Oldest
+                            </span>
+                        </flux:menu.item>
+                    </flux:menu>
+                </flux:dropdown>
+
+                {{-- Clear Search --}}
+                @if($search)
+                    <flux:button
+                        variant="ghost"
+                        size="sm"
+                        icon="x-mark"
+                        wire:click="$set('search', '')"
+                    >
+                        Clear
+                    </flux:button>
+                @endif
+            </div>
         </div>
 
         {{-- Active Filters Summary --}}
@@ -62,6 +93,7 @@
     {{-- Inspections Table --}}
     <div class="overflow-x-auto">
         <div class="shadow-sm ring-1 ring-gray-200 dark:ring-gray-700 rounded-lg overflow-hidden">
+        @if($inspections->count() > 0)
             <flux:table>
                 <flux:table.columns>
                     <flux:table.column class="w-12">#</flux:table.column>
@@ -74,8 +106,11 @@
                 </flux:table.columns>
 
                 <flux:table.rows>
-                    @forelse($inspections as $inspection)
-                        <flux:table.row class="cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors">
+                    @foreach($inspections as $inspection)
+                        <flux:table.row 
+                            class="cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors"
+                            wire:click="viewInspection({{ $inspection->id }})"
+                        >
                             <flux:table.cell>
                                 <flux:text size="sm" variant="subtle" class="font-mono">#{{ $inspection->id }}</flux:text>
                             </flux:table.cell>
@@ -91,20 +126,17 @@
                                 @if($inspection->condition_before)
                                     @switch($inspection->condition_before)
                                         @case('baik')
-                                            <flux:badge color="green" size="sm">
-                                                <flux:icon.check-circle class="size-3 mr-1" />
+                                            <flux:badge color="green" size="sm" variant="soft">
                                                 Good
                                             </flux:badge>
                                             @break
                                         @case('rusak')
-                                            <flux:badge color="red" size="sm">
-                                                <flux:icon.x-circle class="size-3 mr-1" />
+                                            <flux:badge color="red" size="sm" variant="soft">
                                                 Damaged
                                             </flux:badge>
                                             @break
                                         @case('perlu_perbaikan')
-                                            <flux:badge color="yellow" size="sm">
-                                                <flux:icon.wrench class="size-3 mr-1" />
+                                            <flux:badge color="yellow" size="sm" variant="soft">
                                                 Needs Repair
                                             </flux:badge>
                                             @break
@@ -151,9 +183,9 @@
                                 </div>
                             </flux:table.cell>
 
-                            <flux:table.cell>
+                            <flux:table.cell onclick="event.stopPropagation()">
                                 <flux:dropdown position="bottom" align="end">
-                                    <flux:button variant="ghost" size="sm" icon="ellipsis-horizontal" />
+                                    <flux:button variant="ghost" size="sm" icon="eye" />
                                     <flux:menu>
                                         <flux:menu.item 
                                             icon="eye" 
@@ -174,30 +206,27 @@
                                 </flux:dropdown>
                             </flux:table.cell>
                         </flux:table.row>
-                    @empty
-                        <flux:table.row>
-                            <flux:table.cell colspan="7" class="text-center py-12">
-                                <div class="flex flex-col items-center justify-center">
-                                    <flux:icon.clipboard-document-check class="h-12 w-12 text-gray-300 dark:text-gray-600 mb-3" />
-                                    <flux:heading size="lg" class="text-zinc-600 dark:text-zinc-400">No inspections found</flux:heading>
-                                    <flux:text class="mt-2 text-zinc-500">
-                                        @if($search)
-                                            Try adjusting your search term.
-                                        @else
-                                            Get started by creating your first asset inspection.
-                                        @endif
-                                    </flux:text>
-                                    @if(!$search)
-                                        <flux:button variant="primary" class="mt-4" icon="clipboard-document-check" wire:click="openCreateModal">
-                                            Create First Inspection
-                                        </flux:button>
-                                    @endif
-                                </div>
-                            </flux:table.cell>
-                        </flux:table.row>
-                    @endforelse
+                    @endforeach
                 </flux:table.rows>
             </flux:table>
+        @else
+            <div class="text-center py-12">
+                <flux:icon.clipboard-document-check class="mx-auto size-12 text-zinc-300 dark:text-zinc-600" />
+                <flux:heading size="lg" class="mt-4 text-zinc-600 dark:text-zinc-400">No inspections found</flux:heading>
+                <flux:text class="mt-2 text-zinc-500">
+                    @if($search)
+                        Try adjusting your search term.
+                    @else
+                        Get started by creating your first asset inspection.
+                    @endif
+                </flux:text>
+                @if(!$search && auth()->user()->isAdmin())
+                    <flux:button variant="primary" class="mt-4" icon="clipboard-document-check" wire:click="openCreateModal">
+                        Create First Inspection
+                    </flux:button>
+                @endif
+            </div>
+        @endif
         </div>
     </div>
 

@@ -65,6 +65,22 @@ class User extends Authenticatable
     }
 
     /**
+     * Check if user has admin role
+     */
+    public function isAdmin(): bool
+    {
+        return $this->role === 'admin';
+    }
+
+    /**
+     * Check if user has staff role
+     */
+    public function isStaff(): bool
+    {
+        return $this->role === 'staff';
+    }
+
+    /**
      * Get the employee record associated with the user.
      */
     public function employee(): HasOne

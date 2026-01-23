@@ -19,7 +19,7 @@
         <div class="flex flex-col gap-4 lg:flex-row lg:items-center">
             <div class="flex-1 max-w-md">
                 <flux:input
-                    wire:model.live="search"
+                    wire:model.live.debounce.300ms="search"
                     type="text"
                     placeholder="Search by code or name..."
                     icon="magnifying-glass"
@@ -147,6 +147,76 @@
                     </flux:menu>
                 </flux:dropdown>
 
+                {{-- Sorting Dropdown (aligned with filters) --}}
+                <flux:dropdown position="bottom" align="start">
+                    <flux:button variant="ghost" size="sm" icon="arrows-up-down">
+                        Sort
+                    </flux:button>
+
+                    <flux:menu>
+                        <flux:text class="px-3 py-2 text-xs font-semibold uppercase text-gray-500 dark:text-gray-400">Sort By</flux:text>
+                        <flux:separator />
+                        
+                        {{-- Newest --}}
+                        <flux:menu.item
+                            wire:click="setSortField('created_at', 'desc')"
+                            @class([
+                                'bg-blue-50 dark:bg-blue-900/30' => $sortField === 'created_at' && $sortOrder === 'desc',
+                            ])
+                        >
+                            <span @class([
+                                'font-semibold text-blue-600 dark:text-blue-400' => $sortField === 'created_at' && $sortOrder === 'desc',
+                            ])>
+                                Newest
+                            </span>
+                        </flux:menu.item>
+
+                        {{-- Oldest --}}
+                        <flux:menu.item
+                            wire:click="setSortField('created_at', 'asc')"
+                            @class([
+                                'bg-blue-50 dark:bg-blue-900/30' => $sortField === 'created_at' && $sortOrder === 'asc',
+                            ])
+                        >
+                            <span @class([
+                                'font-semibold text-blue-600 dark:text-blue-400' => $sortField === 'created_at' && $sortOrder === 'asc',
+                            ])>
+                                Oldest
+                            </span>
+                        </flux:menu.item>
+
+                        <flux:separator />
+
+                        {{-- A-Z --}}
+                        <flux:menu.item
+                            wire:click="setSortField('name', 'asc')"
+                            @class([
+                                'bg-blue-50 dark:bg-blue-900/30' => $sortField === 'name' && $sortOrder === 'asc',
+                            ])
+                        >
+                            <span @class([
+                                'font-semibold text-blue-600 dark:text-blue-400' => $sortField === 'name' && $sortOrder === 'asc',
+                            ])>
+                                A–Z
+                            </span>
+                        </flux:menu.item>
+
+                        {{-- Z-A --}}
+                        <flux:menu.item
+                            wire:click="setSortField('name', 'desc')"
+                            @class([
+                                'bg-blue-50 dark:bg-blue-900/30' => $sortField === 'name' && $sortOrder === 'desc',
+                            ])
+                        >
+                            <span @class([
+                                'font-semibold text-blue-600 dark:text-blue-400' => $sortField === 'name' && $sortOrder === 'desc',
+                            ])>
+                                Z–A
+                            </span>
+                        </flux:menu.item>
+                    </flux:menu>
+                </flux:dropdown>
+
                 {{-- Clear Filters Button --}}
                 @if($hasActiveFilters || $search)
                     <flux:button
@@ -193,194 +263,147 @@
 
     {{-- Assets Table --}}
     <div class="overflow-x-auto">
-        {{-- Table Header with Sort Options --}}
-        <div class="mb-4 flex items-center justify-between">
-            <flux:text size="sm" class="text-gray-600 dark:text-gray-400">
-                Sorted by: <strong>{{ ucwords(str_replace('_', ' ', $sortField)) }}</strong> ({{ $sortOrder === 'asc' ? 'A→Z' : 'Z→A' }})
-            </flux:text>
-            
-            <flux:dropdown position="bottom" align="end">
-                <flux:button variant="ghost" size="sm" icon="arrows-up-down">
-                    Change Sort
-                </flux:button>
+        <div class="shadow-sm ring-1 ring-gray-200 dark:ring-gray-700 rounded-lg overflow-hidden">
+        @if($assets->count() > 0)
+            <flux:table>
+                <flux:table.columns>
+                    <flux:table.column class="w-12">#</flux:table.column>
+                    <flux:table.column>Code</flux:table.column>
+                    <flux:table.column>Name</flux:table.column>
+                    <flux:table.column>Category</flux:table.column>
+                    <flux:table.column>Location</flux:table.column>
+                    <flux:table.column>Status</flux:table.column>
+                    <flux:table.column>Condition</flux:table.column>
+                    <flux:table.column>Last Updated</flux:table.column>
+                    <flux:table.column>Actions</flux:table.column>
+                </flux:table.columns>
 
-                <flux:menu>
-                    <flux:text class="px-3 py-2 text-xs font-semibold uppercase text-gray-500 dark:text-gray-400">Sort By</flux:text>
-                    <flux:separator />
-                    
-                    {{-- Created Date (newest first) --}}
-                    <flux:menu.item
-                        wire:click="setSortField('created_at', 'desc')"
-                        :class="$sortField === 'created_at' && $sortOrder === 'desc' ? 'bg-blue-50 dark:bg-blue-900/30' : ''"
-                    >
-                        <span :class="$sortField === 'created_at' && $sortOrder === 'desc' ? 'font-semibold text-blue-600 dark:text-blue-400' : ''">
-                            📅 Created Date (Newest)
-                        </span>
-                    </flux:menu.item>
+                <flux:table.rows>
+                    @foreach($assets as $asset)
+                        <flux:table.row 
+                            class="cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors"
+                            wire:click="$dispatch('navigate', { url: '{{ route('assets.show', $asset) }}' })"
+                        >
+                            <flux:table.cell>
+                                <flux:text size="sm" variant="subtle">{{ ($assets->currentPage() - 1) * $perPage + $loop->iteration }}</flux:text>
+                            </flux:table.cell>
+                            <flux:table.cell>
+                                <flux:text variant="strong" color="blue">{{ $asset->asset_code }}</flux:text>
+                            </flux:table.cell>
+                            <flux:table.cell>
+                                <flux:text variant="strong">{{ $asset->name }}</flux:text>
+                            </flux:table.cell>
+                            <flux:table.cell>
+                                <flux:badge size="sm" :color="BadgeColorHelper::getCategoryColor($asset->category)" variant="solid">
+                                    {{ $asset->category->name ?? '-' }}
+                                </flux:badge>
+                            </flux:table.cell>
+                            <flux:table.cell>
+                                <div class="flex items-center gap-1">
+                                    <flux:icon.map-pin class="size-3 text-gray-400" />
+                                    <flux:text size="sm">{{ $asset->location->name ?? '-' }}</flux:text>
+                                </div>
+                            </flux:table.cell>
+                            <flux:table.cell>
+                                @switch($asset->status)
+                                    @case('aktif')
+                                        <flux:badge color="green" size="sm">
+                                            <flux:icon.check-circle class="size-3 mr-1" />
+                                            Active
+                                        </flux:badge>
+                                        @break
+                                    @case('dipinjam')
+                                        <flux:badge color="purple" size="sm">
+                                            <flux:icon.arrow-right-circle class="size-3 mr-1" />
+                                            Borrowed
+                                        </flux:badge>
+                                        @break
+                                    @case('dipelihara')
+                                        <flux:badge color="yellow" size="sm">
+                                            <flux:icon.wrench-screwdriver class="size-3 mr-1" />
+                                            Maintenance
+                                        </flux:badge>
+                                        @break
+                                    @case('dihapuskan')
+                                        <flux:badge color="zinc" size="sm">
+                                            <flux:icon.archive-box-x-mark class="size-3 mr-1" />
+                                            Disposed
+                                        </flux:badge>
+                                        @break
+                                    @case('nonaktif')
+                                        <flux:badge color="red" size="sm" variant="soft">
+                                            <flux:icon.x-circle class="size-3 mr-1" />
+                                            Inactive
+                                        </flux:badge>
+                                        @break
+                                    @default
+                                        <flux:badge color="zinc" size="sm" variant="soft">
+                                            {{ ucfirst($asset->status) }}
+                                        </flux:badge>
+                                @endswitch
+                            </flux:table.cell>
+                            <flux:table.cell>
+                                @switch($asset->condition)
+                                    @case('baik')
+                                        <flux:badge color="emerald" size="sm" variant="soft">
+                                            Good
+                                        </flux:badge>
+                                        @break
+                                    @case('rusak')
+                                        <flux:badge color="red" size="sm" variant="soft">
+                                            Damaged
+                                        </flux:badge>
+                                        @break
+                                    @case('perlu_perbaikan')
+                                        <flux:badge color="orange" size="sm" variant="soft">
+                                            Needs Repair
+                                        </flux:badge>
+                                        @break
+                                    @default
+                                        <flux:badge color="zinc" size="sm" variant="soft">
+                                            {{ $asset->condition ? ucfirst(str_replace('_', ' ', $asset->condition)) : '-' }}
+                                        </flux:badge>
+                                @endswitch
+                            </flux:table.cell>
+                            <flux:table.cell>
+                                <div class="flex items-center gap-1">
+                                    <flux:icon.calendar class="size-3 text-gray-400" />
+                                    <flux:text size="sm">{{ $asset->updated_at->format('d M Y, H:i') }}</flux:text>
+                                </div>
+                            </flux:table.cell>
+                            <flux:table.cell onclick="event.stopPropagation()">
+                                <flux:dropdown position="bottom" align="end">
+                                    <flux:button variant="ghost" size="sm" icon="eye" />
 
-                    {{-- Created Date (oldest first) --}}
-                    <flux:menu.item
-                        wire:click="setSortField('created_at', 'asc')"
-                        :class="$sortField === 'created_at' && $sortOrder === 'asc' ? 'bg-blue-50 dark:bg-blue-900/30' : ''"
-                    >
-                        <span :class="$sortField === 'created_at' && $sortOrder === 'asc' ? 'font-semibold text-blue-600 dark:text-blue-400' : ''">
-                            📅 Created Date (Oldest)
-                        </span>
-                    </flux:menu.item>
-
-                    <flux:separator />
-
-                    {{-- Asset Code A-Z --}}
-                    <flux:menu.item
-                        wire:click="setSortField('asset_code', 'asc')"
-                        :class="$sortField === 'asset_code' && $sortOrder === 'asc' ? 'bg-blue-50 dark:bg-blue-900/30' : ''"
-                    >
-                        <span :class="$sortField === 'asset_code' && $sortOrder === 'asc' ? 'font-semibold text-blue-600 dark:text-blue-400' : ''">
-                            🔤 Asset Code (A→Z)
-                        </span>
-                    </flux:menu.item>
-
-                    {{-- Asset Code Z-A --}}
-                    <flux:menu.item
-                        wire:click="setSortField('asset_code', 'desc')"
-                        :class="$sortField === 'asset_code' && $sortOrder === 'desc' ? 'bg-blue-50 dark:bg-blue-900/30' : ''"
-                    >
-                        <span :class="$sortField === 'asset_code' && $sortOrder === 'desc' ? 'font-semibold text-blue-600 dark:text-blue-400' : ''">
-                            🔤 Asset Code (Z→A)
-                        </span>
-                    </flux:menu.item>
-
-                    <flux:separator />
-
-                    {{-- Asset Name A-Z --}}
-                    <flux:menu.item
-                        wire:click="setSortField('name', 'asc')"
-                        :class="$sortField === 'name' && $sortOrder === 'asc' ? 'bg-blue-50 dark:bg-blue-900/30' : ''"
-                    >
-                        <span :class="$sortField === 'name' && $sortOrder === 'asc' ? 'font-semibold text-blue-600 dark:text-blue-400' : ''">
-                            📝 Asset Name (A→Z)
-                        </span>
-                    </flux:menu.item>
-
-                    {{-- Asset Name Z-A --}}
-                    <flux:menu.item
-                        wire:click="setSortField('name', 'desc')"
-                        :class="$sortField === 'name' && $sortOrder === 'desc' ? 'bg-blue-50 dark:bg-blue-900/30' : ''"
-                    >
-                        <span :class="$sortField === 'name' && $sortOrder === 'desc' ? 'font-semibold text-blue-600 dark:text-blue-400' : ''">
-                            📝 Asset Name (Z→A)
-                        </span>
-                    </flux:menu.item>
-
-                    <flux:separator />
-
-                    {{-- Purchase Date (Newest) --}}
-                    <flux:menu.item
-                        wire:click="setSortField('purchase_date', 'desc')"
-                        :class="$sortField === 'purchase_date' && $sortOrder === 'desc' ? 'bg-blue-50 dark:bg-blue-900/30' : ''"
-                    >
-                        <span :class="$sortField === 'purchase_date' && $sortOrder === 'desc' ? 'font-semibold text-blue-600 dark:text-blue-400' : ''">
-                            💰 Purchase Date (Newest)
-                        </span>
-                    </flux:menu.item>
-
-                    {{-- Purchase Date (Oldest) --}}
-                    <flux:menu.item
-                        wire:click="setSortField('purchase_date', 'asc')"
-                        :class="$sortField === 'purchase_date' && $sortOrder === 'asc' ? 'bg-blue-50 dark:bg-blue-900/30' : ''"
-                    >
-                        <span :class="$sortField === 'purchase_date' && $sortOrder === 'asc' ? 'font-semibold text-blue-600 dark:text-blue-400' : ''">
-                            💰 Purchase Date (Oldest)
-                        </span>
-                    </flux:menu.item>
-                </flux:menu>
-            </flux:dropdown>
+                                    <flux:menu>
+                                        <flux:menu.item
+                                            href="{{ route('assets.show', $asset) }}"
+                                            icon="eye"
+                                            wire:navigate
+                                        >
+                                            View
+                                        </flux:menu.item>
+                                    </flux:menu>
+                                </flux:dropdown>
+                            </flux:table.cell>
+                        </flux:table.row>
+                    @endforeach
+                </flux:table.rows>
+            </flux:table>
+        @else
+            <div class="text-center py-12">
+                <flux:icon.inbox class="mx-auto size-12 text-zinc-300 dark:text-zinc-600" />
+                <flux:heading size="lg" class="mt-4 text-zinc-600 dark:text-zinc-400">No assets found</flux:heading>
+                <flux:text class="mt-2 text-zinc-500">
+                    @if($hasActiveFilters || $search)
+                        Try adjusting your filters or search term.
+                    @else
+                        Get started by creating your first asset.
+                    @endif
+                </flux:text>
+            </div>
+        @endif
         </div>
-
-        <flux:table>
-            <flux:table.columns>
-                <flux:table.column class="w-12">#</flux:table.column>
-                <flux:table.column sortable :sorted="$sortField === 'asset_code'" :direction="$sortOrder" wire:click="toggleSort('asset_code')">Code</flux:table.column>
-                <flux:table.column sortable :sorted="$sortField === 'name'" :direction="$sortOrder" wire:click="toggleSort('name')">Name</flux:table.column>
-                <flux:table.column>Category</flux:table.column>
-                <flux:table.column>Location</flux:table.column>
-                <flux:table.column>Status</flux:table.column>
-                <flux:table.column>Last updated</flux:table.columns>
-                <flux:table.column>Actions</flux:table.column>
-            </flux:table.columns>
-
-            <flux:table.rows>
-                @forelse($assets as $asset)
-                    <flux:table.row>
-                        <flux:table.cell>
-                            <flux:text size="sm" variant="subtle">{{ ($assets->currentPage() - 1) * $perPage + $loop->iteration }}</flux:text>
-                        </flux:table.cell>
-                        <flux:table.cell>
-                            <flux:text variant="strong" color="blue">{{ $asset->asset_code }}</flux:text>
-                        </flux:table.cell>
-                        <flux:table.cell>
-                            <flux:text variant="strong">{{ $asset->name }}</flux:text>
-                        </flux:table.cell>
-                        <flux:table.cell>
-                            <flux:badge size="sm" :color="BadgeColorHelper::getCategoryColor($asset->category)" variant="solid">
-                                {{ $asset->category->name ?? '-' }}
-                            </flux:badge>
-                        </flux:table.cell>
-                        <flux:table.cell>
-                            <div class="flex items-center gap-1">
-                                <flux:icon.map-pin class="h-4 w-4 text-blue-500 dark:text-blue-400 flex-shrink-0" />
-                                <flux:text class="text-gray-700 dark:text-gray-300">{{ $asset->location->name ?? '-' }}</flux:text>
-                            </div>
-                        </flux:table.cell>
-                        <flux:table.cell>
-                            @switch($asset->status)
-                                @case('aktif')
-                                    <flux:badge color="success" inset="top bottom">Active</flux:badge>
-                                    @break
-                                @case('dipinjam')
-                                    <flux:badge color="warning" inset="top bottom">Borrowed</flux:badge>
-                                    @break
-                                @case('dipelihara')
-                                    <flux:badge color="info" inset="top bottom">Maintenance</flux:badge>
-                                    @break
-                                @case('nonaktif')
-                                    <flux:badge color="error" inset="top bottom">Inactive</flux:badge>
-                                    @break
-                            @endswitch
-                        </flux:table.cell>
-                        <flux:table.cell>
-                            <flux:text variant="subtle">
-                                {{ $asset->updated_at->diffForHumans() }}
-                            </flux:text>
-                        </flux:table.cell>
-                        <flux:table.cell>
-                            <flux:dropdown position="bottom" align="end">
-                                <flux:button variant="ghost" size="sm" icon="ellipsis-horizontal" />
-
-                                <flux:menu>
-                                    <flux:menu.item
-                                        href="{{ route('assets.show', $asset) }}"
-                                        icon="eye"
-                                        wire:navigate
-                                    >
-                                        View
-                                    </flux:menu.item>
-                                </flux:menu>
-                            </flux:dropdown>
-                        </flux:table.cell>
-                    </flux:table.row>
-                @empty
-                    <flux:table.row>
-                        <flux:table.cell colspan="7" class="text-center py-8">
-                            <div class="flex flex-col items-center justify-center">
-                                <flux:icon.inbox class="h-12 w-12 text-gray-400 dark:text-gray-600 mb-3" />
-                                <flux:text variant="subtle">No assets found</flux:text>
-                            </div>
-                        </flux:table.cell>
-                    </flux:table.row>
-                @endforelse
-            </flux:table.rows>
-        </flux:table>
     </div>
 
     {{-- Pagination --}}

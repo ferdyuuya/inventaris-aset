@@ -51,6 +51,7 @@ class AssetIndex extends Component
             'aktif' => 'Active',
             'dipinjam' => 'Borrowed',
             'dipelihara' => 'Maintenance',
+            'dihapuskan' => 'Disposed',
             'nonaktif' => 'Inactive',
         ];
     }

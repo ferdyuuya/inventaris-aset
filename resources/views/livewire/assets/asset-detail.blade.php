@@ -264,8 +264,8 @@
                 </div>
 
                 @if(!$asset->isDisposed())
-                {{-- Borrow Asset Button - Only visible when asset is available --}}
-                @if($canBorrow)
+                {{-- Borrow Asset Button - Only visible when asset is available (Admin Only) --}}
+                @if($canBorrow && auth()->user()->isAdmin())
                 <flux:button
                     variant="primary"
                     class="w-full mt-6"
@@ -276,8 +276,8 @@
                 </flux:button>
                 @endif
 
-                {{-- Return Asset Button - Only visible when asset is borrowed --}}
-                @if($asset->isBorrowed() && $activeLoan)
+                {{-- Return Asset Button - Only visible when asset is borrowed (Admin Only) --}}
+                @if($asset->isBorrowed() && $activeLoan && auth()->user()->isAdmin())
                 <flux:button
                     variant="primary"
                     class="w-full mt-6"
@@ -288,8 +288,8 @@
                 </flux:button>
                 @endif
 
-                {{-- Transfer Location Button --}}
-                @if($asset->is_available)
+                {{-- Transfer Location Button (Admin Only) --}}
+                @if($asset->is_available && auth()->user()->isAdmin())
                 <flux:button
                     variant="primary"
                     class="w-full mt-3"
@@ -300,7 +300,7 @@
                 </flux:button>
                 @endif
 
-                {{-- Request Maintenance Button --}}
+                {{-- Request Maintenance Button (All Users - Staff can request) --}}
                 <flux:button
                     variant="primary"
                     class="w-full mt-3"
@@ -310,8 +310,8 @@
                     Request Maintenance
                 </flux:button>
 
-                {{-- Inspect Asset Button --}}
-                @if($canInspect)
+                {{-- Inspect Asset Button (Admin Only) --}}
+                @if($canInspect && auth()->user()->isAdmin())
                 <flux:button
                     variant="primary"
                     class="w-full mt-3"
@@ -323,7 +323,7 @@
                 @endif
 
                 {{-- Dispose Asset Button (Admin only, if asset can be disposed) --}}
-                @if($canDispose)
+                @if($canDispose && auth()->user()->isAdmin())
                 <flux:button
                     variant="danger"
                     class="w-full mt-3"

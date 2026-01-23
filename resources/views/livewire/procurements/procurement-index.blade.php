@@ -21,11 +21,13 @@
             <flux:heading size="xl" class="text-gray-900 dark:text-white">Procurements</flux:heading>
             <flux:subheading class="text-gray-600 dark:text-gray-400 mt-2">Manage purchase records and track asset origins</flux:subheading>
         </div>
+        @if(auth()->user()->isAdmin())
         <flux:modal.trigger name="createProcurement">
             <flux:button variant="primary" icon="plus">
                 Add Procurement
             </flux:button>
         </flux:modal.trigger>
+        @endif
     </div>
 
     <flux:separator />

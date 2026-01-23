@@ -18,37 +18,29 @@ Route::view('dashboard', 'dashboard')
     ->name('dashboard');
 
 // ============================================================
-// MASTER DATA ROUTES
+// MASTER DATA ROUTES (ADMIN ONLY - MUTATING)
 // ============================================================
 
-Route::view('/employees', 'pages.masterdata.employee.index')
-    ->middleware(['auth', 'verified'])
-    ->name('employees');
-
-Route::view('/asset-categories', 'pages.masterdata.category.index')
-    ->middleware(['auth', 'verified'])
-    ->name('asset-categories');
-
-Route::view('/suppliers', 'pages.masterdata.supplier.index')
-    ->middleware(['auth', 'verified'])
-    ->name('suppliers');
-
-Route::view('/locations', 'pages.masterdata.location.index')
-    ->middleware(['auth', 'verified'])
-    ->name('locations');
+Route::middleware(['auth', 'verified', 'admin'])->group(function () {
+    Route::view('/employees', 'pages.masterdata.employee.index')->name('employees');
+    Route::view('/asset-categories', 'pages.masterdata.category.index')->name('asset-categories');
+    Route::view('/suppliers', 'pages.masterdata.supplier.index')->name('suppliers');
+    Route::view('/locations', 'pages.masterdata.location.index')->name('locations');
+});
 
 // ============================================================
-// USER MANAGEMENT ROUTES
+// USER MANAGEMENT ROUTES (ADMIN ONLY)
 // ============================================================
 
 Route::view('/users', 'pages.users.index')
-    ->middleware(['auth', 'verified'])
+    ->middleware(['auth', 'verified', 'admin'])
     ->name('users');
 
 // ============================================================
 // PROCUREMENT ROUTES
 // ============================================================
 
+// Procurement list (viewable by all authenticated users)
 Route::view('/procurements', 'pages.procurements.index')
     ->middleware(['auth', 'verified'])
     ->name('procurements');
@@ -64,24 +56,26 @@ Route::get('/procurements/{id}', function ($id) {
 // ASSET MANAGEMENT ROUTES
 // Assets are generated from procurement records.
 // Users cannot manually create, edit, or delete assets.
-    // ============================================================
+// ============================================================
 
 Route::middleware(['auth', 'verified'])->prefix('assets')->name('assets.')->group(function () {
-    // Summary page (overview with metrics)
+    // Summary page (overview with metrics) - READ ONLY
     Route::get('/summary', [AssetController::class, 'summary'])->name('summary');
 
-    // Asset list (via controller, displays Livewire component)
+    // Asset list (via controller, displays Livewire component) - READ ONLY
     Route::get('/', [AssetController::class, 'index'])->name('index');
 
-    // Asset detail page
+    // Asset detail page - READ ONLY
     Route::get('/{asset}', [AssetController::class, 'show'])->name('show');
 
-    // Controlled Actions (POST requests - state transitions)
-    Route::post('/{asset}/transfer-location', [AssetController::class, 'transferLocation'])->name('transfer-location');
-    Route::post('/{asset}/borrow', [AssetController::class, 'borrow'])->name('borrow');
-    Route::post('/{asset}/return', [AssetController::class, 'returnAsset'])->name('return');
-    Route::post('/{asset}/send-maintenance', [AssetController::class, 'sendMaintenance'])->name('send-maintenance');
-    Route::post('/{asset}/complete-maintenance', [AssetController::class, 'completeMaintenance'])->name('complete-maintenance');
+    // Controlled Actions (POST requests - state transitions) - ADMIN ONLY
+    Route::middleware(['admin'])->group(function () {
+        Route::post('/{asset}/transfer-location', [AssetController::class, 'transferLocation'])->name('transfer-location');
+        Route::post('/{asset}/borrow', [AssetController::class, 'borrow'])->name('borrow');
+        Route::post('/{asset}/return', [AssetController::class, 'returnAsset'])->name('return');
+        Route::post('/{asset}/send-maintenance', [AssetController::class, 'sendMaintenance'])->name('send-maintenance');
+        Route::post('/{asset}/complete-maintenance', [AssetController::class, 'completeMaintenance'])->name('complete-maintenance');
+    });
 });
 
 // ============================================================
@@ -90,7 +84,7 @@ Route::middleware(['auth', 'verified'])->prefix('assets')->name('assets.')->grou
 // ============================================================
 
 Route::middleware(['auth', 'verified'])->prefix('asset-loans')->name('asset-loans.')->group(function () {
-    // Asset loans list page
+    // Asset loans list page - READ ONLY (viewable by all)
     Route::get('/', fn () => view('pages.asset-loans.index'))->name('index');
 });
 
@@ -99,10 +93,10 @@ Route::middleware(['auth', 'verified'])->prefix('asset-loans')->name('asset-loan
 // ============================================================
 
 Route::middleware(['auth', 'verified'])->prefix('maintenance')->name('maintenance.')->group(function () {
-    // Maintenance requests list
+    // Maintenance requests list - viewable by all, staff can create requests
     Route::get('/requests', fn () => view('pages.maintenance.requests'))->name('requests.index');
 
-    // Asset maintenances list
+    // Asset maintenances list - viewable by all
     Route::get('/assets', fn () => view('pages.maintenance.assets'))->name('assets.index');
 });
 
@@ -111,7 +105,7 @@ Route::middleware(['auth', 'verified'])->prefix('maintenance')->name('maintenanc
 // ============================================================
 
 Route::middleware(['auth', 'verified'])->prefix('inspections')->name('inspections.')->group(function () {
-    // Inspection index (list all inspections)
+    // Inspection index (list all inspections) - viewable by all
     Route::get('/', fn () => view('pages.inspections.index'))->name('index');
 });
 

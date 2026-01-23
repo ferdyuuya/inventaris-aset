@@ -58,7 +58,8 @@
                     </flux:sidebar.item>
                 </flux:sidebar.group> --}}
 
-                {{-- Users Management --}}
+                {{-- Users Management (Admin Only) --}}
+                @if(auth()->user()->isAdmin())
                 <flux:sidebar.group :heading="__('Users Management')" class="grid">
                     <flux:sidebar.item icon="users" :href="route('employees')" :current="request()->routeIs('employees')" wire:navigate>
                         {{ __('Employees') }}
@@ -68,7 +69,7 @@
                     </flux:sidebar.item>
                 </flux:sidebar.group>
 
-                {{-- Master Data --}}
+                {{-- Master Data (Admin Only) --}}
                 <flux:sidebar.group :heading="__('Master Data')" class="grid">
                     <flux:sidebar.item icon="tag" :href="route('asset-categories')" :current="request()->routeIs('asset-categories')" wire:navigate>
                         {{ __('Asset Categories') }}
@@ -80,18 +81,19 @@
                         {{ __('Locations') }}
                     </flux:sidebar.item>
                 </flux:sidebar.group>
+                @endif
             </flux:sidebar.nav>
 
             <flux:spacer />
 
-            <flux:sidebar.nav>
+            {{-- <flux:sidebar.nav>
                 <flux:sidebar.item icon="folder-git-2" href="https://github.com/laravel/livewire-starter-kit" target="_blank">
                     {{ __('Repository') }}
                 </flux:sidebar.item>
                 <flux:sidebar.item icon="book-open-text" href="https://laravel.com/docs/starter-kits#livewire" target="_blank">
                     {{ __('Documentation') }}
                 </flux:sidebar.item>
-            </flux:sidebar.nav>
+            </flux:sidebar.nav> --}}
 
             <x-desktop-user-menu class="hidden lg:block" :name="auth()->user()->name" />
         </flux:sidebar>

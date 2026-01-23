@@ -18,117 +18,208 @@
     @endif
 
     {{-- Header --}}
-    <div class="border-b border-gray-200 dark:border-gray-700 pb-4">
-        <div class="flex items-center justify-between">
-            <h1 class="text-2xl font-semibold text-gray-900 dark:text-white">User Account Management</h1>
-            <flux:modal.trigger name="createUser" wire:click="showCreateForm">
-                <flux:button variant="primary">
-                    <svg class="-ml-1 mr-2 h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
-                    </svg>
-                    Add User
-                </flux:button>
-            </flux:modal.trigger>
+    <div class="flex items-center justify-between">
+        <div>
+            <flux:heading size="xl" class="text-gray-900 dark:text-white">User Account Management</flux:heading>
+            <flux:subheading class="text-gray-600 dark:text-gray-400 mt-2">Manage user accounts and permissions</flux:subheading>
+        </div>
+        <flux:modal.trigger name="createUser" wire:click="showCreateForm">
+            <flux:button variant="primary" icon="plus">
+                Add User
+            </flux:button>
+        </flux:modal.trigger>
+    </div>
+
+    <flux:separator />
+
+    {{-- Search and Filter Bar --}}
+    <div class="space-y-4">
+        <div class="flex flex-col gap-4 lg:flex-row lg:items-center">
+            {{-- Search Input --}}
+            <div class="flex-1 max-w-md">
+                <flux:input wire:model.live.debounce.300ms="search" 
+                           icon="magnifying-glass"
+                           placeholder="Search users by name, email, or role..."
+                           clearable />
+            </div>
+
+            {{-- Vertical Separator --}}
+            <div class="hidden lg:block w-px h-8 bg-gray-300 dark:bg-gray-600"></div>
+
+            {{-- Sorting Dropdown --}}
+            <div class="flex flex-wrap gap-3">
+                <flux:dropdown position="bottom" align="start">
+                    <flux:button variant="ghost" size="sm" icon="arrows-up-down">
+                        Sort
+                    </flux:button>
+
+                    <flux:menu>
+                        <flux:text class="px-3 py-2 text-xs font-semibold uppercase text-gray-500 dark:text-gray-400">Sort By</flux:text>
+                        <flux:separator />
+                        
+                        {{-- Newest --}}
+                        <flux:menu.item
+                            wire:click="$set('sortField', 'created_at'); $set('sortOrder', 'desc')"
+                            @class([
+                                'bg-blue-50 dark:bg-blue-900/30' => $sortField === 'created_at' && $sortOrder === 'desc',
+                            ])
+                        >
+                            <span @class([
+                                'font-semibold text-blue-600 dark:text-blue-400' => $sortField === 'created_at' && $sortOrder === 'desc',
+                            ])>
+                                Newest
+                            </span>
+                        </flux:menu.item>
+
+                        {{-- Oldest --}}
+                        <flux:menu.item
+                            wire:click="$set('sortField', 'created_at'); $set('sortOrder', 'asc')"
+                            @class([
+                                'bg-blue-50 dark:bg-blue-900/30' => $sortField === 'created_at' && $sortOrder === 'asc',
+                            ])
+                        >
+                            <span @class([
+                                'font-semibold text-blue-600 dark:text-blue-400' => $sortField === 'created_at' && $sortOrder === 'asc',
+                            ])>
+                                Oldest
+                            </span>
+                        </flux:menu.item>
+
+                        <flux:separator />
+
+                        {{-- A-Z --}}
+                        <flux:menu.item
+                            wire:click="$set('sortField', 'name'); $set('sortOrder', 'asc')"
+                            @class([
+                                'bg-blue-50 dark:bg-blue-900/30' => $sortField === 'name' && $sortOrder === 'asc',
+                            ])
+                        >
+                            <span @class([
+                                'font-semibold text-blue-600 dark:text-blue-400' => $sortField === 'name' && $sortOrder === 'asc',
+                            ])>
+                                A–Z
+                            </span>
+                        </flux:menu.item>
+
+                        {{-- Z-A --}}
+                        <flux:menu.item
+                            wire:click="$set('sortField', 'name'); $set('sortOrder', 'desc')"
+                            @class([
+                                'bg-blue-50 dark:bg-blue-900/30' => $sortField === 'name' && $sortOrder === 'desc',
+                            ])
+                        >
+                            <span @class([
+                                'font-semibold text-blue-600 dark:text-blue-400' => $sortField === 'name' && $sortOrder === 'desc',
+                            ])>
+                                Z–A
+                            </span>
+                        </flux:menu.item>
+                    </flux:menu>
+                </flux:dropdown>
+            </div>
         </div>
     </div>
 
-    {{-- Search --}}
-    <div class="flex items-center space-x-4">
-        <div class="flex-1">
-            <flux:input wire:model.live.debounce.300ms="search" 
-                       icon="magnifying-glass"
-                       placeholder="Search users by name, email, or role..."
-                       clearable />
-        </div>
-    </div>
+    <flux:separator />
 
     {{-- Users Table --}}
     <div class="overflow-x-auto">
-        <flux:table>
-            <flux:table.columns>
-                <flux:table.column class="w-12">#</flux:table.column>
-                <flux:table.column sortable :sorted="$sortField === 'name'" :direction="$sortOrder" wire:click="toggleSort('name')">
-                    Name
-                </flux:table.column>
-                <flux:table.column sortable :sorted="$sortField === 'email'" :direction="$sortOrder" wire:click="toggleSort('email')">
-                    Email
-                </flux:table.column>
-                <flux:table.column sortable :sorted="$sortField === 'role'" :direction="$sortOrder" wire:click="toggleSort('role')">
-                    Role
-                </flux:table.column>
-                <flux:table.column sortable :sorted="$sortField === 'employee_id'" :direction="$sortOrder" wire:click="toggleSort('employee_id')">
-                    Employee
-                </flux:table.column>
-                <flux:table.column sortable :sorted="$sortField === 'created_at'" :direction="$sortOrder" wire:click="toggleSort('created_at')">
-                    Created
-                </flux:table.column>
-                <flux:table.column>
-                    Actions
-                </flux:table.column>
-            </flux:table.columns>
+        <div class="shadow-sm ring-1 ring-gray-200 dark:ring-gray-700 rounded-lg overflow-hidden">
+        @if($users->count() > 0)
+            <flux:table>
+                <flux:table.columns>
+                    <flux:table.column class="w-12">#</flux:table.column>
+                    <flux:table.column>Name</flux:table.column>
+                    <flux:table.column>Email</flux:table.column>
+                    <flux:table.column>Role</flux:table.column>
+                    <flux:table.column>Employee</flux:table.column>
+                    <flux:table.column>Created</flux:table.column>
+                    <flux:table.column>Actions</flux:table.column>
+                </flux:table.columns>
 
-            <flux:table.rows>
-                @forelse($users as $user)
-                    <flux:table.row :key="$user->id">
-                        <flux:table.cell>
-                            <flux:text variant="subtle">{{ ($users->currentPage() - 1) * $perPage + $loop->iteration }}</flux:text>
-                        </flux:table.cell>
-                        <flux:table.cell>
-                            <div class="flex items-center gap-2">
-                                <div class="h-8 w-8 rounded-full bg-gray-300 dark:bg-gray-600 flex items-center justify-center text-xs font-medium text-gray-700 dark:text-gray-300">
-                                    {{ $user->initials() }}
+                <flux:table.rows>
+                    @foreach($users as $user)
+                        <flux:table.row 
+                            :key="$user->id"
+                            class="cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors"
+                            wire:click="showEditForm({{ $user->id }})"
+                        >
+                            <flux:table.cell>
+                                <flux:text size="sm" variant="subtle">{{ ($users->currentPage() - 1) * $perPage + $loop->iteration }}</flux:text>
+                            </flux:table.cell>
+                            <flux:table.cell>
+                                <div class="flex items-center gap-2">
+                                    <div class="h-8 w-8 rounded-full bg-gray-300 dark:bg-gray-600 flex items-center justify-center text-xs font-medium text-gray-700 dark:text-gray-300">
+                                        {{ $user->initials() }}
+                                    </div>
+                                    <flux:text variant="strong">{{ $user->name }}</flux:text>
                                 </div>
-                                <flux:text variant="strong">{{ $user->name }}</flux:text>
-                            </div>
-                        </flux:table.cell>
-                        <flux:table.cell>
-                            <flux:text>{{ $user->email }}</flux:text>
-                        </flux:table.cell>
-                        <flux:table.cell>
-                            <flux:badge :color="$user->role === 'admin' ? 'purple' : 'blue'" variant="solid">
-                                {{ ucfirst($user->role) }}
-                            </flux:badge>
-                        </flux:table.cell>
-                        <flux:table.cell>
-                            @if($user->employee)
-                                <flux:badge color="success" inset="top bottom">
-                                    {{ $user->employee->name }}
-                                </flux:badge>
-                            @else
-                                <flux:text variant="subtle">No employee</flux:text>
-                            @endif
-                        </flux:table.cell>
-                        <flux:table.cell>
-                            <flux:text>{{ $user->created_at->format('M d, Y') }}</flux:text>
-                        </flux:table.cell>
-                        <flux:table.cell>
-                            <flux:dropdown position="bottom" align="end">
-                                <flux:button variant="ghost" icon="ellipsis-horizontal" />
-                                <flux:menu>
-                                    <flux:menu.item icon="pencil" wire:click="showEditForm({{ $user->id }})">Edit</flux:menu.item>
-                                    @if($user->employee)
-                                        <flux:menu.item icon="link-slash" variant="danger" wire:click="unlinkEmployee({{ $user->id }})">Unlink Employee</flux:menu.item>
-                                    @else
-                                        <flux:menu.item icon="link" wire:click="showLinkEmployeeModal({{ $user->id }})">Link Employee</flux:menu.item>
-                                    @endif
-                                    <flux:menu.separator />
-                                    <flux:menu.item icon="trash" variant="danger" wire:click="showDeleteConfirmation({{ $user->id }})">Delete</flux:menu.item>
-                                </flux:menu>
-                            </flux:dropdown>
-                        </flux:table.cell>
-                    </flux:table.row>
-                @empty
-                    <flux:table.row>
-                        <flux:table.cell colspan="7" class="text-center py-8">
-                            <div class="flex flex-col items-center justify-center">
-                                <flux:icon.inbox class="h-12 w-12 text-gray-400 dark:text-gray-600 mb-3" />
-                                <flux:text variant="subtle">No users found</flux:text>
-                            </div>
-                        </flux:table.cell>
-                    </flux:table.row>
-                @endforelse
-            </flux:table.rows>
-        </flux:table>
+                            </flux:table.cell>
+                            <flux:table.cell>
+                                <flux:text size="sm">{{ $user->email }}</flux:text>
+                            </flux:table.cell>
+                            <flux:table.cell>
+                                @if($user->role === 'admin')
+                                    <flux:badge color="purple" size="sm">
+                                        <flux:icon.shield-check class="size-3 mr-1" />
+                                        Admin
+                                    </flux:badge>
+                                @else
+                                    <flux:badge color="zinc" size="sm" variant="soft">
+                                        <flux:icon.user class="size-3 mr-1" />
+                                        Staff
+                                    </flux:badge>
+                                @endif
+                            </flux:table.cell>
+                            <flux:table.cell>
+                                @if($user->employee)
+                                    <flux:badge color="green" size="sm" variant="soft">
+                                        <flux:icon.link class="size-3 mr-1" />
+                                        {{ $user->employee->name }}
+                                    </flux:badge>
+                                @else
+                                    <flux:text size="sm" variant="subtle">No employee</flux:text>
+                                @endif
+                            </flux:table.cell>
+                            <flux:table.cell>
+                                <div class="flex items-center gap-1">
+                                    <flux:icon.calendar class="size-3 text-gray-400" />
+                                    <flux:text size="sm">{{ $user->created_at->format('d M Y, H:i') }}</flux:text>
+                                </div>
+                            </flux:table.cell>
+                            <flux:table.cell onclick="event.stopPropagation()">
+                                <flux:dropdown position="bottom" align="end">
+                                    <flux:button variant="ghost" size="sm" icon="eye" />
+                                    <flux:menu>
+                                        <flux:menu.item icon="pencil" wire:click="showEditForm({{ $user->id }})">Edit</flux:menu.item>
+                                        @if($user->employee)
+                                            <flux:menu.item icon="link-slash" variant="danger" wire:click="unlinkEmployee({{ $user->id }})">Unlink Employee</flux:menu.item>
+                                        @else
+                                            <flux:menu.item icon="link" wire:click="showLinkEmployeeModal({{ $user->id }})">Link Employee</flux:menu.item>
+                                        @endif
+                                        <flux:menu.separator />
+                                        <flux:menu.item icon="trash" variant="danger" wire:click="showDeleteConfirmation({{ $user->id }})">Delete</flux:menu.item>
+                                    </flux:menu>
+                                </flux:dropdown>
+                            </flux:table.cell>
+                        </flux:table.row>
+                    @endforeach
+                </flux:table.rows>
+            </flux:table>
+        @else
+            <div class="text-center py-12">
+                <flux:icon.inbox class="mx-auto size-12 text-zinc-300 dark:text-zinc-600" />
+                <flux:heading size="lg" class="mt-4 text-zinc-600 dark:text-zinc-400">No users found</flux:heading>
+                <flux:text class="mt-2 text-zinc-500">
+                    @if($search)
+                        Try adjusting your search term.
+                    @else
+                        Get started by creating your first user.
+                    @endif
+                </flux:text>
+            </div>
+        @endif
+        </div>
     </div>
 
     {{-- Pagination --}}

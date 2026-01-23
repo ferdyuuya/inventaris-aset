@@ -41,9 +41,11 @@
                 Created {{ $procurement->created_at->format('d M Y') }}
             </flux:subheading>
         </div>
+        @if(auth()->user()->isAdmin())
         <flux:button variant="primary" wire:click="openEditModal" icon="pencil">
             Edit Procurement
         </flux:button>
+        @endif
     </div>
 
     <flux:separator />

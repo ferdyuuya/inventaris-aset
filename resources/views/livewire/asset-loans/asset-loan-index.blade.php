@@ -5,9 +5,11 @@
             <flux:heading size="xl" class="text-gray-900 dark:text-white">Asset Loans</flux:heading>
             <flux:subheading class="text-gray-600 dark:text-gray-400 mt-2">Manage asset borrowings and returns</flux:subheading>
         </div>
+        @if(auth()->user()->isAdmin())
         <flux:button variant="primary" icon="plus" wire:click="openCreateModal">
             New Loan
         </flux:button>
+        @endif
     </div>
 
     <flux:separator />
@@ -268,7 +270,7 @@
                             @endif
                         </flux:table.cell>
                         <flux:table.cell onclick="event.stopPropagation()">
-                            @if($loan->isActive())
+                            @if($loan->isActive() && auth()->user()->isAdmin())
                                 <flux:button variant="primary" size="sm" icon="arrow-uturn-left" wire:click="openReturnModal({{ $loan->id }})">
                                     Return
                                 </flux:button>

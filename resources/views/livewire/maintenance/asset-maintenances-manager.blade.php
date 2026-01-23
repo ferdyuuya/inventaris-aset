@@ -10,186 +10,292 @@
     <flux:separator />
 
     {{-- Search and Filter Bar --}}
-    <div class="flex flex-col gap-4 lg:flex-row lg:items-center">
-        <div class="flex-1 max-w-md">
-            <flux:input
-                wire:model.live="search"
-                type="text"
-                placeholder="Search by asset code or name..."
-                icon="magnifying-glass"
-                clearable
-                class="text-gray-900 dark:text-white"
-            />
+    <div class="space-y-4">
+        <div class="flex flex-col gap-4 lg:flex-row lg:items-center">
+            <div class="flex-1 max-w-md">
+                <flux:input
+                    wire:model.live.debounce.300ms="search"
+                    type="text"
+                    placeholder="Search by asset code or name..."
+                    icon="magnifying-glass"
+                    clearable
+                    class="text-gray-900 dark:text-white"
+                />
+            </div>
+
+            {{-- Vertical Separator --}}
+            <div class="hidden lg:block w-px h-8 bg-gray-300 dark:bg-gray-600"></div>
+
+            {{-- Filter Dropdowns --}}
+            <div class="flex flex-wrap gap-3">
+                {{-- Status Filter --}}
+                <flux:dropdown position="bottom" align="start">
+                    <flux:button
+                        variant="ghost"
+                        size="sm"
+                        icon="funnel"
+                        :badge="$filterStatus ? '1' : null"
+                    >
+                        Status
+                    </flux:button>
+
+                    <flux:menu>
+                        <flux:menu.item
+                            wire:click="$set('filterStatus', '')"
+                            @class([
+                                'bg-blue-50 dark:bg-blue-900/30' => !$filterStatus,
+                            ])
+                        >
+                            <span @class([
+                                'font-semibold text-blue-600 dark:text-blue-400' => !$filterStatus,
+                            ])>
+                                All Statuses
+                            </span>
+                        </flux:menu.item>
+                        <flux:separator />
+                        <flux:menu.item
+                            wire:click="$set('filterStatus', 'dalam_proses')"
+                            @class([
+                                'bg-blue-50 dark:bg-blue-900/30' => $filterStatus === 'dalam_proses',
+                            ])
+                        >
+                            <span @class([
+                                'font-semibold text-blue-600 dark:text-blue-400' => $filterStatus === 'dalam_proses',
+                            ])>
+                                In Progress
+                            </span>
+                        </flux:menu.item>
+                        <flux:menu.item
+                            wire:click="$set('filterStatus', 'selesai')"
+                            @class([
+                                'bg-blue-50 dark:bg-blue-900/30' => $filterStatus === 'selesai',
+                            ])
+                        >
+                            <span @class([
+                                'font-semibold text-blue-600 dark:text-blue-400' => $filterStatus === 'selesai',
+                            ])>
+                                Completed
+                            </span>
+                        </flux:menu.item>
+                        <flux:menu.item
+                            wire:click="$set('filterStatus', 'dibatalkan')"
+                            @class([
+                                'bg-blue-50 dark:bg-blue-900/30' => $filterStatus === 'dibatalkan',
+                            ])
+                        >
+                            <span @class([
+                                'font-semibold text-blue-600 dark:text-blue-400' => $filterStatus === 'dibatalkan',
+                            ])>
+                                Cancelled
+                            </span>
+                        </flux:menu.item>
+                    </flux:menu>
+                </flux:dropdown>
+
+                {{-- Sorting Dropdown --}}
+                <flux:dropdown position="bottom" align="start">
+                    <flux:button variant="ghost" size="sm" icon="arrows-up-down">
+                        Sort
+                    </flux:button>
+
+                    <flux:menu>
+                        <flux:text class="px-3 py-2 text-xs font-semibold uppercase text-gray-500 dark:text-gray-400">Sort By</flux:text>
+                        <flux:separator />
+                        
+                        <flux:menu.item wire:click="$set('sortDirection', 'desc')">
+                            <span @class(['font-semibold text-blue-600 dark:text-blue-400' => ($sortDirection ?? 'desc') === 'desc'])>
+                                Newest
+                            </span>
+                        </flux:menu.item>
+
+                        <flux:menu.item wire:click="$set('sortDirection', 'asc')">
+                            <span @class(['font-semibold text-blue-600 dark:text-blue-400' => ($sortDirection ?? 'desc') === 'asc'])>
+                                Oldest
+                            </span>
+                        </flux:menu.item>
+                    </flux:menu>
+                </flux:dropdown>
+
+                {{-- Clear Filters --}}
+                @if($search || $filterStatus)
+                    <flux:button
+                        variant="ghost"
+                        size="sm"
+                        icon="x-mark"
+                        wire:click="$set('search', ''); $set('filterStatus', '')"
+                    >
+                        Clear
+                    </flux:button>
+                @endif
+            </div>
         </div>
 
-        {{-- Vertical Separator --}}
-        <div class="hidden lg:block w-px h-8 bg-gray-300 dark:bg-gray-600"></div>
-
-        {{-- Status Filter --}}
-        <flux:dropdown position="bottom" align="start">
-            <flux:button
-                variant="ghost"
-                size="sm"
-                icon="funnel"
-                :badge="$filterStatus ? '1' : null"
-            >
-                Status
-            </flux:button>
-
-            <flux:menu>
-                <flux:menu.item
-                    wire:click="$set('filterStatus', '')"
-                    :class="!$filterStatus ? 'bg-blue-50 dark:bg-blue-900/30' : ''"
-                >
-                    <span :class="!$filterStatus ? 'font-semibold text-blue-600 dark:text-blue-400' : ''">
-                        All Statuses
-                    </span>
-                </flux:menu.item>
-                <flux:separator />
-                <flux:menu.item
-                    wire:click="$set('filterStatus', 'dalam_proses')"
-                    :class="$filterStatus === 'dalam_proses' ? 'bg-blue-50 dark:bg-blue-900/30' : ''"
-                >
-                    <span :class="$filterStatus === 'dalam_proses' ? 'font-semibold text-blue-600 dark:text-blue-400' : ''">
-                        In Progress
-                    </span>
-                </flux:menu.item>
-                <flux:menu.item
-                    wire:click="$set('filterStatus', 'selesai')"
-                    :class="$filterStatus === 'selesai' ? 'bg-blue-50 dark:bg-blue-900/30' : ''"
-                >
-                    <span :class="$filterStatus === 'selesai' ? 'font-semibold text-blue-600 dark:text-blue-400' : ''">
-                        Completed
-                    </span>
-                </flux:menu.item>
-                <flux:menu.item
-                    wire:click="$set('filterStatus', 'dibatalkan')"
-                    :class="$filterStatus === 'dibatalkan' ? 'bg-blue-50 dark:bg-blue-900/30' : ''"
-                >
-                    <span :class="$filterStatus === 'dibatalkan' ? 'font-semibold text-blue-600 dark:text-blue-400' : ''">
-                        Cancelled
-                    </span>
-                </flux:menu.item>
-            </flux:menu>
-        </flux:dropdown>
+        {{-- Active Filters Summary --}}
+        @if($search || $filterStatus)
+            <div class="flex flex-wrap gap-2 items-center text-sm">
+                <flux:text class="text-gray-600 dark:text-gray-400">Active filters:</flux:text>
+                @if($search)
+                    <flux:badge color="blue" size="sm">
+                        Search: <strong>{{ $search }}</strong>
+                    </flux:badge>
+                @endif
+                @if($filterStatus)
+                    <flux:badge color="blue" size="sm">
+                        Status: <strong>{{ $filterStatus === 'dalam_proses' ? 'In Progress' : ($filterStatus === 'selesai' ? 'Completed' : 'Cancelled') }}</strong>
+                    </flux:badge>
+                @endif
+            </div>
+        @endif
     </div>
 
     <flux:separator />
 
     {{-- Asset Maintenances Table --}}
     <div class="overflow-x-auto">
-        <flux:table>
-            <flux:table.columns>
-                <flux:table.column>Maintenance ID</flux:table.column>
-                <flux:table.column>Asset</flux:table.column>
-                <flux:table.column>Start Date</flux:table.column>
-                <flux:table.column>Est. Completion</flux:table.column>
-                <flux:table.column>Completion Date</flux:table.column>
-                <flux:table.column>Status</flux:table.column>
-                <flux:table.column>Request ID</flux:table.column>
-                <flux:table.column>Actions</flux:table.column>
-            </flux:table.columns>
+        <div class="shadow-sm ring-1 ring-gray-200 dark:ring-gray-700 rounded-lg overflow-hidden">
+        @if($maintenances->count() > 0)
+            <flux:table>
+                <flux:table.columns>
+                    <flux:table.column class="w-12">#</flux:table.column>
+                    <flux:table.column>Asset</flux:table.column>
+                    <flux:table.column>Start Date</flux:table.column>
+                    <flux:table.column>Est. Completion</flux:table.column>
+                    <flux:table.column>Completion Date</flux:table.column>
+                    <flux:table.column>Status</flux:table.column>
+                    <flux:table.column>Request ID</flux:table.column>
+                    <flux:table.column>Actions</flux:table.column>
+                </flux:table.columns>
 
-            <flux:table.rows>
-                @forelse($maintenances as $maintenance)
-                    <flux:table.row>
-                        <flux:table.cell class="font-mono text-sm">
-                            #{{ $maintenance->id }}
-                        </flux:table.cell>
+                <flux:table.rows>
+                    @foreach($maintenances as $maintenance)
+                        <flux:table.row 
+                            class="cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors"
+                            wire:click="viewMaintenance({{ $maintenance->id }})"
+                        >
+                            <flux:table.cell>
+                                <flux:text size="sm" variant="subtle" class="font-mono">#{{ $maintenance->id }}</flux:text>
+                            </flux:table.cell>
 
-                        <flux:table.cell>
-                            <div class="flex flex-col">
-                                <span class="font-medium">{{ $maintenance->asset->asset_code ?? 'N/A' }}</span>
-                                <span class="text-sm text-zinc-500">{{ $maintenance->asset->name ?? 'Unknown Asset' }}</span>
-                            </div>
-                        </flux:table.cell>
+                            <flux:table.cell>
+                                <div class="flex flex-col">
+                                    <flux:text variant="strong" color="blue">{{ $maintenance->asset->asset_code ?? 'N/A' }}</flux:text>
+                                    <flux:text size="sm" class="text-zinc-500">{{ $maintenance->asset->name ?? 'Unknown Asset' }}</flux:text>
+                                </div>
+                            </flux:table.cell>
 
-                        <flux:table.cell>
-                            <span class="text-sm">{{ $maintenance->maintenance_date?->format('d M Y') ?? 'N/A' }}</span>
-                        </flux:table.cell>
+                            <flux:table.cell>
+                                <div class="flex items-center gap-1">
+                                    <flux:icon.calendar class="size-3 text-gray-400" />
+                                    <flux:text size="sm">{{ $maintenance->maintenance_date?->format('d M Y, H:i') ?? 'N/A' }}</flux:text>
+                                </div>
+                            </flux:table.cell>
 
-                        <flux:table.cell>
-                            <span class="text-sm">{{ $maintenance->estimated_completion_date?->format('d M Y') ?? 'N/A' }}</span>
-                        </flux:table.cell>
+                            <flux:table.cell>
+                                <div class="flex items-center gap-1">
+                                    <flux:icon.clock class="size-3 text-gray-400" />
+                                    <flux:text size="sm">{{ $maintenance->estimated_completion_date?->format('d M Y') ?? 'N/A' }}</flux:text>
+                                </div>
+                            </flux:table.cell>
 
-                        <flux:table.cell>
-                            <span class="text-sm">
+                            <flux:table.cell>
                                 @if($maintenance->completed_date)
-                                    {{ $maintenance->completed_date->format('d M Y') }}
+                                    <div class="flex items-center gap-1">
+                                        <flux:icon.check-circle class="size-3 text-green-500" />
+                                        <flux:text size="sm">{{ $maintenance->completed_date->format('d M Y, H:i') }}</flux:text>
+                                    </div>
                                 @else
-                                    <span class="text-zinc-400">Pending</span>
+                                    <flux:text size="sm" variant="subtle">Pending</flux:text>
                                 @endif
-                            </span>
-                        </flux:table.cell>
+                            </flux:table.cell>
 
-                        <flux:table.cell>
-                            @switch($maintenance->status)
-                                @case('dalam_proses')
-                                    <flux:badge color="blue">In Progress</flux:badge>
-                                    @break
-                                @case('selesai')
-                                    <flux:badge color="green">Completed</flux:badge>
-                                    @break
-                                @case('dibatalkan')
-                                    <flux:badge color="red">Cancelled</flux:badge>
-                                    @break
-                            @endswitch
-                        </flux:table.cell>
+                            <flux:table.cell>
+                                @switch($maintenance->status)
+                                    @case('dalam_proses')
+                                        <flux:badge color="yellow" size="sm">
+                                            <flux:icon.wrench-screwdriver class="size-3 mr-1" />
+                                            In Progress
+                                        </flux:badge>
+                                        @break
+                                    @case('selesai')
+                                        <flux:badge color="green" size="sm">
+                                            <flux:icon.check-circle class="size-3 mr-1" />
+                                            Completed
+                                        </flux:badge>
+                                        @break
+                                    @case('dibatalkan')
+                                        <flux:badge color="zinc" size="sm" variant="soft">
+                                            <flux:icon.x-circle class="size-3 mr-1" />
+                                            Cancelled
+                                        </flux:badge>
+                                        @break
+                                @endswitch
+                            </flux:table.cell>
 
-                        <flux:table.cell>
-                            @if($maintenance->maintenanceRequest)
-                                <span class="text-sm font-mono">#{{ $maintenance->maintenanceRequest->id }}</span>
-                            @else
-                                <span class="text-sm text-zinc-400">—</span>
-                            @endif
-                        </flux:table.cell>
+                            <flux:table.cell>
+                                @if($maintenance->maintenanceRequest)
+                                    <flux:badge color="blue" size="sm" variant="soft">
+                                        #{{ $maintenance->maintenanceRequest->id }}
+                                    </flux:badge>
+                                @else
+                                    <flux:text size="sm" variant="subtle">—</flux:text>
+                                @endif
+                            </flux:table.cell>
 
-                        <flux:table.cell>
-                            <div class="flex gap-2">
-                                <flux:button
-                                    size="sm"
-                                    variant="ghost"
-                                    icon="eye"
-                                    wire:click="viewMaintenance({{ $maintenance->id }})"
-                                />
-
-                                @if($maintenance->status === 'dalam_proses')
+                            <flux:table.cell onclick="event.stopPropagation()">
+                                <div class="flex gap-1">
                                     <flux:button
                                         size="sm"
                                         variant="ghost"
-                                        icon="check"
-                                        class="text-green-600 dark:text-green-400"
-                                        wire:click="openCompleteModal({{ $maintenance->id }})"
-                                        title="Complete Maintenance"
+                                        icon="eye"
+                                        wire:click="viewMaintenance({{ $maintenance->id }})"
                                     />
-                                    <flux:button
-                                        size="sm"
-                                        variant="ghost"
-                                        icon="x-mark"
-                                        class="text-red-600 dark:text-red-400"
-                                        wire:click="openCancelModal({{ $maintenance->id }})"
-                                        title="Cancel Maintenance"
-                                    />
-                                @endif
-                            </div>
-                        </flux:table.cell>
-                    </flux:table.row>
-                @empty
-                    <flux:table.row>
-                        <flux:table.cell colspan="8" class="text-center py-8">
-                            <flux:icon.inbox class="mx-auto size-10 text-zinc-300 dark:text-zinc-600 mb-2" />
-                            <p class="text-zinc-500">No maintenance records found</p>
-                        </flux:table.cell>
-                    </flux:table.row>
-                @endforelse
-            </flux:table.rows>
-        </flux:table>
+
+                                    @if($maintenance->status === 'dalam_proses' && auth()->user()->isAdmin())
+                                        <flux:button
+                                            size="sm"
+                                            variant="ghost"
+                                            icon="check"
+                                            class="text-green-600 dark:text-green-400"
+                                            wire:click="openCompleteModal({{ $maintenance->id }})"
+                                            title="Complete Maintenance"
+                                        />
+                                        <flux:button
+                                            size="sm"
+                                            variant="ghost"
+                                            icon="x-mark"
+                                            class="text-red-600 dark:text-red-400"
+                                            wire:click="openCancelModal({{ $maintenance->id }})"
+                                            title="Cancel Maintenance"
+                                        />
+                                    @endif
+                                </div>
+                            </flux:table.cell>
+                        </flux:table.row>
+                    @endforeach
+                </flux:table.rows>
+            </flux:table>
+        @else
+            <div class="text-center py-12">
+                <flux:icon.wrench-screwdriver class="mx-auto size-12 text-zinc-300 dark:text-zinc-600" />
+                <flux:heading size="lg" class="mt-4 text-zinc-600 dark:text-zinc-400">No maintenance records found</flux:heading>
+                <flux:text class="mt-2 text-zinc-500">
+                    @if($search || $filterStatus)
+                        Try adjusting your filters or search term.
+                    @else
+                        Maintenance records will appear here when assets are sent for maintenance.
+                    @endif
+                </flux:text>
+            </div>
+        @endif
+        </div>
     </div>
 
     {{-- Pagination --}}
-    <div>
-        {{ $maintenances->links() }}
-    </div>
+    @if($maintenances->hasPages())
+        <div class="mt-6">
+            <flux:pagination :paginator="$maintenances" />
+        </div>
+    @endif
 
     {{-- ============================================== --}}
     {{-- VIEW MAINTENANCE MODAL --}}
