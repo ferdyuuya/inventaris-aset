@@ -194,57 +194,91 @@
     {{-- ============================================== --}}
     {{-- VIEW MAINTENANCE MODAL --}}
     {{-- ============================================== --}}
-    <flux:modal wire:model.defer="showViewModal">
+    <flux:modal wire:model.defer="showViewModal" class="md:w-full md:max-w-md">
         <div class="space-y-6">
+            {{-- Modal Header --}}
             <div>
                 <flux:heading size="lg">Maintenance Record Details</flux:heading>
-                <flux:text class="mt-2">Maintenance #{{ $selectedMaintenance?->id ?? 'N/A' }}</flux:text>
+                <flux:text class="mt-1 text-zinc-500">Maintenance #{{ $selectedMaintenance?->id ?? 'N/A' }}</flux:text>
             </div>
 
             @if($selectedMaintenance)
-                <div class="space-y-4">
-                    <div>
-                        <flux:label>Asset</flux:label>
-                        <flux:field>
-                            <span class="text-sm font-medium">
-                                {{ $selectedMaintenance->asset->asset_code }} - {{ $selectedMaintenance->asset->name }}
-                            </span>
-                        </flux:field>
-                    </div>
+                {{-- Asset Information Section --}}
+                <div class="space-y-2 p-3 bg-zinc-50 dark:bg-zinc-800 rounded-lg border border-zinc-200 dark:border-zinc-700">
+                    <flux:label class="text-xs uppercase tracking-wide text-zinc-500 dark:text-zinc-400">Asset Information</flux:label>
+                    <flux:text class="font-medium">
+                        {{ $selectedMaintenance->asset->asset_code }} - {{ $selectedMaintenance->asset->name }}
+                    </flux:text>
+                </div>
 
-                    <div>
-                        <flux:label>Start Date</flux:label>
-                        <flux:field>
-                            <span class="text-sm">{{ $selectedMaintenance->maintenance_date?->format('d M Y') ?? 'N/A' }}</span>
-                        </flux:field>
-                    </div>
-
-                    <div>
-                        <flux:label>Estimated Completion</flux:label>
-                        <flux:field>
-                            <span class="text-sm">{{ $selectedMaintenance->estimated_completion_date?->format('d M Y') ?? 'N/A' }}</span>
-                        </flux:field>
+                {{-- Schedule Section --}}
+                <div class="space-y-4 border-t border-zinc-200 dark:border-zinc-700 pt-4">
+                    <flux:label class="text-xs uppercase tracking-wide text-zinc-500 dark:text-zinc-400">Schedule</flux:label>
+                    
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <flux:label class="text-zinc-500 dark:text-zinc-400">Start Date</flux:label>
+                            <flux:text class="text-sm mt-1">{{ $selectedMaintenance->maintenance_date?->format('d M Y') ?? 'N/A' }}</flux:text>
+                        </div>
+                        <div>
+                            <flux:label class="text-zinc-500 dark:text-zinc-400">Est. Completion</flux:label>
+                            <flux:text class="text-sm mt-1">{{ $selectedMaintenance->estimated_completion_date?->format('d M Y') ?? 'N/A' }}</flux:text>
+                        </div>
                     </div>
 
                     @if($selectedMaintenance->completed_date)
                         <div>
-                            <flux:label>Completion Date</flux:label>
-                            <flux:field>
-                                <span class="text-sm">{{ $selectedMaintenance->completed_date->format('d M Y') }}</span>
-                            </flux:field>
+                            <flux:label class="text-zinc-500 dark:text-zinc-400">Completion Date</flux:label>
+                            <flux:text class="text-sm mt-1">{{ $selectedMaintenance->completed_date->format('d M Y') }}</flux:text>
                         </div>
                     @endif
+                </div>
 
+                {{-- Details Section --}}
+                <div class="space-y-4 border-t border-zinc-200 dark:border-zinc-700 pt-4">
+                    <flux:label class="text-xs uppercase tracking-wide text-zinc-500 dark:text-zinc-400">Details</flux:label>
+                    
                     <div>
-                        <flux:label>Description</flux:label>
-                        <flux:field>
-                            <p class="text-sm text-zinc-600 dark:text-zinc-400">{{ $selectedMaintenance->description ?? 'No description' }}</p>
-                        </flux:field>
+                        <flux:label class="text-zinc-500 dark:text-zinc-400">Description</flux:label>
+                        <p class="text-sm text-zinc-600 dark:text-zinc-400 mt-1">{{ $selectedMaintenance->description ?? 'No description provided' }}</p>
                     </div>
+                </div>
 
-                    <div>
-                        <flux:label>Status</flux:label>
-                        <flux:field>
+                {{-- Result & Feedback Section (only shown when maintenance is completed) --}}
+                @if($selectedMaintenance->status === 'selesai' && ($selectedMaintenance->result || $selectedMaintenance->feedback))
+                    <div class="space-y-4 border-t border-zinc-200 dark:border-zinc-700 pt-4">
+                        <flux:label class="text-xs uppercase tracking-wide text-zinc-500 dark:text-zinc-400">Maintenance Outcome</flux:label>
+                        
+                        @if($selectedMaintenance->result)
+                            <div>
+                                <flux:label class="text-zinc-500 dark:text-zinc-400">Result</flux:label>
+                                <div class="mt-1">
+                                    @if($selectedMaintenance->result === 'baik')
+                                        <flux:badge color="green">Baik (Good)</flux:badge>
+                                    @elseif($selectedMaintenance->result === 'rusak')
+                                        <flux:badge color="red">Rusak (Damaged)</flux:badge>
+                                    @else
+                                        <flux:text class="text-sm">{{ $selectedMaintenance->result }}</flux:text>
+                                    @endif
+                                </div>
+                            </div>
+                        @endif
+
+                        @if($selectedMaintenance->feedback)
+                            <div>
+                                <flux:label class="text-zinc-500 dark:text-zinc-400">Technical Feedback</flux:label>
+                                <p class="text-sm text-zinc-600 dark:text-zinc-400 mt-1">{{ $selectedMaintenance->feedback }}</p>
+                            </div>
+                        @endif
+                    </div>
+                @endif
+
+                {{-- Status Section --}}
+                <div class="space-y-3 border-t border-zinc-200 dark:border-zinc-700 pt-4">
+                    <flux:label class="text-xs uppercase tracking-wide text-zinc-500 dark:text-zinc-400">Status & Assignment</flux:label>
+                    
+                    <div class="flex items-center justify-between">
+                        <div class="flex items-center gap-3">
                             @switch($selectedMaintenance->status)
                                 @case('dalam_proses')
                                     <flux:badge color="blue">In Progress</flux:badge>
@@ -256,30 +290,26 @@
                                     <flux:badge color="red">Cancelled</flux:badge>
                                     @break
                             @endswitch
-                        </flux:field>
-                    </div>
-
-                    @if($selectedMaintenance->maintenanceRequest)
-                        <div>
-                            <flux:label>Request ID</flux:label>
-                            <flux:field>
-                                <span class="text-sm font-mono">#{{ $selectedMaintenance->maintenanceRequest->id }}</span>
-                            </flux:field>
                         </div>
-                    @endif
+                        
+                        @if($selectedMaintenance->maintenanceRequest)
+                            <span class="text-sm text-zinc-500 dark:text-zinc-400">
+                                Request #{{ $selectedMaintenance->maintenanceRequest->id }}
+                            </span>
+                        @endif
+                    </div>
 
                     @if($selectedMaintenance->creator)
                         <div>
-                            <flux:label>Created By</flux:label>
-                            <flux:field>
-                                <span class="text-sm">{{ $selectedMaintenance->creator->name }}</span>
-                            </flux:field>
+                            <flux:label class="text-zinc-500 dark:text-zinc-400">Created By</flux:label>
+                            <flux:text class="text-sm mt-1">{{ $selectedMaintenance->creator->name }}</flux:text>
                         </div>
                     @endif
                 </div>
             @endif
 
-            <div class="flex justify-end gap-3">
+            {{-- Action Buttons --}}
+            <div class="flex justify-end gap-3 border-t border-zinc-200 dark:border-zinc-700 pt-4">
                 <flux:button variant="ghost" wire:click="closeModals">
                     Close
                 </flux:button>
@@ -290,27 +320,29 @@
     {{-- ============================================== --}}
     {{-- COMPLETE MAINTENANCE MODAL --}}
     {{-- ============================================== --}}
-    <flux:modal wire:model.defer="showCompleteModal">
+    <flux:modal wire:model.defer="showCompleteModal" class="md:w-full md:max-w-md">
         <div class="space-y-6">
+            {{-- Modal Header --}}
             <div>
                 <flux:heading size="lg">Complete Maintenance</flux:heading>
-                <flux:text class="mt-2">Provide the maintenance result and feedback to complete this maintenance.</flux:text>
+                <flux:text class="mt-1 text-zinc-500">Record the outcome and complete this maintenance</flux:text>
             </div>
 
             @if($selectedMaintenance)
-                <div class="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
-                    <p class="text-sm text-blue-900 dark:text-blue-100">
-                        <strong>{{ $selectedMaintenance->asset->asset_code ?? 'N/A' }}</strong> - {{ $selectedMaintenance->asset->name ?? 'Unknown Asset' }}
-                    </p>
-                    <p class="text-sm text-blue-700 dark:text-blue-200 mt-1">
-                        The asset condition will be updated based on the result you select.
-                    </p>
+                {{-- Asset Information --}}
+                <div class="space-y-2 p-3 bg-zinc-50 dark:bg-zinc-800 rounded-lg border border-zinc-200 dark:border-zinc-700">
+                    <flux:label class="text-xs uppercase tracking-wide text-zinc-500 dark:text-zinc-400">Asset</flux:label>
+                    <flux:text class="font-medium">
+                        {{ $selectedMaintenance->asset->asset_code ?? 'N/A' }} - {{ $selectedMaintenance->asset->name ?? 'Unknown Asset' }}
+                    </flux:text>
                 </div>
 
-                <div class="space-y-4">
-                    {{-- Result Selection --}}
+                {{-- Result Selection Section --}}
+                <div class="space-y-4 border-t border-zinc-200 dark:border-zinc-700 pt-4">
+                    <flux:label class="text-xs uppercase tracking-wide text-zinc-500 dark:text-zinc-400">Maintenance Result</flux:label>
+                    
                     <div>
-                        <flux:label>Maintenance Result <span class="text-red-500">*</span></flux:label>
+                        <flux:label>Asset Condition After Maintenance <span class="text-red-500">*</span></flux:label>
                         <div class="flex gap-4 mt-2">
                             <label class="flex items-center gap-2 cursor-pointer">
                                 <input 
@@ -335,23 +367,29 @@
                                 </span>
                             </label>
                         </div>
+                        <p class="text-xs text-zinc-500 dark:text-zinc-400 mt-2">The asset condition will be updated based on your selection</p>
                     </div>
+                </div>
 
-                    {{-- Feedback --}}
-                    <div>
-                        <flux:label for="completeFeedback">Technical Feedback <span class="text-red-500">*</span></flux:label>
+                {{-- Feedback Section --}}
+                <div class="space-y-4 border-t border-zinc-200 dark:border-zinc-700 pt-4">
+                    <flux:label class="text-xs uppercase tracking-wide text-zinc-500 dark:text-zinc-400">Technical Feedback</flux:label>
+                    
+                    <flux:field>
+                        <flux:label for="completeFeedback">Maintenance Notes <span class="text-red-500">*</span></flux:label>
                         <flux:textarea
                             wire:model="completeFeedback"
                             id="completeFeedback"
                             rows="4"
                             placeholder="Describe the maintenance work performed, parts replaced, issues found, etc..."
-                            class="mt-1"
                         />
-                    </div>
+                        <flux:description>Provide details about the work performed and any recommendations</flux:description>
+                    </flux:field>
                 </div>
             @endif
 
-            <div class="flex justify-end gap-3">
+            {{-- Action Buttons --}}
+            <div class="flex justify-end gap-3 border-t border-zinc-200 dark:border-zinc-700 pt-4">
                 <flux:button variant="ghost" wire:click="closeModals">
                     Cancel
                 </flux:button>
@@ -369,38 +407,57 @@
     {{-- ============================================== --}}
     {{-- CANCEL MAINTENANCE MODAL --}}
     {{-- ============================================== --}}
-    <flux:modal wire:model.defer="showCancelModal">
+    <flux:modal wire:model.defer="showCancelModal" class="md:w-full md:max-w-md">
         <div class="space-y-6">
+            {{-- Modal Header --}}
             <div>
-                <flux:heading size="lg">Cancel Maintenance?</flux:heading>
-                <flux:text class="mt-2">Are you sure you want to cancel this maintenance? This action cannot be undone.</flux:text>
+                <flux:heading size="lg">Cancel Maintenance</flux:heading>
+                <flux:text class="mt-1 text-zinc-500">Confirm cancellation for this maintenance record</flux:text>
             </div>
 
             @if($selectedMaintenance)
-                <div class="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-4">
-                    <p class="text-sm text-red-900 dark:text-red-100">
-                        <strong>{{ $selectedMaintenance->asset->asset_code ?? 'N/A' }}</strong> - {{ $selectedMaintenance->asset->name ?? 'Unknown Asset' }}
-                    </p>
-                    <p class="text-sm text-red-700 dark:text-red-200 mt-1">
-                        The asset will be restored to "Active" status. Condition will remain unchanged.
-                    </p>
+                {{-- Asset Information --}}
+                <div class="space-y-2 p-3 bg-zinc-50 dark:bg-zinc-800 rounded-lg border border-zinc-200 dark:border-zinc-700">
+                    <flux:label class="text-xs uppercase tracking-wide text-zinc-500 dark:text-zinc-400">Asset</flux:label>
+                    <flux:text class="font-medium">
+                        {{ $selectedMaintenance->asset->asset_code ?? 'N/A' }} - {{ $selectedMaintenance->asset->name ?? 'Unknown Asset' }}
+                    </flux:text>
                 </div>
 
-                <div>
-                    <flux:label for="cancelReason">Reason for Cancellation (Optional)</flux:label>
-                    <flux:textarea
-                        wire:model="cancelReason"
-                        id="cancelReason"
-                        rows="3"
-                        placeholder="Enter reason for cancelling this maintenance..."
-                        class="mt-1"
-                    />
+                {{-- Warning Notice --}}
+                <div class="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-4">
+                    <div class="flex items-start gap-3">
+                        <flux:icon.exclamation-triangle class="size-5 text-red-600 dark:text-red-400 flex-shrink-0 mt-0.5" />
+                        <div>
+                            <p class="text-sm font-medium text-red-700 dark:text-red-200">This action cannot be undone</p>
+                            <p class="text-sm text-red-600 dark:text-red-300 mt-1">
+                                The asset will be restored to "Active" status. Condition will remain unchanged.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+                {{-- Reason Section --}}
+                <div class="space-y-4 border-t border-zinc-200 dark:border-zinc-700 pt-4">
+                    <flux:label class="text-xs uppercase tracking-wide text-zinc-500 dark:text-zinc-400">Cancellation Details</flux:label>
+                    
+                    <flux:field>
+                        <flux:label for="cancelReason">Reason for Cancellation</flux:label>
+                        <flux:textarea
+                            wire:model="cancelReason"
+                            id="cancelReason"
+                            rows="3"
+                            placeholder="Enter reason for cancelling this maintenance..."
+                        />
+                        <flux:description>Optional - provide context for why this maintenance is being cancelled</flux:description>
+                    </flux:field>
                 </div>
             @endif
 
-            <div class="flex justify-end gap-3">
+            {{-- Action Buttons --}}
+            <div class="flex justify-end gap-3 border-t border-zinc-200 dark:border-zinc-700 pt-4">
                 <flux:button variant="ghost" wire:click="closeModals">
-                    Close
+                    Cancel
                 </flux:button>
                 <flux:button
                     variant="filled"
