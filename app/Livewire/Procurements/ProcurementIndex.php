@@ -8,6 +8,7 @@ use App\Models\Procurement;
 use App\Models\Supplier;
 use App\Models\User;
 use App\Services\AssetGenerationService;
+use App\Services\Export\ProcurementExportService;
 use Livewire\Component;
 use Livewire\WithPagination;
 use Livewire\Attributes\Validate;
@@ -64,6 +65,9 @@ class ProcurementIndex extends Component
     public $sortOrder = 'desc';
     public $perPage = 10;
 
+    // Export year selection
+    public ?int $exportYear = null;
+
     public function mount()
     {
         $this->resetForm();
@@ -71,6 +75,8 @@ class ProcurementIndex extends Component
         if (!$this->procurement_date) {
             $this->procurement_date = now()->format('Y-m-d');
         }
+        // Set default export year
+        $this->exportYear = now()->year;
     }
 
     /**
@@ -443,5 +449,31 @@ class ProcurementIndex extends Component
             unset($this->temporaryDocuments[$index]);
             $this->temporaryDocuments = array_values($this->temporaryDocuments);
         }
+    }
+
+    /**
+     * Get available years for procurement export
+     */
+    #[Computed]
+    public function availableExportYears()
+    {
+        return ProcurementExportService::getAvailableYears();
+    }
+
+    /**
+     * Export procurements to PDF for selected year
+     */
+    public function exportPdf()
+    {
+        /** @var \App\Models\User|null $user */
+        $user = Auth::user();
+        if (!$user || !$user->isAdmin()) {
+            $this->dispatch('notify', type: 'error', message: 'Only administrators can export reports.');
+            return;
+        }
+
+        $year = $this->exportYear ?: now()->year;
+
+        return $this->redirect(route('export.procurement', ['year' => $year]), navigate: false);
     }
 }

@@ -6,16 +6,32 @@
             <flux:subheading class="text-gray-600 dark:text-gray-400 mt-2">Record and track asset condition evaluations</flux:subheading>
         </div>
 
-        {{-- Create Inspection Button (Admin Only) --}}
-        @if(auth()->user()->isAdmin())
-        <flux:button
-            variant="primary"
-            icon="clipboard-document-check"
-            wire:click="openCreateModal"
-        >
-            New Inspection
-        </flux:button>
-        @endif
+        <div class="flex items-center gap-2">
+            {{-- Export PDF Button (Admin Only) --}}
+            @if(auth()->user()->isAdmin())
+            <flux:button
+                wire:click="exportPdf"
+                variant="ghost"
+                size="sm"
+                icon="document-arrow-down"
+                wire:loading.attr="disabled"
+                wire:loading.class="opacity-50"
+                wire:target="exportPdf"
+            >
+                <span wire:loading.remove wire:target="exportPdf">Export PDF</span>
+                <span wire:loading wire:target="exportPdf">Exporting...</span>
+            </flux:button>
+
+            {{-- Create Inspection Button (Admin Only) --}}
+            <flux:button
+                variant="primary"
+                icon="clipboard-document-check"
+                wire:click="openCreateModal"
+            >
+                New Inspection
+            </flux:button>
+            @endif
+        </div>
     </div>
 
     <flux:separator />

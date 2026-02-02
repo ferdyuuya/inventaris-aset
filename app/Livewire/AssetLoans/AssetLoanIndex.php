@@ -9,6 +9,7 @@ use Livewire\Component;
 use Livewire\WithPagination;
 use Livewire\Attributes\Computed;
 use App\Services\AssetLoanService;
+use Illuminate\Support\Facades\Auth;
 
 class AssetLoanIndex extends Component
 {
@@ -266,6 +267,27 @@ class AssetLoanIndex extends Component
         $this->statusFilter = '';
         $this->overdueFilter = '';
         $this->resetPage();
+    }
+
+    /**
+     * Export loans to PDF using current status filter
+     */
+    public function exportPdf()
+    {
+        /** @var \App\Models\User|null $user */
+        $user = Auth::user();
+        if (!$user || !$user->isAdmin()) {
+            $this->dispatch('notify', type: 'error', message: 'Only administrators can export reports.');
+            return;
+        }
+
+        // Build export URL with current filters
+        $params = [];
+        if ($this->statusFilter) {
+            $params['status'] = $this->statusFilter;
+        }
+
+        return $this->redirect(route('export.loan', $params), navigate: false);
     }
 
     public function render()

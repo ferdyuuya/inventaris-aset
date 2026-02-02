@@ -162,6 +162,21 @@ class InspectionManager extends Component
         }
     }
 
+    /**
+     * Export inspections to PDF
+     */
+    public function exportPdf()
+    {
+        /** @var \App\Models\User|null $user */
+        $user = Auth::user();
+        if (!$user || !$user->isAdmin()) {
+            $this->dispatch('notify', type: 'error', message: 'Only administrators can export reports.');
+            return;
+        }
+
+        return $this->redirect(route('export.inspection'), navigate: false);
+    }
+
     public function render()
     {
         return view('livewire.inspections.inspection-manager', [

@@ -105,4 +105,29 @@ Route::middleware(['auth', 'verified'])->prefix('inspections')->name('inspection
     Route::get('/', fn () => view('pages.inspections.index'))->name('index');
 });
 
+// ============================================================
+// EXPORT / REPORTING ROUTES (ADMIN ONLY)
+// PDF export functionality for various modules
+// ============================================================
+
+Route::middleware(['auth', 'verified', 'admin'])->prefix('export')->name('export.')->group(function () {
+    // Maintenance export
+    Route::get('/maintenance', [\App\Http\Controllers\ExportController::class, 'exportMaintenance'])->name('maintenance');
+    
+    // Maintenance request export
+    Route::get('/maintenance-request', [\App\Http\Controllers\ExportController::class, 'exportMaintenanceRequest'])->name('maintenance-request');
+    
+    // Inspection export
+    Route::get('/inspection', [\App\Http\Controllers\ExportController::class, 'exportInspection'])->name('inspection');
+    
+    // Loan/borrowing export
+    Route::get('/loan', [\App\Http\Controllers\ExportController::class, 'exportLoan'])->name('loan');
+    
+    // Procurement export by year
+    Route::get('/procurement', [\App\Http\Controllers\ExportController::class, 'exportProcurement'])->name('procurement');
+    
+    // Get available procurement years (for dropdown)
+    Route::get('/procurement-years', [\App\Http\Controllers\ExportController::class, 'getProcurementYears'])->name('procurement-years');
+});
+
 require __DIR__.'/settings.php';

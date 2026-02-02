@@ -246,6 +246,27 @@ class AssetMaintenancesManager extends Component
         }
     }
 
+    /**
+     * Export maintenance records to PDF using current filters
+     */
+    public function exportPdf()
+    {
+        /** @var \App\Models\User|null $user */
+        $user = Auth::user();
+        if (!$user || !$user->isAdmin()) {
+            $this->dispatch('notify', type: 'error', message: 'Only administrators can export reports.');
+            return;
+        }
+
+        // Build export URL with current filters
+        $params = [];
+        if ($this->filterStatus) {
+            $params['status'] = $this->filterStatus;
+        }
+
+        return $this->redirect(route('export.maintenance', $params), navigate: false);
+    }
+
     public function render()
     {
         return view('livewire.maintenance.asset-maintenances-manager', [

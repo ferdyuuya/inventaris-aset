@@ -21,13 +21,36 @@
             <flux:heading size="xl" class="text-gray-900 dark:text-white">Procurements</flux:heading>
             <flux:subheading class="text-gray-600 dark:text-gray-400 mt-2">Manage purchase records and track asset origins</flux:subheading>
         </div>
-        @if(auth()->user()->isAdmin())
-        <flux:modal.trigger name="createProcurement">
-            <flux:button variant="primary" icon="plus">
-                Add Procurement
-            </flux:button>
-        </flux:modal.trigger>
-        @endif
+        <div class="flex items-center gap-2">
+            {{-- Export PDF Button with Year Selector (Admin Only) --}}
+            @if(auth()->user()->isAdmin())
+            <div class="flex items-center gap-2">
+                <flux:select wire:model="exportYear" size="sm" class="w-24">
+                    @foreach($this->availableExportYears as $year)
+                        <flux:select.option value="{{ $year }}">{{ $year }}</flux:select.option>
+                    @endforeach
+                </flux:select>
+                <flux:button
+                    wire:click="exportPdf"
+                    variant="ghost"
+                    size="sm"
+                    icon="document-arrow-down"
+                    wire:loading.attr="disabled"
+                    wire:loading.class="opacity-50"
+                    wire:target="exportPdf"
+                >
+                    <span wire:loading.remove wire:target="exportPdf">Export PDF</span>
+                    <span wire:loading wire:target="exportPdf">Exporting...</span>
+                </flux:button>
+            </div>
+
+            <flux:modal.trigger name="createProcurement">
+                <flux:button variant="primary" icon="plus">
+                    Add Procurement
+                </flux:button>
+            </flux:modal.trigger>
+            @endif
+        </div>
     </div>
 
     <flux:separator />

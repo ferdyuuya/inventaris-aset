@@ -5,6 +5,23 @@
             <flux:heading size="xl" class="text-gray-900 dark:text-white">Asset Maintenances</flux:heading>
             <flux:subheading class="text-gray-600 dark:text-gray-400 mt-2">Track active and completed asset maintenance records</flux:subheading>
         </div>
+        @if(auth()->user()->isAdmin())
+        <div class="flex items-center gap-2">
+            {{-- Export PDF Button --}}
+            <flux:button
+                wire:click="exportPdf"
+                variant="ghost"
+                size="sm"
+                icon="document-arrow-down"
+                wire:loading.attr="disabled"
+                wire:loading.class="opacity-50"
+                wire:target="exportPdf"
+            >
+                <span wire:loading.remove wire:target="exportPdf">Export PDF</span>
+                <span wire:loading wire:target="exportPdf">Exporting...</span>
+            </flux:button>
+        </div>
+        @endif
     </div>
 
     <flux:separator />
