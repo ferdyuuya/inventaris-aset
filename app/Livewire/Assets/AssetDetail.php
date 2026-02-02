@@ -31,6 +31,7 @@ class AssetDetail extends Component
     public bool $showReturnModal = false;
     public bool $showMaintenanceModal = false;
     public bool $showRequestMaintenanceModal = false;
+    public bool $showRequestMaintenanceConfirmation = false;
     public bool $showDisposeModal = false;
     public bool $showInspectModal = false;
     public bool $showMaintenanceDetailModal = false;
@@ -415,6 +416,14 @@ class AssetDetail extends Component
     }
 
     /**
+     * Close maintenance request confirmation modal
+     */
+    public function closeRequestMaintenanceConfirmation(): void
+    {
+        $this->showRequestMaintenanceConfirmation = false;
+    }
+
+    /**
      * Reset maintenance request form
      */
     public function resetRequestMaintenanceForm(): void
@@ -428,13 +437,27 @@ class AssetDetail extends Component
      */
     public function submitRequestMaintenance(): void
     {
-        $validated = $this->validate();
+        Log::info('submitRequestMaintenance CALLED', [
+            'asset_id' => $this->asset?->id,
+            'description' => $this->requestMaintenanceDescription,
+        ]);
+
+        // Explicit validation rules
+        $validated = $this->validate([
+            'requestMaintenanceDescription' => 'required|string|min:5|max:500',
+        ]);
 
         try {
             $user = Auth::user();
 
             if (!$user) {
-                $this->dispatch('notify', 'error', 'You must be logged in to request maintenance.');
+                $this->dispatch('notify', type: 'error', message: 'You must be logged in to request maintenance.');
+                return;
+            }
+
+            // Ensure asset context exists
+            if (!$this->asset || !$this->asset->id) {
+                $this->dispatch('notify', type: 'error', message: 'Asset context is missing. Please refresh the page.');
                 return;
             }
 
@@ -446,10 +469,20 @@ class AssetDetail extends Component
                 'status' => 'diajukan',
             ]);
 
-            $this->dispatch('notify', 'Maintenance request submitted successfully.');
-            $this->closeRequestMaintenanceModal();
+            Log::info('submitRequestMaintenance SUCCESS - showing confirmation', [
+                'asset_id' => $this->asset->id,
+            ]);
+
+            // Close request form modal and show confirmation
+            $this->showRequestMaintenanceModal = false;
+            $this->resetRequestMaintenanceForm();
+            $this->showRequestMaintenanceConfirmation = true;
         } catch (\Exception $e) {
-            $this->dispatch('notify', 'error', 'Error creating maintenance request: ' . $e->getMessage());
+            Log::error('submitRequestMaintenance EXCEPTION', [
+                'error' => $e->getMessage(),
+            ]);
+            $this->dispatch('notify', type: 'error', message: 'Error creating maintenance request: ' . $e->getMessage());
+            report($e);
         }
     }
 

@@ -5,8 +5,11 @@ namespace App\Livewire\Maintenance;
 use App\Models\MaintenanceRequest;
 use App\Models\Asset;
 use App\Models\AssetMaintenance;
+use App\Models\User;
+use App\Models\Employee;
 use App\Services\Maintenance\MaintenanceWorkflowService;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Log;
 use Livewire\Component;
 use Livewire\WithPagination;
 use Livewire\Attributes\Computed;
@@ -23,8 +26,17 @@ class MaintenanceRequestsManager extends Component
     public bool $showViewModal = false;
     public bool $showApproveModal = false;
     public bool $showRejectModal = false;
+    public bool $showCreateModal = false;
+    public bool $showRequestSuccessModal = false;
+    public bool $showApprovalSuccessModal = false;
     public ?MaintenanceRequest $selectedRequest = null;
     public string $rejectReason = '';
+
+    // PIC selection for approval (employee)
+    public ?int $selectedPicEmployeeId = null;
+    
+    // Store the request ID explicitly for approval (avoid re-render issues)
+    public ?int $approvalRequestId = null;
 
     // Create maintenance request form
     #[Validate('required|integer|exists:assets,id')]
@@ -65,7 +77,7 @@ class MaintenanceRequestsManager extends Component
      */
     public function viewRequest(MaintenanceRequest $request): void
     {
-        $this->selectedRequest = $request->load('asset', 'requester', 'approver');
+        $this->selectedRequest = $request->load('asset', 'requester', 'approver', 'maintenance.pic');
         $this->showViewModal = true;
     }
 
@@ -79,8 +91,15 @@ class MaintenanceRequestsManager extends Component
             return;
         }
 
-        $this->selectedRequest = $request;
+        $this->selectedRequest = $request->load('asset');
+        $this->approvalRequestId = $request->id; // Store ID explicitly
+        $this->selectedPicEmployeeId = null;
         $this->showApproveModal = true;
+        
+        Log::info('openApproveModal CALLED', [
+            'request_id' => $request->id,
+            'approvalRequestId' => $this->approvalRequestId,
+        ]);
     }
 
     /**
@@ -92,28 +111,59 @@ class MaintenanceRequestsManager extends Component
      */
     public function approveRequest($requestId): void
     {
+        // LOGGING: Prove this method is being called
+        Log::info('approveRequest CALLED', [
+            'requestId' => $requestId,
+            'selectedPicEmployeeId' => $this->selectedPicEmployeeId,
+            'user_id' => Auth::id(),
+        ]);
+
+        // FAIL-FAST: Validate request ID is provided
+        if (empty($requestId)) {
+            Log::error('approveRequest FAILED: No requestId provided');
+            $this->addError('selectedPicEmployeeId', 'Invalid request. Please close and try again.');
+            return;
+        }
+
+        // FAIL-FAST: Validate PIC employee selection is required
+        if (empty($this->selectedPicEmployeeId)) {
+            Log::warning('approveRequest FAILED: No PIC selected');
+            $this->addError('selectedPicEmployeeId', 'Please select an employee as Person In Charge (PIC) before approving.');
+            return;
+        }
+
         try {
             $request = MaintenanceRequest::with('asset')->findOrFail($requestId);
+            Log::info('approveRequest: Found request', ['request_id' => $request->id, 'status' => $request->status]);
 
             // Validate request status for user feedback
             if ($request->status !== 'diajukan') {
-                $this->dispatch('notify', type: 'error', message: 'Only pending requests can be approved.');
-                $this->closeModals();
+                Log::warning('approveRequest FAILED: Invalid status', ['status' => $request->status]);
+                $this->addError('selectedPicEmployeeId', 'Only pending requests can be approved. Current status: ' . $request->status);
                 return;
             }
 
             // Delegate to service (handles transaction, all updates, atomicity)
             $service = new MaintenanceWorkflowService();
-            $maintenance = $service->approveRequest($request, Auth::user());
+            $maintenance = $service->approveRequest($request, Auth::user(), $this->selectedPicEmployeeId);
 
-            $this->dispatch('notify', 
-                type: 'success', 
-                message: 'Maintenance request approved. Asset maintenance record created.'
-            );
-            $this->closeModals();
+            Log::info('approveRequest SUCCESS', [
+                'request_id' => $request->id,
+                'maintenance_id' => $maintenance->id,
+                'pic_employee_id' => $this->selectedPicEmployeeId,
+            ]);
+
+            // Show success feedback and close modal
+            $this->showApproveModal = false;
+            $this->showApprovalSuccessModal = true;
+            $this->selectedPicEmployeeId = null;
         } catch (\Exception $e) {
-            // Service exceptions have context; show user-friendly message
-            $this->dispatch('notify', type: 'error', message: 'Error approving request: ' . $e->getMessage());
+            Log::error('approveRequest EXCEPTION', [
+                'requestId' => $requestId,
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
+            ]);
+            $this->addError('selectedPicEmployeeId', 'Error: ' . $e->getMessage());
             report($e);
         }
     }
@@ -162,15 +212,43 @@ class MaintenanceRequestsManager extends Component
     }
 
     /**
-     * Close all modals
+     * Close all modals (except success confirmation)
      */
     public function closeModals(): void
     {
         $this->showViewModal = false;
         $this->showApproveModal = false;
         $this->showRejectModal = false;
+        $this->showCreateModal = false;
         $this->rejectReason = '';
+        $this->selectedPicEmployeeId = null;
+        $this->approvalRequestId = null;
         $this->resetCreateForm();
+    }
+
+    /**
+     * Close success confirmation modal
+     */
+    public function closeSuccessModal(): void
+    {
+        $this->showRequestSuccessModal = false;
+    }
+
+    /**
+     * Close approval success confirmation modal
+     */
+    public function closeApprovalSuccessModal(): void
+    {
+        $this->showApprovalSuccessModal = false;
+    }
+
+    /**
+     * Open create maintenance request modal
+     */
+    public function openCreateModal(): void
+    {
+        $this->resetCreateForm();
+        $this->showCreateModal = true;
     }
 
     /**
@@ -188,30 +266,60 @@ class MaintenanceRequestsManager extends Component
      */
     public function submitCreateMaintenance(): void
     {
-        $validated = $this->validate();
+        // LOGGING: Prove this method is being called
+        Log::info('submitCreateMaintenance CALLED', [
+            'createAssetId' => $this->createAssetId,
+            'createDescription' => $this->createDescription,
+            'user_id' => Auth::id(),
+        ]);
+
+        // Explicit validation with rules
+        $validated = $this->validate([
+            'createAssetId' => 'required|integer|exists:assets,id',
+            'createDescription' => 'required|string|min:5|max:500',
+        ]);
 
         try {
             $user = Auth::user();
 
             if (!$user) {
-                $this->dispatch('notify', type: 'error', message: 'You must be logged in to create a maintenance request.');
+                Log::error('submitCreateMaintenance FAILED: No authenticated user');
+                $this->addError('createAssetId', 'You must be logged in to create a maintenance request.');
                 return;
             }
 
-            MaintenanceRequest::create([
+            $maintenanceRequest = MaintenanceRequest::create([
                 'asset_id' => $validated['createAssetId'],
                 'requested_by' => $user->id,
                 'request_date' => now()->toDateString(),
                 'issue_description' => $validated['createDescription'],
                 'status' => 'diajukan',
             ]);
-            // Asset::where('id', $validated['createAssetId'])->update(['is_available' => '0']);
 
-            $this->dispatch('notify', type: 'success', message: 'Maintenance request submitted successfully.');
-            $this->closeModals();
-            $this->resetPage();
+            Log::info('submitCreateMaintenance SUCCESS', [
+                'maintenance_request_id' => $maintenanceRequest->id,
+                'asset_id' => $validated['createAssetId'],
+            ]);
+
+            // Close create modal and show success confirmation
+            $this->showCreateModal = false;
+            $this->resetCreateForm();
+            $this->showRequestSuccessModal = true;
+            
+            // CRITICAL LOG: Verify modal state is set
+            Log::info('showRequestSuccessModal SET TO TRUE', [
+                'showRequestSuccessModal' => $this->showRequestSuccessModal,
+                'showCreateModal' => $this->showCreateModal,
+            ]);
+            
+            // Note: Do NOT call resetPage() here - it can interfere with modal state
         } catch (\Exception $e) {
-            $this->dispatch('notify', type: 'error', message: 'Error creating maintenance request: ' . $e->getMessage());
+            Log::error('submitCreateMaintenance EXCEPTION', [
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
+            ]);
+            $this->addError('createDescription', 'Error creating maintenance request: ' . $e->getMessage());
+            report($e);
         }
     }
 
@@ -227,11 +335,23 @@ class MaintenanceRequestsManager extends Component
             ->get(['id', 'asset_code', 'name']);
     }
 
+    /**
+     * Get all employees for PIC dropdown
+     */
+    #[Computed]
+    public function employees()
+    {
+        return Employee::query()
+            ->orderBy('name', 'asc')
+            ->get(['id', 'name', 'nik', 'position']);
+    }
+
     public function render()
     {
         return view('livewire.maintenance.maintenance-requests-manager', [
             'requests' => $this->requests,
             'availableAssets' => $this->availableAssets,
+            'employees' => $this->employees,
         ]);
     }
 }

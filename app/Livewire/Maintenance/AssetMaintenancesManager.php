@@ -5,6 +5,7 @@ namespace App\Livewire\Maintenance;
 use App\Models\AssetMaintenance;
 use App\Services\Maintenance\MaintenanceWorkflowService;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Log;
 use Livewire\Component;
 use Livewire\WithPagination;
 use Livewire\Attributes\Computed;
@@ -21,6 +22,7 @@ class AssetMaintenancesManager extends Component
     public bool $showViewModal = false;
     public bool $showCompleteModal = false;
     public bool $showCancelModal = false;
+    public bool $showCompletionConfirmation = false;
     public ?AssetMaintenance $selectedMaintenance = null;
     public string $cancelReason = '';
 
@@ -93,6 +95,11 @@ class AssetMaintenancesManager extends Component
      */
     public function completeMaintenance(): void
     {
+        Log::info('completeMaintenance CALLED', [
+            'maintenance_id' => $this->selectedMaintenance?->id,
+            'result' => $this->completeResult,
+        ]);
+
         try {
             if (!$this->selectedMaintenance || $this->selectedMaintenance->status !== 'dalam_proses') {
                 $this->dispatch('notify', type: 'error', message: 'Invalid maintenance state.');
@@ -131,10 +138,17 @@ class AssetMaintenancesManager extends Component
                 $this->completeFeedback
             );
 
-            $this->dispatch('notify', type: 'success', message: 'Maintenance completed. Asset restored to active.');
-            $this->closeModals();
+            Log::info('completeMaintenance SUCCESS - showing confirmation', [
+                'maintenance_id' => $maintenance->id,
+            ]);
+
+            // Close complete form modal and show confirmation
+            $this->showCompleteModal = false;
+            $this->showCompletionConfirmation = true;
         } catch (\Exception $e) {
-            // Service exceptions have context; show user-friendly message
+            Log::error('completeMaintenance EXCEPTION', [
+                'error' => $e->getMessage(),
+            ]);
             $this->dispatch('notify', type: 'error', message: 'Error completing maintenance: ' . $e->getMessage());
             report($e);
         }
@@ -150,6 +164,17 @@ class AssetMaintenancesManager extends Component
         $this->showCancelModal = false;
         $this->selectedMaintenance = null;
         $this->cancelReason = '';
+        $this->completeResult = '';
+        $this->completeFeedback = '';
+    }
+
+    /**
+     * Close completion confirmation modal
+     */
+    public function closeCompletionConfirmation(): void
+    {
+        $this->showCompletionConfirmation = false;
+        $this->selectedMaintenance = null;
         $this->completeResult = '';
         $this->completeFeedback = '';
     }

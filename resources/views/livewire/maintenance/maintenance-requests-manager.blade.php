@@ -11,14 +11,13 @@
         </div>
 
         {{-- Create Request Button --}}
-        <flux:modal.trigger name="create-request-modal">
-            <flux:button
-                variant="primary"
-                icon="plus"
-            >
-                Create Request
-            </flux:button>
-        </flux:modal.trigger>
+        <flux:button
+            variant="primary"
+            icon="plus"
+            wire:click="openCreateModal"
+        >
+            Create Request
+        </flux:button>
     </div>
 
     <flux:separator />
@@ -293,11 +292,9 @@
                     @endif
                 </flux:text>
                 @if(!$search && !($filterStatus ?? null))
-                    <flux:modal.trigger name="create-request-modal">
-                        <flux:button variant="primary" class="mt-4" icon="plus">
-                            Create First Request
-                        </flux:button>
-                    </flux:modal.trigger>
+                    <flux:button variant="primary" class="mt-4" icon="plus" wire:click="openCreateModal">
+                        Create First Request
+                    </flux:button>
                 @endif
             </div>
         @endif
@@ -380,6 +377,27 @@
                     </div>
                 </div>
 
+                {{-- PIC Information Section (only shown when approved/completed and has maintenance record) --}}
+                @if(in_array($selectedRequest->status, ['disetujui', 'selesai']) && $selectedRequest->maintenance)
+                    <div class="space-y-3 border-t border-zinc-200 dark:border-zinc-700 pt-4">
+                        <flux:label class="text-xs uppercase tracking-wide text-zinc-500 dark:text-zinc-400">Assignment</flux:label>
+                        
+                        <div>
+                            <flux:label class="text-zinc-500 dark:text-zinc-400">PIC (Person In Charge)</flux:label>
+                            @if($selectedRequest->maintenance->pic)
+                                <div class="mt-1">
+                                    <flux:text class="text-sm font-medium">{{ $selectedRequest->maintenance->pic->name }}</flux:text>
+                                    @if($selectedRequest->maintenance->pic->position)
+                                        <flux:text class="text-xs text-zinc-500 dark:text-zinc-400">{{ $selectedRequest->maintenance->pic->position }}</flux:text>
+                                    @endif
+                                </div>
+                            @else
+                                <flux:text class="text-sm text-zinc-400 dark:text-zinc-500 mt-1">Not assigned</flux:text>
+                            @endif
+                        </div>
+                    </div>
+                @endif
+
                 {{-- Result & Feedback Section (only shown when request is completed) --}}
                 @if($selectedRequest->status === 'selesai' && ($selectedRequest->result || $selectedRequest->feedback))
                     <div class="space-y-4 border-t border-zinc-200 dark:border-zinc-700 pt-4">
@@ -435,8 +453,30 @@
                 <div class="space-y-2 p-3 bg-zinc-50 dark:bg-zinc-800 rounded-lg border border-zinc-200 dark:border-zinc-700">
                     <flux:label class="text-xs uppercase tracking-wide text-zinc-500 dark:text-zinc-400">Asset</flux:label>
                     <flux:text class="font-medium">
-                        {{ $selectedRequest->asset->asset_code }} - {{ $selectedRequest->asset->name }}
+                        {{ $selectedRequest->asset->asset_code ?? 'N/A' }} - {{ $selectedRequest->asset->name ?? 'Unknown' }}
                     </flux:text>
+                </div>
+
+                {{-- PIC Selection Section --}}
+                <div class="space-y-4 border-t border-zinc-200 dark:border-zinc-700 pt-4">
+                    <flux:label class="text-xs uppercase tracking-wide text-zinc-500 dark:text-zinc-400">Assignment</flux:label>
+                    
+                    <flux:field>
+                        <flux:label for="selectedPicEmployeeId">Assign PIC (Person In Charge) <span class="text-red-500">*</span></flux:label>
+                        <flux:select
+                            id="selectedPicEmployeeId"
+                            wire:model.live="selectedPicEmployeeId"
+                            placeholder="Select employee for maintenance..."
+                        >
+                            @foreach($employees as $employee)
+                                <option value="{{ $employee->id }}">
+                                    {{ $employee->name }} {{ $employee->position ? '- ' . $employee->position : '' }}
+                                </option>
+                            @endforeach
+                        </flux:select>
+                        <flux:description>Select the employee who will be responsible for this maintenance</flux:description>
+                        <flux:error name="selectedPicEmployeeId" />
+                    </flux:field>
                 </div>
 
                 {{-- Info Notice --}}
@@ -455,13 +495,26 @@
                 <flux:button variant="ghost" wire:click="closeModals">
                     Cancel
                 </flux:button>
-                <flux:button
-                    variant="filled"
-                    color="blue"
-                    wire:click="approveRequest({{ $selectedRequest?->id }})"
-                >
-                    Approve Request
-                </flux:button>
+                @if($selectedPicEmployeeId && $approvalRequestId)
+                    <flux:button
+                        variant="filled"
+                        color="blue"
+                        wire:click="approveRequest({{ $approvalRequestId }})"
+                        wire:loading.attr="disabled"
+                        wire:target="approveRequest"
+                    >
+                        <span wire:loading.remove wire:target="approveRequest">Approve Request</span>
+                        <span wire:loading wire:target="approveRequest">Processing...</span>
+                    </flux:button>
+                @else
+                    <flux:button
+                        variant="filled"
+                        color="blue"
+                        disabled
+                    >
+                        Approve Request
+                    </flux:button>
+                @endif
             </div>
         </div>
     </flux:modal>
@@ -516,7 +569,7 @@
     {{-- ============================================== --}}
     {{-- CREATE MAINTENANCE REQUEST MODAL --}}
     {{-- ============================================== --}}
-    <flux:modal name="create-request-modal" class="md:w-full md:max-w-md" @close="$wire.closeModals()">
+    <flux:modal wire:model.defer="showCreateModal" class="md:w-full md:max-w-md" @close="$wire.closeModals()">
         <div class="space-y-6">
             {{-- Modal Header --}}
             <div>
@@ -532,7 +585,7 @@
                     <flux:label for="createAssetId">Select Asset <span class="text-red-500">*</span></flux:label>
                     <flux:select
                         id="createAssetId"
-                        wire:model="createAssetId"
+                        wire:model.live="createAssetId"
                         placeholder="Choose an asset..."
                     >
                         @foreach($availableAssets as $asset)
@@ -550,10 +603,10 @@
                 <flux:label class="text-xs uppercase tracking-wide text-zinc-500 dark:text-zinc-400">Problem Description</flux:label>
                 
                 <flux:field>
-                    <flux:label for="createDescription">Issue Description <span class="text-red-500">*</span></flux:label>
+                    <flux:label for="createDescription">Describe the Issue <span class="text-red-500">*</span></flux:label>
                     <flux:textarea
                         id="createDescription"
-                        wire:model="createDescription"
+                        wire:model.live="createDescription"
                         placeholder="Describe the issue or reason for maintenance..."
                         rows="4"
                     />
@@ -564,17 +617,82 @@
 
             {{-- Action Buttons --}}
             <div class="flex justify-end gap-3 border-t border-zinc-200 dark:border-zinc-700 pt-4">
-                <flux:modal.close>
-                    <flux:button variant="ghost">
-                        Cancel
-                    </flux:button>
-                </flux:modal.close>
+                <flux:button variant="ghost" wire:click="closeModals">
+                    Cancel
+                </flux:button>
                 <flux:button
                     variant="filled"
                     color="blue"
                     wire:click="submitCreateMaintenance"
+                    wire:loading.attr="disabled"
+                    wire:target="submitCreateMaintenance"
                 >
-                    Submit Request
+                    <span wire:loading.remove wire:target="submitCreateMaintenance">Submit Request</span>
+                    <span wire:loading wire:target="submitCreateMaintenance">Submitting...</span>
+                </flux:button>
+            </div>
+        </div>
+    </flux:modal>
+
+    {{-- ============================================== --}}
+    {{-- SUCCESS CONFIRMATION MODAL --}}
+    {{-- ============================================== --}}
+    <flux:modal wire:model="showRequestSuccessModal" class="md:w-full md:max-w-sm">
+        <div class="space-y-6 text-center">
+            {{-- Success Icon --}}
+            <div class="mx-auto flex items-center justify-center w-16 h-16 rounded-full bg-green-100 dark:bg-green-900/30">
+                <flux:icon.check-circle class="size-10 text-green-600 dark:text-green-400" />
+            </div>
+
+            {{-- Success Message --}}
+            <div>
+                <flux:heading size="lg">Maintenance Request Submitted</flux:heading>
+                <flux:text class="mt-2 text-zinc-500 dark:text-zinc-400">
+                    Your maintenance request has been successfully submitted and is waiting for admin approval.
+                </flux:text>
+            </div>
+
+            {{-- Action Button --}}
+            <div class="pt-4">
+                <flux:button
+                    variant="filled"
+                    color="green"
+                    wire:click="closeSuccessModal"
+                    class="w-full"
+                >
+                    Close
+                </flux:button>
+            </div>
+        </div>
+    </flux:modal>
+
+    {{-- ============================================== --}}
+    {{-- APPROVAL SUCCESS CONFIRMATION MODAL --}}
+    {{-- ============================================== --}}
+    <flux:modal wire:model="showApprovalSuccessModal" class="md:w-full md:max-w-sm">
+        <div class="space-y-6 text-center">
+            {{-- Success Icon --}}
+            <div class="mx-auto flex items-center justify-center w-16 h-16 rounded-full bg-blue-100 dark:bg-blue-900/30">
+                <flux:icon.check-circle class="size-10 text-blue-600 dark:text-blue-400" />
+            </div>
+
+            {{-- Success Message --}}
+            <div>
+                <flux:heading size="lg">Request Approved!</flux:heading>
+                <flux:text class="mt-2 text-zinc-500 dark:text-zinc-400">
+                    The maintenance request has been approved. An asset maintenance record has been created and the asset status is now "In Maintenance".
+                </flux:text>
+            </div>
+
+            {{-- Action Button --}}
+            <div class="pt-4">
+                <flux:button
+                    variant="filled"
+                    color="blue"
+                    wire:click="closeApprovalSuccessModal"
+                    class="w-full"
+                >
+                    Close
                 </flux:button>
             </div>
         </div>

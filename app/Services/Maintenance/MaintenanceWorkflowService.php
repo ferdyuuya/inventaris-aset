@@ -30,24 +30,30 @@ class MaintenanceWorkflowService
      * ATOMIC OPERATION:
      * 1. Validate request is in 'diajukan' status
      * 2. Update request status to 'disetujui'
-     * 3. Create asset_maintenances record
+     * 3. Create asset_maintenances record with assigned PIC employee
      * 4. Update asset status to 'dipelihara'
      * 5. Mark asset as unavailable (is_available = false)
      * 
      * @param MaintenanceRequest $request The request to approve
      * @param User $admin The admin approving the request
+     * @param int|null $picEmployeeId The employee ID of the Person In Charge for maintenance execution
      * 
      * @return AssetMaintenance The created maintenance record
      * 
-     * @throws Exception If request is not pending or any operation fails
+     * @throws Exception If request is not pending, PIC not provided, or any operation fails
      */
-    public function approveRequest(MaintenanceRequest $request, User $admin): AssetMaintenance
+    public function approveRequest(MaintenanceRequest $request, User $admin, ?int $picEmployeeId = null): AssetMaintenance
     {
         // Validation: Only pending requests can be approved
         if ($request->status !== 'diajukan') {
             throw new Exception(
                 "Cannot approve request. Status is '{$request->status}', expected 'diajukan'."
             );
+        }
+
+        // Validation: PIC employee is required
+        if (empty($picEmployeeId)) {
+            throw new Exception("PIC (Person In Charge) employee must be assigned when approving a maintenance request.");
         }
 
         // Ensure asset is loaded
@@ -57,14 +63,14 @@ class MaintenanceWorkflowService
 
         // Atomic transaction: All operations must succeed or all rollback
         try {
-            return DB::transaction(function () use ($request, $admin): AssetMaintenance {
+            return DB::transaction(function () use ($request, $admin, $picEmployeeId): AssetMaintenance {
                 // STEP 1: Update maintenance request status to approved
                 $request->update([
                     'status' => 'disetujui',
                     'approved_by' => $admin->id,
                 ]);
 
-                // STEP 2: Create asset maintenance record
+                // STEP 2: Create asset maintenance record with PIC employee
                 $maintenance = AssetMaintenance::create([
                     'asset_id' => $request->asset_id,
                     'maintenance_request_id' => $request->id,
@@ -73,6 +79,7 @@ class MaintenanceWorkflowService
                     'description' => $request->issue_description,
                     'status' => 'dalam_proses',
                     'created_by' => $admin->id,
+                    'pic_employee_id' => $picEmployeeId,
                 ]);
 
                 // STEP 3: Mark asset as under maintenance

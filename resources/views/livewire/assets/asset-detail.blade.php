@@ -1040,9 +1040,9 @@
         {{-- Description (Required) --}}
         <div>
             <flux:field>
-                <flux:label>Issue Description <span class="text-red-500">*</span></flux:label>
+                <flux:label>Describe the Issue <span class="text-red-500">*</span></flux:label>
                 <flux:textarea
-                    wire:model="requestMaintenanceDescription"
+                    wire:model.live="requestMaintenanceDescription"
                     placeholder="Describe the maintenance issue or reason..."
                     rows="4"
                 />
@@ -1065,6 +1065,38 @@
             </flux:button>
         </div>
     </form>
+</flux:modal>
+
+{{-- ============================================== --}}
+{{-- MAINTENANCE REQUEST CONFIRMATION MODAL        --}}
+{{-- ============================================== --}}
+<flux:modal wire:model="showRequestMaintenanceConfirmation" class="md:w-full md:max-w-sm">
+    <div class="space-y-6 text-center">
+        {{-- Success Icon --}}
+        <div class="mx-auto flex items-center justify-center w-16 h-16 rounded-full bg-green-100 dark:bg-green-900/30">
+            <flux:icon.check-circle class="size-10 text-green-600 dark:text-green-400" />
+        </div>
+
+        {{-- Success Message --}}
+        <div>
+            <flux:heading size="lg">Maintenance Request Submitted</flux:heading>
+            <flux:text class="mt-2 text-zinc-500 dark:text-zinc-400">
+                Your maintenance request has been successfully submitted and is waiting for admin approval.
+            </flux:text>
+        </div>
+
+        {{-- Action Button --}}
+        <div class="pt-4">
+            <flux:button
+                variant="filled"
+                color="green"
+                wire:click="closeRequestMaintenanceConfirmation"
+                class="w-full"
+            >
+                Close
+            </flux:button>
+        </div>
+    </div>
 </flux:modal>
 
 {{-- ============================================== --}}

@@ -575,4 +575,36 @@
             </div>
         </div>
     </flux:modal>
+
+    {{-- ============================================== --}}
+    {{-- COMPLETION CONFIRMATION MODAL --}}
+    {{-- ============================================== --}}
+    <flux:modal wire:model="showCompletionConfirmation" class="md:w-full md:max-w-sm">
+        <div class="space-y-6 text-center">
+            {{-- Success Icon --}}
+            <div class="mx-auto flex items-center justify-center w-16 h-16 rounded-full bg-green-100 dark:bg-green-900/30">
+                <flux:icon.check-circle class="size-10 text-green-600 dark:text-green-400" />
+            </div>
+
+            {{-- Success Message --}}
+            <div>
+                <flux:heading size="lg">Maintenance Completed</flux:heading>
+                <flux:text class="mt-2 text-zinc-500 dark:text-zinc-400">
+                    The asset maintenance has been completed successfully.
+                </flux:text>
+            </div>
+
+            {{-- Action Button --}}
+            <div class="pt-4">
+                <flux:button
+                    variant="filled"
+                    color="green"
+                    wire:click="closeCompletionConfirmation"
+                    class="w-full"
+                >
+                    Close
+                </flux:button>
+            </div>
+        </div>
+    </flux:modal>
 </div>

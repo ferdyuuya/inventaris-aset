@@ -20,6 +20,7 @@ class AssetMaintenance extends Model
         'feedback',
         'status',
         'created_by',
+        'pic_employee_id',
     ];
 
     protected $casts = [
@@ -50,6 +51,14 @@ class AssetMaintenance extends Model
     public function creator(): BelongsTo
     {
         return $this->belongsTo(User::class, 'created_by');
+    }
+
+    /**
+     * Get the Person In Charge (PIC) employee for this maintenance.
+     */
+    public function pic(): BelongsTo
+    {
+        return $this->belongsTo(Employee::class, 'pic_employee_id');
     }
 
     /**
